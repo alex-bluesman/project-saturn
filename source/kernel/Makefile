@@ -3,7 +3,7 @@ include $(TOP_DIR)/config.mk
 AFLAGS +=
 CFLAGS +=
 
-SOURCES := init.c console.c
+SOURCES := init.c console.c mmu.c
 
 OBJECTS := $(SOURCES:.c=.o)
 OBJECTS := $(OBJECTS:.S=.o)
