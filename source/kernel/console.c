@@ -19,14 +19,14 @@ static size_t format_console_message(char *buff, const char *fmt, va_list argp)
 			uint32_t base = 10;
 			uint8_t negative = 0;
 
-			int32_t d;
-			uint32_t u;
+			int d;
+			unsigned long u;
 
 			c = *fmt++;
 
-			if ((c >= '0') && (c <= '9'))
+			while ((c >= '0') && (c <= '9'))
 			{
-				fill = (size_t)(c - '0');
+				fill = fill * 10 + (size_t)(c - '0');
 				c = *fmt++;
 			}
 
@@ -36,7 +36,7 @@ static size_t format_console_message(char *buff, const char *fmt, va_list argp)
 				d = va_arg(argp, signed int);
 
 				negative = (d < 0);
-				u = (d < 0) ? (uint32_t)(-d) : (uint32_t)d;
+				u = (d < 0) ? (unsigned long)(-d) : (unsigned long)d;
 				base = 10;
 
 				break;
@@ -73,8 +73,13 @@ static size_t format_console_message(char *buff, const char *fmt, va_list argp)
 
 			if (s == 0)
 			{
+				/* Max unsigned 64 bit
+				 *  - in dec: 1 777 777 777 777 777 777 777
+				 *  - in hex: ffff ffff ffff ffff
+				 * So the maximal literal length is 22
+				 */
+				char str[22];
 				size_t i = 0;
-				char str[12];
 
 				s = str + sizeof(str);
 				*--s = 0;
