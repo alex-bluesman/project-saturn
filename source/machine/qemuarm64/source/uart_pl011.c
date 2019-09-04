@@ -1,5 +1,6 @@
 #include <asm/io_mem.h>
 #include <io.h>
+#include <mmu.h>
 #include <types.h>
 
 static uint64_t uart_base_addr;
@@ -7,6 +8,7 @@ static uint64_t uart_base_addr;
 void uart_init(void)
 {
 	uart_base_addr = UART_BASE_ADDRESS;
+	mmap_io(uart_base_addr, PAGE_SIZE);
 }
 
 void uart_tx(uint8_t *buff, size_t len)

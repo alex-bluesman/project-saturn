@@ -42,18 +42,19 @@
  *
  * TBD: should be reworked later to be more flexible
  */
-#define L0_SIZE			1		/* Single entry */
-#define L1_SIZE			4		/* 4GB of memory (4 * 1GB)   */
-#define L2_SIZE			512		/* 1GB of memory (512 * 2MB) */
-#define L3_SIZE			512		/* 2MB of memory (512 * 4KB) */
+#define L0_SIZE			1				/* Single entry */
+#define L1_SIZE			MAPPED_ADDRESS_SPACE_GB		/* 4GB of memory (4 * 1GB)   */
+#define L2_SIZE			512				/* 1GB of memory (512 * 2MB) */
+#define L3_SIZE			512				/* 2MB of memory (512 * 4KB) */
 
-#define TABLE_INDEX_MASK	0x1ff		/* (512 - 1) */
+#define TABLE_INDEX_MASK	0x1ff				/* (512 - 1) */
 
 /* Page shifts */
-#define L1_ADDR_SHIFT		30		/* Address shift for L1 page tables entries */
-#define L2_ADDR_SHIFT		21		/* Address shift for L2 page tables entries */
+#define L1_ADDR_SHIFT		30				/* Address shift for L1 page tables entries */
+#define L2_ADDR_SHIFT		21				/* Address shift for L2 page tables entries */
+#define L3_ADDR_SHIFT		12				/* Address shift for L3 page tables entries */
 
-/* See mmu.h for explanation of bits encoding */
+/* See kernel/mmu.h for explanation of bits encoding */
 
 /* Translation Table Entry pattern: table
  *                                   T           V
@@ -63,7 +64,8 @@
 /* Translation Table Entry pattern: page
  *                                   nG           AF           SH          AP          NS        ATTR          T           P
  */
-#define TTE_PAGE		((1U << 11) | (1U << 10) | (3U << 8) | (1U << 6) | (1U << 5) | (7U << 2) | (1U << 1) | (1U << 0))
+#define TTE_PAGE_DEVICE		((1U << 11) | (1U << 10) | (2U << 8) | (1U << 6) | (1U << 5) | (4U << 2) | (1U << 1) | (1U << 0))
+#define TTE_PAGE_NORMAL		((1U << 11) | (1U << 10) | (3U << 8) | (1U << 6) | (1U << 5) | (7U << 2) | (1U << 1) | (1U << 0))
 
 /* Translation Table Entry pattern: block
  *                                   nG           AF           SH          AP          NS        ATTR          P

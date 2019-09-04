@@ -3,15 +3,14 @@
 #include <mmu.h>
 #include <sys.h>
 
-unsigned int boot_stack[STACK_SIZE] __align(1 << 12);
+unsigned int boot_stack[STACK_SIZE] __align(PAGE_SIZE);
 
 void saturn_init(void)
 {
+	mmu_init();
 	console_init();
 
-	console_msg("\r\nWelcome to the C world!\r\n");
-
-	mmu_init();
+	console_msg("\r\n > console enabled\r\n");
 
 	for (;;);
 }

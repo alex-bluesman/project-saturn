@@ -161,14 +161,6 @@ common_start:
 	orr	x0, x0, x3			/* Add block attributes to descriptor */
 	str	x0, [x1, x2]			/* Store descriptor to ptable_l2[][] entry */
 
-	/* Map 1-to-1 1GB of RAM, usually it contains all the IOMEM for peripherals.
-	 * TBD: do it on demand in device drivers
-	 */
-	ldr	x0, =ptable_l1			/* x1 - ptable_l1[0] */
-	add	x0, x0, x20			/* Add physical memory offset */
-	mov	x1, #TTE_BLOCK_DEVICE		/* Due to it's the 1st GB, then the base address is 0 */
-	str	x1, [x0]			/* Store descriptor to ptable_l1[0] */
-
 	tlbi	alle2				/* Flush hypervisor TLB */
 	dsb	nsh
 

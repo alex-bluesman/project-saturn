@@ -1,6 +1,8 @@
 #include <console.h>
 
-#define PRINT_BUFF_SIZE		80
+#define PRINT_BUFF_SIZE		256
+
+static volatile uint8_t console_ready;
 
 static size_t format_console_message(char *buff, const char *fmt, va_list argp)
 {
@@ -147,6 +149,12 @@ void console_msg(const char *fmt, ...)
 	unsigned int len;
 	char print_buffer[PRINT_BUFF_SIZE];
 
+	if (console_ready == 0)
+	{
+		/* TODO: cache output to print it later */
+		return;
+	}
+
 	va_start(args, fmt);
 	len = format_console_message(print_buffer, fmt, args);
 	va_end(args);
@@ -158,4 +166,6 @@ void console_msg(const char *fmt, ...)
 void console_init(void)
 {
 	uart_init();
+
+	console_ready = 1;
 }
