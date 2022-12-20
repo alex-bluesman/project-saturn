@@ -1,19 +1,21 @@
 include $(TOP_DIR)/config.mk
 
 AFLAGS +=
-CFLAGS +=
+CFLAGS += -MMD -MP -fno-rtti
 
-SOURCES := head.S
+src := main.cpp console.c mmu.c uart_pl011.c core.cpp heap.cpp
 
-OBJECTS := $(SOURCES:.c=.o)
-OBJECTS := $(OBJECTS:.S=.o)
+objs := $(src:.c=.o)
+objs := $(objs:.cpp=.o)
+objs := $(objs:.S=.o)
+deps := $(objs:.o=.d)
 
-CURRENT_DIR = "arch/aarch64"
+CURRENT_DIR = "core"
 
 .PHONY: build
 build: built_in.o
 
-built_in.o: $(OBJECTS)
+built_in.o: $(objs)
 	@echo "[LD]		$(CURRENT_DIR)/$@"
 	@$(LD) $(LDFLAGS) -r -o $@ $^
 
@@ -25,15 +27,13 @@ built_in.o: $(OBJECTS)
 	@echo "[CC]		$(CURRENT_DIR)/$@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+%.o: %.cpp
+	@echo "[CXX]		$(CURRENT_DIR)/$@"
+	@$(CXX) $(CFLAGS) -c $< -o $@
+
 .PHONY: clean
 clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
-	@-rm -f *.o .depend
-
-.depend: depend
-
-depend: $(SOURCES)
-	@rm -f ./.depend
-	@$(CC) $(CFLAGS) -MM $^ >> ./.depend;
+	@-rm -f *.o
 
 -include .depend

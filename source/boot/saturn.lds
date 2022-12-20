@@ -24,6 +24,14 @@ SECTIONS
 		*(.data)
 	} : text
 
+	/* Reserve heap */
+	. = ALIGN(1 << 12);
+	.heap (NOLOAD):
+	{
+		*(.heap)
+	}
+
+
 	/* Align BSS start by page border to speed up flush */
 	. = ALIGN(1 << 12);
 	_bss_start = .;

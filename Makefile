@@ -1,8 +1,6 @@
 export TOP_DIR := $(shell pwd)
 include $(TOP_DIR)/config.mk
 
-export DCONF
-
 all:
 	@echo "Project Saturn:	build"
 	@echo "Arch: $(ARCH)"

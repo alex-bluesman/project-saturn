@@ -120,7 +120,7 @@ static inline void mmap_io(uint64_t base_addr, size_t size)
 	return mem_map(base_addr, size, MMAP_DEVICE);
 }
 
-static inline void mmap_ram(uint64_t base_addr, size_t size)
+static inline void mmap_text(uint64_t base_addr, size_t size)
 {
 	return mem_map(base_addr, size, MMAP_NORMAL);
 }

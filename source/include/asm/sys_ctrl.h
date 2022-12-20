@@ -1,5 +1,5 @@
-#ifndef __SYS_CTRL_H__
-#define __SYS_CTRL_H__
+#ifndef __ASM_SYS_CTRL_H__
+#define __ASM_SYS_CTRL_H__
 
 #define STACK_SIZE	1024			/* Stack size for one CPU */
 
@@ -9,4 +9,4 @@
 						 */
 #define MPIDR_CPUID	(0x3)			/* Indicates the processor number */
 
-#endif /* __SYS_CTRL_H__ */
+#endif /* __ASM_SYS_CTRL_H__ */

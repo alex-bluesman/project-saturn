@@ -42,6 +42,8 @@
  *
  * TBD: should be reworked later to be more flexible
  */
+#define MAPPED_ADDRESS_SPACE_GB	4
+
 #define L0_SIZE			1				/* Single entry */
 #define L1_SIZE			MAPPED_ADDRESS_SPACE_GB		/* 4GB of memory (4 * 1GB)   */
 #define L2_SIZE			512				/* 1GB of memory (512 * 2MB) */

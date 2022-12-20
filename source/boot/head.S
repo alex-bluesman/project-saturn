@@ -7,9 +7,23 @@
  * x30 - Link register (LR)
  */
 
-#include <asm/early_print.h>
 #include <asm/mmu.h>
 #include <asm/sys_ctrl.h>
+
+#define early_print(_s)		\
+adr	x0, 98f;		\
+bl	early_uart_print;	\
+b	99f;			\
+98:				\
+	.asciz _s;		\
+	.align 2;		\
+99:
+
+#define early_print_hex()	\
+bl	early_uart_print_hex;
+
+#define early_uart_init()	\
+bl	early_uart_init
 
 	.global start
 start:
@@ -177,6 +191,15 @@ common_start:
 	lsl	x1, x1, #3
 	add	x0, x0, x1			/* Stack grows down, so add STACK_SIZE * 8 (word size) */
 	mov	sp, x0
+
+/* DEBUG PURPOSE >>>>>>> */
+/*
+	ldr	x1,=ptable_l1
+	add	x1, x1, x20
+	mov	x3, #TTE_BLOCK_DEVICE
+	str	x3, [x1]
+*/
+/*              <<<<<<<< */
 
 	b	saturn_init
 

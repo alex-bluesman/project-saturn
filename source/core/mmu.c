@@ -1,8 +1,6 @@
 #include <asm/mmu.h>
-#include <console.h>
 #include <mmu.h>
 #include <sys.h>
-#include <types.h>
 
 /* Number of tables for hypervisor level-3 page mapping. Hypervisor uses them
  * to map I/O peripheral regions. And due to only certain devices are used
@@ -137,4 +135,5 @@ void mem_map(uint64_t base_addr, size_t size, uint8_t type)
 
 void mmu_init(void)
 {
+	l3_valid_mask = 0;
 }

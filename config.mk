@@ -1,5 +1,17 @@
 MACHINE := qemuarm64
 
-include $(TOP_DIR)/scripts/build.mk
+AFLAGS += -I$(TOP_DIR)/source/include
+CFLAGS += -I$(TOP_DIR)/source/include
 
-DCONF := -DCONFIG_EARLY_PRINT		# Use early console output
+# Toolchain parameters
+AS      = $(CROSS_COMPILE)as
+CC      = $(CROSS_COMPILE)gcc
+CXX     = $(CROSS_COMPILE)g++
+LD      = $(CROSS_COMPILE)ld
+STRIP   = $(CROSS_COMPILE)strip
+OBJCOPY = $(CROSS_COMPILE)objcopy
+OBJDUMP = $(CROSS_COMPILE)objdump
+
+MKIMAGE = mkimage
+
+QEMU_AARCH64 = qemu-system-aarch64
