@@ -2,14 +2,14 @@
 
 Project Saturn is a hypervisor for Aarch64 platforms.
 
-Copyright (c) 2019
+Copyright (c) 2022
 Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
 
 # QEMU Aarch64 Target
 
 ### Prerequisites
 
-1. Toolchain: `gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu` from linaro.org website
+1. Toolchain: `aarch64-unknown-linux-gnu-` from linaro.org website
 2. QEMU: standard Linux package qemu-system-aarch64
 
 ### Build
@@ -17,7 +17,7 @@ Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
 To build Saturn for QEMU machine the following commads could be used:
 
 ```
- $ export CROSS_COMPILE=$(WORKDIR)/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-
+ $ export CROSS_COMPILE=$(TOOLCHAIN_ROOT)/bin/aarch64-unknown-linux-gnu-
  $ make
 ```
 
