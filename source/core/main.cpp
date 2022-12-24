@@ -1,14 +1,13 @@
-#include <types.h>
-#include <asm/sys_ctrl.h>
-#include <sys.h>
+#include <system>
+#include <console>
 
-// TBD: should be globally defined!
-//  - Size of the core stack
-//  - Size of the page
-static const size_t stack_size = 1024;
-static const size_t page_size = 4096;
+#include "uart_pl011.hpp"
 
-unsigned int boot_stack[stack_size] __align(page_size);
+// Saturn stack definition
+unsigned int boot_stack[_stack_size] __align(_page_size);
+
+namespace saturn {
+namespace core {
 
 // External functions
 extern "C" 
@@ -19,15 +18,26 @@ extern "C"
 
 static void Main(void)
 {
-	console_init();
-	console_msg("\r\n > console enabled\r\n");
+	//console_init();
+	//console_msg("\r\n > console enabled\r\n");
+
+	device::UartPl011 Uart;
+
+	Uart.Init();
+//	console_init();
+//	console_msg("\r\n > console enabled\r\n");
+
+	Console c(Uart);
+	c << "Hey!";
 
 	for (;;);
 }
 
+}; // namespace core
+}; // namespace saturn
+
 extern "C" void saturn_init()
 {
 	// Let's switch to C++ world!
-	Main();
+	saturn::core::Main();
 }
-

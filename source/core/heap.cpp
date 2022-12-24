@@ -82,7 +82,7 @@ void Heap::Debug(void)
 	{
 		Data_Block<16> *data = list_entry(head, Data_Block<16>, List);
 
-		console_msg("-> %d\r\n", data->Id);
+//		console_msg("-> %d\r\n", data->Id);
 		head = head->next;
 	}
 }

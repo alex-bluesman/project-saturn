@@ -3,7 +3,7 @@ include $(TOP_DIR)/config.mk
 AFLAGS +=
 CFLAGS += -MMD -MP -fno-rtti
 
-src := main.cpp console.c mmu.c uart_pl011.c core.cpp heap.cpp
+src := main.cpp mmu.c core.cpp heap.cpp console.cpp uart_pl011.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
@@ -34,6 +34,6 @@ built_in.o: $(objs)
 .PHONY: clean
 clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
-	@-rm -f *.o
+	@-rm -f *.o *.d
 
 -include .depend

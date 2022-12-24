@@ -1,0 +1,34 @@
+#pragma once
+
+#include <dev/uart>
+
+namespace saturn {
+namespace core {
+
+using namespace device;
+
+enum class fmt {
+	endl,
+	hex
+};
+
+class Console
+{
+//public:
+//	void * operator new(long unsigned int size);
+//	void operator delete(void * p, unsigned long){};
+
+public:
+	Console(UartDevice&);
+
+public:
+	Console& operator<<(char const *msg);
+	Console& operator<<(fmt format);
+
+private:
+	bool isActive;
+	UartDevice& uart;
+};
+
+}; // namespace core
+}; // namespace saturn

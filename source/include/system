@@ -1,0 +1,16 @@
+#pragma once
+
+// Memory alignment for data objects in the binary
+#define __align(n)	__attribute__((__aligned__(n)))
+
+// Packing of data structure members without compiler auto-alignment
+#define __packed	__attribute__((__packed__))
+
+// Assign object to specific section in the binary
+#define __section(s)	__attribute__((section(s)))
+
+// Size of the core stack
+static const unsigned _stack_size = 1024;
+
+// Size of the page
+static const unsigned _page_size = 4096;
