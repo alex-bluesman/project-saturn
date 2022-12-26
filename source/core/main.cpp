@@ -18,17 +18,11 @@ extern "C"
 
 static void Main(void)
 {
-	//console_init();
-	//console_msg("\r\n > console enabled\r\n");
-
 	device::UartPl011 Uart;
-
 	Uart.Init();
-//	console_init();
-//	console_msg("\r\n > console enabled\r\n");
 
 	Console c(Uart);
-	c << "Hey!";
+	c << "Console test: " << 1234 << " = 0x" << fmt::hex << fmt::fill << 1234 << fmt::endl;
 
 	for (;;);
 }
