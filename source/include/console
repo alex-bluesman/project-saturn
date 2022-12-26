@@ -8,8 +8,11 @@ namespace core {
 using namespace device;
 
 enum class fmt {
-	endl,
-	hex
+	dec,		// Display integers in decimal format
+	endl,		// Line break and carier return
+	hex,		// Display integers in heximal format
+	fill,		// Fill number displaying by '0' till 8 digits in total
+	nofill		// Disable filling the number by '0'
 };
 
 class Console
@@ -23,10 +26,14 @@ public:
 
 public:
 	Console& operator<<(char const *msg);
+	Console& operator<<(int num);
+	Console& operator<<(unsigned long num);
 	Console& operator<<(fmt format);
 
 private:
 	bool isActive;
+	bool isHex;
+	bool isFill;
 	UartDevice& uart;
 };
 

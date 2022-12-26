@@ -8,7 +8,9 @@ using namespace device;
 static const size_t max_message_size = 128;
 
 Console::Console(UartDevice& u)
-	: isActive(0)
+	: isActive(false)
+	, isHex(false)
+	, isFill(false)
 	, uart(u)
 {
 	isActive = true;
@@ -16,8 +18,7 @@ Console::Console(UartDevice& u)
 }
 
 //void * Console::operator new(long unsigned int size)
-//{
-//}
+//{}
 
 Console& Console::operator<<(char const *msg)
 {
@@ -58,17 +59,88 @@ Console& Console::operator<<(char const *msg)
 	return *this;
 }
 
+Console& Console::operator<<(int num)
+{
+	if (num < 0)
+	{
+		if (isHex)
+		{
+			*this << "<invalid>";
+		}
+		else
+		{
+			*this << "-" << static_cast<unsigned long>(-num);
+		}
+	}
+	else
+	{
+		*this << static_cast<unsigned long>(num);
+	}
+
+	return *this;
+}
+
+Console& Console::operator<<(unsigned long num)
+{
+
+	// Max unsigned 64 bit
+	//  - in dec: 1 777 777 777 777 777 777 777
+	//  - in hex: ffff ffff ffff ffff
+	// So the maximal literal length is 22
+	char str[22];
+
+	// Symbol table
+	char hex[] = "0123456789abcdef";
+
+	// Formating flags
+	uint8_t base = isHex ? 16 : 10;
+	uint8_t fill = isFill ? 8 : 0;
+
+	char *s = str + sizeof(str);
+	*--s = 0;
+
+	size_t i = 0;
+	do
+	{
+		*--s = hex[num % base];
+		num /= base;
+		i++;
+	}
+	while (num > 0);
+
+
+	while (i++ < fill)
+	{
+		*--s = '0';
+	}
+
+	return *this << s;
+}
+
 Console& Console::operator<<(fmt format)
 {
 	switch (format)
 	{
 	case fmt::endl:
 		*this << "\r\n";
+		isHex = false;
+		isFill = false;
+		break;
+	case fmt::dec:
+		isHex = false;
+		break;
+	case fmt::hex:
+		isHex = true;
+		break;
+	case fmt::fill:
+		isFill = true;
+		break;
+	case fmt::nofill:
+		isFill = false;
 		break;
 	default:
-		break;	// TBD: add unsupported formatting options
+		break;
 	}
-
 
 	return *this;
 }
