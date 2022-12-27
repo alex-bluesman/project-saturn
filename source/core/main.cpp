@@ -1,6 +1,6 @@
 #include <system>
-#include <console>
 
+#include "console.hpp"
 #include "uart_pl011.hpp"
 
 // Saturn stack definition
