@@ -1,0 +1,16 @@
+#pragma once
+
+#include <basetypes>
+
+namespace saturn {
+namespace core {
+
+class IHeap
+{
+public:
+	virtual void*	Alloc(size_t size) = 0;
+	virtual void	Free(void *base) = 0;
+};
+
+}; // namespace core
+}; // namespace saturn

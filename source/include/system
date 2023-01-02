@@ -1,5 +1,7 @@
 #pragma once
 
+namespace saturn {
+
 // Memory alignment for data objects in the binary
 #define __align(n)	__attribute__((__aligned__(n)))
 
@@ -12,5 +14,10 @@
 // Size of the core stack
 static const unsigned _stack_size = 1024;
 
+// Size of the heap (number of blocks per size)
+static const unsigned _heap_size = 10;
+
 // Size of the page
 static const unsigned _page_size = 4096;
+
+}; // namespace saturn

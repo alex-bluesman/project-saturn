@@ -15,26 +15,13 @@ enum class fmt {
 	nofill		// Disable filling the number by '0'
 };
 
-class Console
+class IConsole
 {
-//public:
-//	void * operator new(long unsigned int size);
-//	void operator delete(void * p, unsigned long){};
-
 public:
-	Console(UartDevice&);
-
-public:
-	Console& operator<<(char const *msg);
-	Console& operator<<(int num);
-	Console& operator<<(unsigned long num);
-	Console& operator<<(fmt format);
-
-private:
-	bool isActive;
-	bool isHex;
-	bool isFill;
-	UartDevice& uart;
+	virtual IConsole& operator<<(char const *msg) = 0;
+	virtual IConsole& operator<<(int num) = 0;
+	virtual IConsole& operator<<(unsigned long num) = 0;
+	virtual IConsole& operator<<(fmt format) = 0;
 };
 
 }; // namespace core

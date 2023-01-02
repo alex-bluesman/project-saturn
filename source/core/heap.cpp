@@ -1,45 +1,19 @@
-#include <list>
-#include <sys.h>
+#include <system>
 
-#include "Heap.hpp"
+#include "heap.hpp"
 
-template <int size>
-struct Data_Block
-{
-	int Id;
-	char Data[size];
-	list_head List;
-};
+namespace saturn {
+namespace core {
 
-static const int _heap_size = 10;
+// Saturn heap definition
+static Data_Block<16> _data16[_heap_size] __section(".heap");
+static Data_Block<32> _data32[_heap_size] __section(".heap");
+static Data_Block<48> _data48[_heap_size] __section(".heap");
+static Data_Block<64> _data64[_heap_size] __section(".heap");
 
-class Heap : public HeapInterface
-{
-public:
-	void	Init(void);
-	void*	Alloc(int size);
-	void	Free(void *base);
-
-public:
-	void	Debug(void);
-
-private:
-	Data_Block<16>	Data16[_heap_size];
-	list_head_t	List16_Available;
-	list_head_t	List16_Allocated;
-};
-
-int __heap_start_marker __section("heap");
-
-// Our Heap, we should keep is as safe as possible
-Heap SaturnHeap  __section("heap");
-
-int __heap_end_marker __section("heap");
-
-
-
-template<typename T>
-void Heap_List_Init(list_head_t *avail, list_head_t *alloc, T *data)
+// Template to initialize list of data blocks
+template<typename T, size_t _heap_size>
+static void Heap_List_Init(list_head_t *avail, list_head_t *alloc, T *data)
 {
 	List_Init(avail);
 	List_Init(alloc);
@@ -51,38 +25,134 @@ void Heap_List_Init(list_head_t *avail, list_head_t *alloc, T *data)
 	}
 }
 
-void Heap::Init(void)
+// Template to allocate memory block from the heap
+template<typename T>
+static void* Heap_Get_Block(list_head_t* avail, list_head_t* alloc)
 {
-	//TBD
-	Heap_List_Init<Data_Block<16>>(&List16_Available, &List16_Allocated, Data16);
+	void* block = nullptr;
+
+	if (List_Size(avail) > 0)
+	{
+		list_head_t *entry = avail->next;
+		List_Del(entry);
+		List_Add(entry, alloc);
+
+		block = List_Entry(entry, T, List)->Data;
+	}
+
+	return block;
 }
 
-void* Heap::Alloc(int size)
+template<typename T>
+static bool Heap_Free_Block(list_head_t* avail, list_head_t* alloc, void* block)
 {
-	return 0;
+	list_head_t *entry = alloc->next;
+	bool found = false;
+
+	while (entry != alloc)
+	{
+		if (block == (void*)List_Entry(entry, T, List)->Data)
+		{
+			List_Del(entry);
+			List_Add(entry, avail);
+			found = true;
+			break;
+		}
+		entry = entry->next;
+	}
+
+	return found;
+}
+
+// Template to dump blocks in the heap list
+template<typename T>
+static void Dump_Block_List(IConsole& console, list_head_t* head)
+{
+	size_t i = 0;
+	list_head_t *entry = head->next;
+	while (entry != head)
+	{
+		console << "      Data[" << i++ << "] = 0x" << fmt::hex << fmt::fill
+			<< (unsigned long)List_Entry(entry, T, List)->Data << fmt::endl;
+		entry = entry->next;
+	}
+}
+
+
+// Heap class implementation
+Heap::Heap(void)
+	: Data16(_data16)
+	, Data32(_data32)
+	, Data48(_data48)
+	, Data64(_data64)
+{
+	Heap_List_Init<Data_Block<16>, _heap_size>(&List16_Available, &List16_Allocated, Data16);
+	Heap_List_Init<Data_Block<32>, _heap_size>(&List32_Available, &List32_Allocated, Data32);
+	Heap_List_Init<Data_Block<48>, _heap_size>(&List48_Available, &List48_Allocated, Data48);
+	Heap_List_Init<Data_Block<64>, _heap_size>(&List64_Available, &List64_Allocated, Data64);
+}
+
+void* Heap::Alloc(size_t size)
+{
+	void* block = nullptr;
+
+	if (size <= 16)
+	{
+		block = Heap_Get_Block<Data_Block<16>>(&List16_Available, &List16_Allocated);
+	}
+	else if (size <= 32)
+	{
+		block = Heap_Get_Block<Data_Block<32>>(&List32_Available, &List32_Allocated);
+	}
+	else if (size <= 48)
+	{
+		block = Heap_Get_Block<Data_Block<48>>(&List48_Available, &List48_Allocated);
+	}
+	else if (size <= 64)
+	{
+		block = Heap_Get_Block<Data_Block<64>>(&List64_Available, &List64_Allocated);
+	}
+
+	return block;
 }
 
 void Heap::Free(void *base)
 {
+	if (base <= &Data16[_heap_size])
+	{
+		Heap_Free_Block<Data_Block<16>>(&List16_Available, &List16_Allocated, base);
+	}
 	//TBD
 }
 
-extern "C" void console_msg(const char *fmt, ...);
-
-void heap_debug()
+void Heap::State(IConsole& console)
 {
-	SaturnHeap.Debug();
+	console << "Saturn heap state:" << fmt::endl;
+
+	console << "  Data block 16 bytes:" << fmt::endl;
+	console << "    Available = " << List_Size(&List16_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<16>>(console, &List16_Available);
+	console << "    Allocated = " << List_Size(&List16_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<16>>(console, &List16_Allocated);
+
+	console << "  Data block 32 bytes:" << fmt::endl;
+	console << "    Available = " << List_Size(&List32_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<32>>(console, &List32_Available);
+	console << "    Allocated = " << List_Size(&List32_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<32>>(console, &List32_Allocated);
+
+	console << "  Data block 48 bytes:" << fmt::endl;
+	console << "    Available = " << List_Size(&List48_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<48>>(console, &List48_Available);
+	console << "    Allocated = " << List_Size(&List48_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<48>>(console, &List48_Allocated);
+
+	console << "  Data block 64 bytes:" << fmt::endl;
+	console << "    Available = " << List_Size(&List64_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<64>>(console, &List64_Available);
+	console << "    Allocated = " << List_Size(&List64_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<64>>(console, &List64_Allocated);
 }
 
-void Heap::Debug(void)
-{
-	list_head_t *head = List16_Available.next;
-
-	for (int i = 0; i < _heap_size; ++i)
-	{
-		Data_Block<16> *data = list_entry(head, Data_Block<16>, List);
-
-//		console_msg("-> %d\r\n", data->Id);
-		head = head->next;
-	}
-}
+} // namespace core
+} // namespace saturn

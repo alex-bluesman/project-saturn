@@ -1,7 +1,7 @@
 include $(TOP_DIR)/config.mk
 
 AFLAGS +=
-CFLAGS += -MMD -MP -fno-rtti
+CFLAGS += -MMD -MP
 
 src := main.cpp mmu.c core.cpp heap.cpp console.cpp uart_pl011.cpp
 
