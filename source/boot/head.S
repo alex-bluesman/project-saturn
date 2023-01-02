@@ -78,7 +78,7 @@ smp_entry:
 	early_print("         .. . .\"'\r\n")
 	early_print("        .\r\n")
 
-	early_print(" - Project Saturn 2019 -\r\n\n")
+	early_print(" - Project Saturn 2023 -\r\n\n")
 
 	early_print(" > physical start: 0x")
 	adr	x0, start
