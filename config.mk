@@ -1,7 +1,7 @@
 MACHINE := qemuarm64
 
 AFLAGS += -I$(TOP_DIR)/source/include
-CFLAGS += -I$(TOP_DIR)/source/include
+CFLAGS += -I$(TOP_DIR)/source/include -fno-rtti 
 
 # Toolchain parameters
 AS      = $(CROSS_COMPILE)as
