@@ -12,34 +12,19 @@ unsigned int boot_stack[_stack_size] __align(_page_size);
 namespace saturn {
 namespace core {
 
-
-extern Heap SaturnHeap;
+static Heap* Saturn_Heap;
 
 static void Main(void)
 {
-	device::UartPl011 Uart;
+	Heap Main_Heap;
+	Saturn_Heap = &Main_Heap;
+
+	device::UartPl011 Uart = *new device::UartPl011;
 	Uart.Init();
 
-	Console Log(Uart);
-	Log << "Console test: " << 1234 << " = 0x" << fmt::hex << fmt::fill << 1234 << fmt::endl;
+	Console& Log = *new Console(Uart);
 
-	Heap Saturn_Heap;
-
-
-	void* base = Saturn_Heap.Alloc(10);
-	Saturn_Heap.Alloc(20);
-	Saturn_Heap.Alloc(30);
-	Saturn_Heap.Alloc(60);
-	Saturn_Heap.State(Log);
-
-
-	Log << "xxx" << fmt::endl;
-
-	Saturn_Heap.Free(base);
-	Saturn_Heap.State(Log);
-
-	Log << fmt::endl << "<core initialization complete>" << fmt::endl;
-	
+	Log << "<core initialization complete>" << fmt::endl;
 
 	for (;;);
 }
@@ -51,4 +36,14 @@ extern "C" void saturn_init()
 {
 	// Let's switch to C++ world!
 	saturn::core::Main();
+}
+
+void* operator new(size_t size) noexcept
+{
+	return saturn::core::Saturn_Heap->Alloc(size);
+}
+
+void operator delete(void* base, size_t size) noexcept
+{
+	return saturn::core::Saturn_Heap->Free(base);
 }
