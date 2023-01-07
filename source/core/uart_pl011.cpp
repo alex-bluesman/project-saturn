@@ -2,11 +2,7 @@
 #include <system>
 #include "uart_pl011.hpp"
 
-#include <io.h>
-
-// TBD: Linkage workaround
-extern "C" void mem_map(uint64_t base_addr, size_t size, uint8_t type);
-// End
+#include <io>
 
 namespace saturn {
 namespace device {
