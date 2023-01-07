@@ -1,0 +1,19 @@
+#pragma once
+
+#include <basetypes>
+
+namespace saturn {
+
+// Memory mapping types:
+enum class MMapType {
+	Device,
+	Normal
+};
+
+class IMemoryManagementUnit {
+public:
+	virtual void MemoryMap(uint64_t base_addr, size_t size, MMapType type) = 0;
+	virtual void MemoryUnmap(uint64_t base_addr, size_t size) = 0;
+};
+
+}; // namespace saturn

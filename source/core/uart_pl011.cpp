@@ -1,3 +1,4 @@
+#include <mmap>
 #include <system>
 #include "uart_pl011.hpp"
 
@@ -39,7 +40,7 @@ UartPl011::UartPl011()
 
 void UartPl011::Init(void)
 {
-	mem_map(uart_base_address, _page_size, 0);
+	Reg = new MMap(uart_base_address, _page_size, MMapType::Device);
 }
 
 void UartPl011::Rx(uint8_t *buff, size_t len)

@@ -2,6 +2,7 @@
 
 #include "console.hpp"
 #include "heap.hpp"
+#include "mmu.hpp"
 #include "uart_pl011.hpp"
 
 using namespace saturn;
@@ -12,12 +13,18 @@ unsigned int boot_stack[_stack_size] __align(_page_size);
 namespace saturn {
 namespace core {
 
+// Heap object pointer to implement operators new/delete
 static Heap* Saturn_Heap;
+
+// MMU object pointer to implement I/O mapping
+MemoryManagementUnit* Saturn_MMU;
 
 static void Main(void)
 {
 	Heap Main_Heap;
 	Saturn_Heap = &Main_Heap;
+
+	Saturn_MMU = new MemoryManagementUnit();
 
 	device::UartPl011 Uart = *new device::UartPl011;
 	Uart.Init();

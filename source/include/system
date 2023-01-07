@@ -12,7 +12,7 @@ namespace saturn {
 #define __section(s)	__attribute__((section(s)))
 
 // Size of the core stack
-static const unsigned _stack_size = 1024;
+static const unsigned _stack_size = STACK_SIZE;
 
 // Size of the heap (number of blocks per size)
 static const unsigned _heap_size = 10;
