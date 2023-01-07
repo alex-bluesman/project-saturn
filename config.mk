@@ -1,7 +1,10 @@
 MACHINE := qemuarm64
 
-AFLAGS += -I$(TOP_DIR)/source/include
-CFLAGS += -I$(TOP_DIR)/source/include -fno-rtti -fno-exceptions
+SATURN_CONFIG = -DSTACK_SIZE=1024
+
+AFLAGS += $(SATURN_CONFIG) -I$(TOP_DIR)/source/include
+CFLAGS += $(SATURN_CONFIG) -I$(TOP_DIR)/source/include -fno-rtti -fno-exceptions
+
 
 # Toolchain parameters
 AS      = $(CROSS_COMPILE)as

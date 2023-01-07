@@ -3,7 +3,7 @@ include $(TOP_DIR)/config.mk
 AFLAGS +=
 CFLAGS += -MMD -MP
 
-src := main.cpp mmu.c core.cpp heap.cpp console.cpp uart_pl011.cpp
+src := main.cpp mmu.cpp heap.cpp console.cpp uart_pl011.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
