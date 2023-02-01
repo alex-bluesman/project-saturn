@@ -19,6 +19,9 @@ static Heap* Saturn_Heap;
 // MMU object pointer to implement I/O mapping
 MemoryManagementUnit* Saturn_MMU;
 
+// Saturn console pointer
+static Console* Saturn_Console = nullptr;
+
 static void Main(void)
 {
 	Heap Main_Heap;
@@ -28,12 +31,16 @@ static void Main(void)
 
 	device::UartPl011 Uart = *new device::UartPl011;
 	Uart.Init();
+	Saturn_Console = new Console(Uart);
 
-	Console& Log = *new Console(Uart);
-
-	Log << "<core initialization complete>" << fmt::endl;
+	Log() << "<core initialization complete>" << fmt::endl;
 
 	for (;;);
+}
+
+IConsole& Log()
+{
+	return *Saturn_Console;
 }
 
 }; // namespace core
