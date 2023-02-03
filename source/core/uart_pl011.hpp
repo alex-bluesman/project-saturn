@@ -18,7 +18,6 @@ public:
 //	~UartPl011();
 
 public:
-	void Init(void);
 	void Rx(uint8_t *buff, size_t len);
 	void Tx(uint8_t *buff, size_t len);
 

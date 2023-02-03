@@ -24,20 +24,13 @@ enum Pl011_Reg_FR {
 
 UartPl011::UartPl011()
 {
-	// Let's keep constructor empty, because we could create the
-	// object before MMU is initialized. When system is ready a
-	// user could call Init method instead.
+	// TBD: destroy the allocated data
+	Reg = new MMap(uart_base_address, _page_size, MMapType::Device);
 }
 
 //UartPl011::~UartPl011()
 //{
-	// TBD: destroy the allocated data
 //}
-
-void UartPl011::Init(void)
-{
-	Reg = new MMap(uart_base_address, _page_size, MMapType::Device);
-}
 
 void UartPl011::Rx(uint8_t *buff, size_t len)
 {}
