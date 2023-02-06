@@ -22,6 +22,9 @@ MemoryManagementUnit* Saturn_MMU;
 // Saturn console pointer
 static Console* Saturn_Console = nullptr;
 
+// External API:
+void Exceptions_Init();
+
 static void Main(void)
 {
 	// The Main function will never quit, so all the allocated on stack objects
@@ -34,6 +37,8 @@ static void Main(void)
 
 	device::UartPl011& Uart = *new device::UartPl011();
 	Saturn_Console = new Console(Uart);
+
+	Exceptions_Init();
 
 	Log() << "<core initialization complete>" << fmt::endl;
 
