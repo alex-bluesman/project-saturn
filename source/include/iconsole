@@ -24,5 +24,7 @@ public:
 	virtual IConsole& operator<<(fmt format) = 0;
 };
 
+IConsole& Log();
+
 }; // namespace core
 }; // namespace saturn

@@ -3,7 +3,7 @@ include $(TOP_DIR)/config.mk
 AFLAGS +=
 CFLAGS += -MMD -MP
 
-src := main.cpp mmu.cpp heap.cpp console.cpp uart_pl011.cpp
+src := main.cpp mmu.cpp heap.cpp console.cpp uart_pl011.cpp exceptions.cpp vector.S
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
@@ -21,7 +21,7 @@ built_in.o: $(objs)
 
 %.o: %.S
 	@echo "[AS]		$(CURRENT_DIR)/$@"
-	@$(CC) $(AFLAGS) -c $< -o $@
+	@$(CXX) $(AFLAGS) -c $< -o $@
 
 %.o: %.c
 	@echo "[CC]		$(CURRENT_DIR)/$@"

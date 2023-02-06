@@ -19,21 +19,35 @@ static Heap* Saturn_Heap;
 // MMU object pointer to implement I/O mapping
 MemoryManagementUnit* Saturn_MMU;
 
+// Saturn console pointer
+static Console* Saturn_Console = nullptr;
+
+// External API:
+void Exceptions_Init();
+
 static void Main(void)
 {
+	// The Main function will never quit, so all the allocated on stack objects
+	// will be available whole Saturn life cycle
+
 	Heap Main_Heap;
 	Saturn_Heap = &Main_Heap;
 
 	Saturn_MMU = new MemoryManagementUnit();
 
-	device::UartPl011 Uart = *new device::UartPl011;
-	Uart.Init();
+	device::UartPl011& Uart = *new device::UartPl011();
+	Saturn_Console = new Console(Uart);
 
-	Console& Log = *new Console(Uart);
+	Exceptions_Init();
 
-	Log << "<core initialization complete>" << fmt::endl;
+	Log() << "<core initialization complete>" << fmt::endl;
 
 	for (;;);
+}
+
+IConsole& Log()
+{
+	return *Saturn_Console;
 }
 
 }; // namespace core

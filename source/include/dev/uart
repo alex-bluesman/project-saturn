@@ -8,7 +8,6 @@ namespace device {
 class UartDevice
 {
 public:
-	virtual void Init(void) = 0;
 	virtual void Rx(uint8_t *buff, size_t len) = 0;
 	virtual void Tx(uint8_t *buff, size_t len) = 0;
 };

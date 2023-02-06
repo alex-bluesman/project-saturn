@@ -1,0 +1,20 @@
+#pragma once
+
+#include <basetypes>
+
+namespace saturn {
+
+#define WriteArm64Reg(_reg, _val)				\
+	do {							\
+		uint64_t v = _val;				\
+		asm volatile("msr " #_reg ", %0" : : "r" (v));	\
+	} while (0)
+
+#define ReadArm64Reg(_reg)					\
+	({							\
+		uint64_t v;					\
+		asm volatile("mrs  %0, " #_reg : "=r" (v));	\
+		v;						\
+	})
+
+}; // namespace saturn
