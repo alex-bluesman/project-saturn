@@ -18,10 +18,19 @@ public:
 	Console(UartDevice&);
 
 public:
-	Console& operator<<(char const *msg);
-	Console& operator<<(int num);
-	Console& operator<<(unsigned long num);
 	Console& operator<<(fmt format);
+	Console& operator<<(char const *msg);
+
+	Console& operator<<(int32_t num);
+	Console& operator<<(uint32_t num);
+	Console& operator<<(int64_t num);
+	Console& operator<<(uint64_t num);
+
+	Console& operator<<(size_t num);
+
+private:
+	Console& SignedToStr(int64_t num, uint8_t fillSize = 0);
+	Console& UnsignedToStr(uint64_t num, uint8_t fillSize = 0);
 
 private:
 	bool isActive;

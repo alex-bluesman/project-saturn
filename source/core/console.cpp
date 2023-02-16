@@ -59,59 +59,92 @@ Console& Console::operator<<(char const *msg)
 	return *this;
 }
 
-Console& Console::operator<<(int num)
+Console& Console::operator<<(int32_t num)
+{
+	uint8_t fillSize = isFill ? 8 : 0;
+	return SignedToStr(num, fillSize);
+}
+
+Console& Console::operator<<(uint32_t num)
+{
+	uint8_t fillSize = isFill ? 8 : 0;
+	return UnsignedToStr(num, fillSize);
+}
+
+Console& Console::operator<<(int64_t num)
+{
+	uint8_t fillSize = isFill ? 16 : 0;
+	return SignedToStr(num, fillSize);
+}
+
+Console& Console::operator<<(uint64_t num)
+{
+	uint8_t fillSize = isFill ? 16 : 0;
+	return UnsignedToStr(num, fillSize);
+}
+
+Console& Console::operator<<(size_t num)
+{
+	uint8_t fillSize = isFill ? 16 : 0;
+	return UnsignedToStr(num, fillSize);
+}
+
+Console& Console::SignedToStr(int64_t num, uint8_t fillSize)
 {
 	if (num < 0)
 	{
 		if (isHex)
 		{
-			*this << "<invalid>";
+			*this << "<invalid>";	// No need to support negative hex
 		}
 		else
 		{
-			*this << "-" << static_cast<unsigned long>(-num);
+			*this << "-";
+			UnsignedToStr(static_cast<uint64_t>(-num), fillSize);
 		}
 	}
 	else
 	{
-		*this << static_cast<unsigned long>(num);
+		UnsignedToStr(static_cast<uint64_t>(num), fillSize);
 	}
 
 	return *this;
 }
 
-Console& Console::operator<<(unsigned long num)
+Console& Console::UnsignedToStr(uint64_t num, uint8_t fillSize)
 {
 
 	// Max unsigned 64 bit
 	//  - in dec: 1 777 777 777 777 777 777 777
 	//  - in hex: ffff ffff ffff ffff
 	// So the maximal literal length is 22
-	char str[22];
+	char numStr[22];
 
 	// Symbol table
-	char hex[] = "0123456789abcdef";
+	char hexTable[] = "0123456789abcdef";
 
 	// Formating flags
-	uint8_t base = isHex ? 16 : 10;
-	uint8_t fill = isFill ? 8 : 0;
+	uint8_t divBase = isHex ? 16 : 10;
 
-	char *s = str + sizeof(str);
+	char *s = numStr + sizeof(numStr);
 	*--s = 0;
 
 	size_t i = 0;
 	do
 	{
-		*--s = hex[num % base];
-		num /= base;
+		*--s = hexTable[num % divBase];
+		num /= divBase;
 		i++;
 	}
 	while (num > 0);
 
 
-	while (i++ < fill)
+	if (isHex)
 	{
-		*--s = '0';
+		while (i++ < fillSize)
+		{
+			*--s = '0';
+		}
 	}
 
 	return *this << s;
