@@ -4,9 +4,17 @@
 
 namespace saturn {
 
-static inline void mem_write8(uint64_t addr, uint8_t data)
+template<typename T>
+static inline T Read(uint64_t addr)
 {
-	volatile uint8_t *paddr = (uint8_t *)addr;
+	volatile T *paddr = (T *)addr;
+	return *paddr;
+}
+
+template<typename T>
+static inline void Write(uint64_t addr, T data)
+{
+	volatile T *paddr = (T *)addr;
 	*paddr = data;
 }
 
