@@ -1,4 +1,5 @@
 #include <mmap>
+#include <platform/qemuarm64>
 #include <system>
 #include "uart_pl011.hpp"
 
@@ -6,8 +7,6 @@
 
 namespace saturn {
 namespace device {
-
-static const uint64_t uart_base_address = 0x09000000;
 
 enum Pl011_Regs {
 	DR	= 0x00,		// Data register
@@ -25,7 +24,7 @@ enum Pl011_Reg_FR {
 UartPl011::UartPl011()
 {
 	// TBD: destroy the allocated data
-	Reg = new MMap(uart_base_address, _page_size, MMapType::Device);
+	Regs = new MMap(MMap::IO_Region(_uart_addr));
 }
 
 //UartPl011::~UartPl011()
@@ -37,16 +36,13 @@ void UartPl011::Rx(uint8_t *buff, size_t len)
 
 void UartPl011::Tx(uint8_t *buff, size_t len)
 {
-	// TBD: rework by using mem_read32 to avoid this black magic
-	volatile uint32_t *reg = (uint32_t *)(void *)(uart_base_address + Pl011_Regs::FR);
-
 	while (len--)
 	{
 		// Wait for UART to be ready
-		while (!(*reg && Pl011_Reg_FR::Busy));
-		mem_write8(uart_base_address + Pl011_Regs::DR, *buff++);
-	}
+		while (!(Regs->Read<uint32_t>(Pl011_Regs::FR) && Pl011_Reg_FR::Busy));
 
+		Regs->Write<uint8_t>(Pl011_Regs::DR, *buff++);
+	}
 }
 
 }; // namespace device

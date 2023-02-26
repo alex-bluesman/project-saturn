@@ -22,7 +22,7 @@ public:
 	void Tx(uint8_t *buff, size_t len);
 
 private:
-	MMap* Reg;
+	MMap* Regs;
 };
 
 }; // namespace device

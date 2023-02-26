@@ -1,0 +1,17 @@
+#pragma once
+
+#include <iconsole>
+#include <io>
+
+namespace saturn {
+
+static inline void Fault(const char* reason)
+{
+	core::Log() << "Software Fault: " << reason << core::fmt::endl;
+
+	// The easiest way to stop execution including interrupts is hardware
+	// exception. So let's just to small oops to cause data abort in EL2.
+	Read<uint8_t>(0x00000000);
+}
+
+}; // namespace saturn
