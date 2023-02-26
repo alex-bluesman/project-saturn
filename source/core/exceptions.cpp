@@ -8,6 +8,8 @@ namespace core {
 
 void Exceptions_Init()
 {
+	Log() << "register AArch64 EL2 excpetions vector" << fmt::endl;
+
 	WriteArm64Reg(VBAR_EL2, (uint64_t)&saturn_vector);
 }
 
@@ -87,6 +89,5 @@ void System_Error(struct AArch64_Regs* Regs)
 
 	core::Fault_Mode(Regs);
 }
-
 
 }
