@@ -24,7 +24,7 @@ enum Pl011_Reg_FR {
 UartPl011::UartPl011()
 {
 	// TBD: destroy the allocated data
-	Reg = new MMap(MMap::IO_Region(_uart_addr));
+	Regs = new MMap(MMap::IO_Region(_uart_addr));
 }
 
 //UartPl011::~UartPl011()
@@ -39,11 +39,10 @@ void UartPl011::Tx(uint8_t *buff, size_t len)
 	while (len--)
 	{
 		// Wait for UART to be ready
-		while (!(Read<uint32_t>(Reg->GetBase() + Pl011_Regs::FR) && Pl011_Reg_FR::Busy));
+		while (!(Regs->Read<uint32_t>(Pl011_Regs::FR) && Pl011_Reg_FR::Busy));
 
-		Write<uint8_t>(Reg->GetBase() + Pl011_Regs::DR, *buff++);
+		Regs->Write<uint8_t>(Pl011_Regs::DR, *buff++);
 	}
-
 }
 
 }; // namespace device

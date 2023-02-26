@@ -1,6 +1,7 @@
 #pragma once
 
 #include <immu>
+#include <io>
 
 namespace saturn {
 
@@ -22,18 +23,27 @@ public:
 		, Size(io.Size)
 		, Type(type)
 	{
+		// TBD: check return value
 		core::Saturn_MMU->MemoryMap(Base, Size, Type);
 	};
 
 	~MMap()
 	{
+		// TBD: check return value
 		core::Saturn_MMU->MemoryUnmap(Base, Size);
 	};
 
 public:
-	uint64_t GetBase(void)
+	template<typename T>
+	inline T Read(uint64_t offset)
 	{
-		return Base;
+		return saturn::Read<T>(Base + offset);
+	};
+
+	template<typename T>
+	inline void Write(uint64_t offset, T data)
+	{
+		return saturn::Write<T>(Base + offset, data);
 	};
 
 private:
