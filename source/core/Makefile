@@ -3,7 +3,15 @@ include $(TOP_DIR)/config.mk
 AFLAGS +=
 CFLAGS += -MMD -MP
 
-src := main.cpp mmu.cpp heap.cpp console.cpp uart_pl011.cpp exceptions.cpp vector.S
+src := main.cpp			\
+       mmu.cpp			\
+       heap.cpp			\
+       console.cpp		\
+       uart_pl011.cpp		\
+       exceptions.cpp		\
+       vector.S			\
+       interrupts.cpp		\
+       gic/distributor.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
@@ -35,5 +43,7 @@ built_in.o: $(objs)
 clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/gic/*.o"
+	@-rm -f gic/*.o gic/*.d
 
 -include .depend
