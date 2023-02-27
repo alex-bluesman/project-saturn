@@ -34,10 +34,15 @@ static void Main(void)
 	Heap Main_Heap;
 	Saturn_Heap = &Main_Heap;
 
+	// Let's create console as soon as possible to be able to collect output from MMU.
+	// It has no connection to UART, but it could buffer the output and flush it later.
+	// Also let's keep heap initialization before, we could use it for buffering.
+	Saturn_Console = new Console();
+
 	Saturn_MMU = new MemoryManagementUnit();
 
 	device::UartPl011& Uart = *new device::UartPl011();
-	Saturn_Console = new Console(Uart);
+	Saturn_Console->RegisterUart(Uart);
 
 	Exceptions_Init();
 

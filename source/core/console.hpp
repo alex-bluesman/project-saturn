@@ -15,6 +15,7 @@ class Console : public IConsole
 //	void operator delete(void * p, unsigned long){};
 
 public:
+	Console();
 	Console(UartDevice&);
 
 public:
@@ -28,6 +29,9 @@ public:
 
 	Console& operator<<(size_t num);
 
+public:
+	void RegisterUart(UartDevice&);
+
 private:
 	Console& SignedToStr(int64_t num, uint8_t fillSize = 0);
 	Console& UnsignedToStr(uint64_t num, uint8_t fillSize = 0);
@@ -36,7 +40,7 @@ private:
 	bool isActive;
 	bool isHex;
 	bool isFill;
-	UartDevice& uart;
+	UartDevice* uart;
 };
 
 }; // namespace core

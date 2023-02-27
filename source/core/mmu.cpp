@@ -2,6 +2,7 @@
 
 // TBD: rework it
 #include <asm/mmu.h>
+#include <fault>
 
 using namespace saturn::core;
 
@@ -25,7 +26,9 @@ MemoryManagementUnit::MemoryManagementUnit()
 	, PTable2(ptable_l2)
 	, PTable3(ptable_l3)
 	, FreeMaskL3(0)
-{}
+{
+	Log() << "memory management unit initialized" << fmt::endl;
+}
 
 uint16_t MemoryManagementUnit::FindFreeL3(void)
 {
@@ -42,7 +45,7 @@ uint16_t MemoryManagementUnit::FindFreeL3(void)
 
 	if (i == _l3_tables)
 	{
-		// TBD: die here
+		Fault("mmu: no free L3 tables left");
 	}
 
 	return i;
@@ -142,6 +145,12 @@ void MemoryManagementUnit::MemoryMap(uint64_t base_addr, size_t size, MMapType t
 	while (start < end);
 
 	// TBD: update TLB and data caches here
+//	asm volatile("\
+//			dsb	ishst;	\
+//			tlbi	alle2;	\
+//			dsb	ish;	\
+//			isb;		\
+//	             " : : : "memory");
 }
 
 void MemoryManagementUnit::MemoryUnmap(uint64_t base_addr, size_t size)
