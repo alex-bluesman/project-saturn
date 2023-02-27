@@ -22,4 +22,4 @@ clean:
 run_qemu:
 	@echo "Start Saturn kernel:"
 	@echo "--------------------"
-	@$(QEMU_AARCH64) -m 1024 -cpu cortex-a57 -M virt -machine virtualization=on -nographic -kernel source/saturn
+	@$(QEMU_AARCH64) -machine virt,gic_version=3 -machine virtualization=true -cpu cortex-a57 -machine type=virt -m 512M -nographic -kernel source/saturn
