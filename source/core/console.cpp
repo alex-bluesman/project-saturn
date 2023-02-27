@@ -7,18 +7,33 @@ using namespace device;
 
 static const size_t max_message_size = 128;
 
+Console::Console()
+	: isActive(false)
+	, isHex(false)
+	, isFill(false)
+	, uart(nullptr)
+{
+	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
+}
+
 Console::Console(UartDevice& u)
 	: isActive(false)
 	, isHex(false)
 	, isFill(false)
-	, uart(u)
+	, uart(&u)
 {
 	isActive = true;
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 }
 
-//void * Console::operator new(long unsigned int size)
-//{}
+
+void Console::RegisterUart(UartDevice& u)
+{
+	uart = &u;
+	isActive = true;
+
+	// TBD: flush buffered output
+}
 
 Console& Console::operator<<(char const *msg)
 {
@@ -53,7 +68,7 @@ Console& Console::operator<<(char const *msg)
 
 	if (isActive)
 	{
-		uart.Tx(buf, len);
+		uart->Tx(buf, len);
 	}
 
 	return *this;
