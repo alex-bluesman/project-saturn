@@ -57,6 +57,8 @@ Console& Console::operator<<(char const *msg)
 			case 'b':
 				c = 0x08;
 				break;
+			case '/':
+				break;
 			default:
 				buf[len++] = '/';
 				break;
