@@ -16,7 +16,6 @@ build: built_in.o
 
 built_in.o: $(objs)
 	@echo "[LD]		$(CURRENT_DIR)/$@"
-	@echo $(objs)
 	@$(LD) $(LDFLAGS) -r -o $@ $^
 
 %.o: %.S
