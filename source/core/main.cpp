@@ -25,6 +25,7 @@ static Console* Saturn_Console = nullptr;
 // External API:
 void Exceptions_Init();
 void Interrupts_Init();
+void Register_CPU();
 
 static void Main(void)
 {
@@ -49,6 +50,7 @@ static void Main(void)
 	// Starting from now there is Fault Mode available, so it makes sense to do sanity checks
 	// for memory allocations and return values from calls
 
+	Register_CPU();
 	Interrupts_Init();
 
 	Log() << fmt::endl << "<core initialization complete>" << fmt::endl;
