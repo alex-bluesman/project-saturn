@@ -1,0 +1,17 @@
+#pragma once
+
+#include <basetypes>
+
+namespace saturn {
+namespace core {
+
+class ICpuInfo
+{
+public:
+	virtual uint64_t Id() = 0;	
+};
+
+ICpuInfo* This_CPU();
+
+}; // namespace core
+}; // namespace saturn

@@ -7,11 +7,14 @@ src := main.cpp			\
        mmu.cpp			\
        heap.cpp			\
        console.cpp		\
+       cpu.cpp			\
        uart_pl011.cpp		\
        exceptions.cpp		\
        vector.S			\
        interrupts.cpp		\
-       gic/distributor.cpp
+       gic/cpu_interface.cpp	\
+       gic/distributor.cpp	\
+       gic/redistributor.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)

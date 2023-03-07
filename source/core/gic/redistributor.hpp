@@ -5,17 +5,13 @@
 namespace saturn {
 namespace core {
 
-class GicDistributor
+class GicRedistributor
 {
 public:
-	GicDistributor();
-
-public:
-	void SendSGI();
+	GicRedistributor();
 
 private:
 	MMap* Regs;
-	size_t linesNumber;
 };
 
 }; // namespace core

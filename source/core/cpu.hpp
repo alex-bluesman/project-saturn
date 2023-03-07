@@ -1,21 +1,20 @@
 #pragma once
 
-#include <mmap>
+#include <icpu>
 
 namespace saturn {
 namespace core {
 
-class GicDistributor
+class CpuInfo : public ICpuInfo
 {
 public:
-	GicDistributor();
+	CpuInfo();
 
 public:
-	void SendSGI();
+	uint64_t Id();
 
 private:
-	MMap* Regs;
-	size_t linesNumber;
+	uint64_t CoreId;
 };
 
 }; // namespace core
