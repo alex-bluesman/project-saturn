@@ -48,7 +48,9 @@ saturn_sync:
 	b	Sync_Abort
 
 saturn_irq:
-	b	.
+	Store_Context
+	mov	x0, sp
+	b	IRq_Handler
 
 saturn_fiq:
 	b	.

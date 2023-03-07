@@ -10,7 +10,11 @@ void Exceptions_Init()
 {
 	Log() << "register AArch64 EL2 excpetions vector" << fmt::endl;
 
+	// Set the exception vector base
 	WriteArm64Reg(VBAR_EL2, (uint64_t)&saturn_vector);
+
+	// Enable receiving of Aborts (AMO bit), IRQs (IMO bit) and Fast IRQs (FMO bit)
+	WriteArm64Reg(HCR_EL2, (1 << 5) | (1 << 4) | (1 << 3));
 }
 
 static void Print_Registers(struct AArch64_Regs* Regs)
@@ -90,4 +94,11 @@ void System_Error(struct AArch64_Regs* Regs)
 	core::Fault_Mode(Regs);
 }
 
+void IRq_Handler(struct AArch64_Regs* Regs)
+{
+	core::Log() << core::fmt::endl << " * got interrupt (no handler implemented)" << core::fmt::endl;
+
+	core::Fault_Mode(Regs);
 }
+
+} // extern "C"
