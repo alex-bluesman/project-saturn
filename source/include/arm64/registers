@@ -56,4 +56,17 @@ struct AArch64_Regs {
 	uint64_t	cpsr;
 } __packed;
 
+// Let's use these wrappers to correclty expand macro parameters
+// We need it to access GIC system registers
+#define ReadICCReg(_reg)		ReadArm64Reg(_reg)	
+#define WriteICCReg(_reg, _val)		WriteArm64Reg(_reg, _val)	
+
+// GNU AS is not aware about GIC symbolic register names
+#define ICC_PMR_EL1		s3_0_c4_c6_0
+#define ICC_SRE_EL2		s3_4_c12_c9_5
+#define ICC_SGI1R_EL1		s3_0_c12_c11_5
+#define ICC_BPR1_EL1		s3_0_c12_c12_3
+#define ICC_CTRL_EL1		s3_0_c12_c12_4
+#define ICC_IGRPEN1_EL1		s3_0_c12_c12_7
+
 }; // namespace saturn
