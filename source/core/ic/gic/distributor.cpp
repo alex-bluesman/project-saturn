@@ -50,7 +50,7 @@ GicDistributor::GicDistributor()
 
 	// Maximum SPI INTID could be calculated by: 32 * (N + 1)
 	size_t ITLinesNumber = Regs->Read<uint32_t>(Gic_Dist::TYPER) & 0x1f;
-	size_t linesNumber = 32 * (ITLinesNumber + 1);
+	linesNumber = 32 * (ITLinesNumber + 1);
 	Log() << "  /found " << linesNumber << " interrupt lines" << fmt::endl;
 
 	// So we have now:
@@ -98,10 +98,15 @@ GicDistributor::GicDistributor()
 	Log() << "  /distributor initialized" << fmt::endl;
 }
 
-void GicDistributor::SendSGI()
+void GicDistributor::Send_SGI(uint32_t targetList, uint8_t id)
 {
-	// Generate SGI nr 0 to current CPU
-	WriteICCReg(ICC_SGI1R_EL1, 1);
+	// Generate SGI id to current PE cluster
+	WriteICCReg(ICC_SGI1R_EL1, (id << 24) | targetList);
+}
+
+size_t GicDistributor::Get_Max_Lines()
+{
+	return linesNumber;
 }
 
 }; // namespace core

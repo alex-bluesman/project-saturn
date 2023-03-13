@@ -12,13 +12,25 @@
 
 #pragma once
 
+#include <mmap>
+
 namespace saturn {
 namespace core {
 
-class CpuInterface
+class GicDistributor
 {
 public:
-	CpuInterface();
+	GicDistributor();
+
+public:
+	void Send_SGI(uint32_t targetList, uint8_t id);
+
+public:
+	size_t Get_Max_Lines();
+
+private:
+	MMap* Regs;
+	size_t linesNumber;
 };
 
 }; // namespace core

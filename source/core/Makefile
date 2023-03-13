@@ -11,10 +11,10 @@ src := main.cpp			\
        uart_pl011.cpp		\
        exceptions.cpp		\
        vector.S			\
-       interrupts.cpp		\
-       gic/cpu_interface.cpp	\
-       gic/distributor.cpp	\
-       gic/redistributor.cpp
+       ic/ic_core.cpp		\
+       ic/gic/cpu_interface.cpp	\
+       ic/gic/distributor.cpp	\
+       ic/gic/redistributor.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
@@ -46,7 +46,7 @@ built_in.o: $(objs)
 clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
-	@echo "[CLEAN]		$(CURRENT_DIR)/gic/*.o"
-	@-rm -f gic/*.o gic/*.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/ic/*.o"
+	@-rm -f ic/gic/*.o ic/gic/*.d ic/*.o ic/*.d
 
 -include .depend

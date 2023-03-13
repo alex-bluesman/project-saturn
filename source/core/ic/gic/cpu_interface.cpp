@@ -40,5 +40,19 @@ CpuInterface::CpuInterface()
 	Log() << "  /CPU interface initialized" << fmt::endl;
 }
 
+uint32_t CpuInterface::Read_Ack_IRq()
+{
+	uint32_t reg = ReadICCReg(ICC_IAR1_EL1);
+	return (reg & 0xffffff); // INTID [23:0]
+}
+
+void CpuInterface::EOI(uint32_t id)
+{
+	// Decrease the priority for interrupt
+	WriteICCReg(ICC_EOIR1_EL1, id);
+	// Deactivate the interrupt
+	WriteICCReg(ICC_DIR_EL1, id);
+}
+
 }; // namespace core
 }; // namespace saturn

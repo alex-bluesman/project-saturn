@@ -12,22 +12,37 @@
 
 #pragma once
 
-#include <mmap>
+#include <basetypes>
 
 namespace saturn {
 namespace core {
 
-class GicDistributor
+using IRHandler = void(*)(uint8_t);
+
+// Forward declaration
+class CpuInterface;
+class GicDistributor;
+class GicRedistributor;
+
+class IC_Core
 {
 public:
-	GicDistributor();
+	IC_Core();
 
 public:
-	void SendSGI();
+	void Local_IRq_Disable();
+	void Local_IRq_Enable();
+	void Send_SGI(uint32_t targetList, uint8_t id);
+	void Handle_IRq();
 
 private:
-	MMap* Regs;
-	size_t linesNumber;
+	CpuInterface* CpuIface;
+	GicDistributor* GicDist;
+	GicRedistributor* GicRedist;
+	IRHandler (&IRq_Table)[];
+
+private:
+	static void Default_Handler(uint8_t);
 };
 
 }; // namespace core

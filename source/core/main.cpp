@@ -14,6 +14,7 @@
 
 #include "console.hpp"
 #include "heap.hpp"
+#include "ic/ic_core.hpp"
 #include "mmu.hpp"
 #include "uart_pl011.hpp"
 
@@ -25,18 +26,15 @@ unsigned int boot_stack[_stack_size] __align(_page_size);
 namespace saturn {
 namespace core {
 
-// Heap object pointer to implement operators new/delete
-static Heap* Saturn_Heap;
-
-// MMU object pointer to implement I/O mapping
-MemoryManagementUnit* Saturn_MMU;
-
-// Saturn console pointer
-static Console* Saturn_Console = nullptr;
+// Saturn core components
+// TBD: think about better way how to manage this objects (for example shift this )
+static Heap* 		Saturn_Heap = nullptr;		// Heap object pointer to implement operators new/delete
+MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer to implement I/O mapping
+static Console* 	Saturn_Console = nullptr;	// Console pointer for trace and logging
+IC_Core*		Saturn_IC = nullptr;		// Interrupt controller pointer for IRq management
 
 // External API:
 void Exceptions_Init();
-void Interrupts_Init();
 void Register_CPU();
 
 static void Main(void)
@@ -46,6 +44,8 @@ static void Main(void)
 
 	Heap Main_Heap;
 	Saturn_Heap = &Main_Heap;
+
+	// TBD: check that all allocations are successful
 
 	// Let's create console as soon as possible to be able to collect output from MMU.
 	// It has no connection to UART, but it could buffer the output and flush it later.
@@ -63,9 +63,15 @@ static void Main(void)
 	// for memory allocations and return values from calls
 
 	Register_CPU();
-	Interrupts_Init();
+
+	Saturn_IC = new IC_Core();
 
 	Log() << fmt::endl << "<core initialization complete>" << fmt::endl;
+
+	// Finally we are ready to receive interrupts
+	Saturn_IC->Local_IRq_Enable();
+
+	Saturn_IC->Send_SGI(1, 0);
 
 	for (;;);
 }

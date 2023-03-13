@@ -10,6 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "ic_core.hpp"
+
 #include "gic/cpu_interface.hpp"
 #include "gic/distributor.hpp"
 #include "gic/redistributor.hpp"
@@ -19,20 +21,15 @@
 namespace saturn {
 namespace core {
 
-static CpuInterface* CpuIface = nullptr;
-static GicDistributor* GicDist = nullptr;
-static GicRedistributor* GicRedist = nullptr;
+// According to the GICv3 Architecture Specification, the maximal SPI number could be 1020.
+// TBD: due to we do not support ESPIs and LPIs, let's limit table size to 1020.
+static const size_t _maxIRq = 1020;
 
-static inline void Local_IRQ_Enable()
-{
-	asm volatile (
-			"msr daifclr, #2\n"
-			"isb\n"
-			::: "memory"
-		     );
-}
+// TBD: think about better allocation for this data block
+static IRHandler _IRq_Table[_maxIRq];
 
-void Interrupts_Init()
+IC_Core::IC_Core()
+	: IRq_Table(_IRq_Table)
 {
 	// GICv3 consists from the following logical components:
 	//
@@ -67,11 +64,61 @@ void Interrupts_Init()
 		Fault("GIC CPU interface allocation failed");
 	}
 
-	// Now we are ready to ebable IRQs
-	Local_IRQ_Enable();
+	for (int i = 0; i < GicDist->Get_Max_Lines(); i++)
+	{
+		IRq_Table[i] = Default_Handler;
+	}
+}
 
-	// Debug purpose:
-	GicDist->SendSGI();
+void IC_Core::Local_IRq_Disable()
+{
+	asm volatile (
+			"msr daifset, #2\n"
+			"isb\n"
+			::: "memory"
+		     );
+}
+
+void IC_Core::Local_IRq_Enable()
+{
+	asm volatile (
+			"msr daifclr, #2\n"
+			"isb\n"
+			::: "memory"
+		     );
+}
+
+void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
+{
+	if (id < 16)
+	{
+		GicDist->Send_SGI(targetList, id);
+	}
+	else
+	{
+		Log() << "!error: invalid SGI id = " << id << fmt::endl;
+	}
+}
+
+void IC_Core::Handle_IRq()
+{
+	uint32_t id = CpuIface->Read_Ack_IRq();
+
+	if (id < GicDist->Get_Max_Lines())
+	{
+		IRq_Table[id](id);
+	}
+	else
+	{
+		Log() << "!error: received INT with ID (" << id << ") out of supported range" << fmt::endl;
+	}
+
+	CpuIface->EOI(id);
+}
+
+void IC_Core::Default_Handler(uint8_t id)
+{
+	Log() << "!warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
 }
 
 }; // namespace core
