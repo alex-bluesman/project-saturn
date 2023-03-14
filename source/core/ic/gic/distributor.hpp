@@ -23,7 +23,10 @@ public:
 	GicDistributor();
 
 public:
-	void SendSGI();
+	void Send_SGI(uint32_t targetList, uint8_t id);
+
+public:
+	size_t Get_Max_Lines();
 
 private:
 	MMap* Regs;

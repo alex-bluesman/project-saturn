@@ -12,12 +12,10 @@
 
 #pragma once
 
-#include <dev/uart>
+#include <basetypes>
 
 namespace saturn {
 namespace core {
-
-using namespace device;
 
 enum class fmt {
 	dec,		// Display integers in decimal format
