@@ -26,7 +26,7 @@ namespace core {
 static const size_t _maxIRq = 1020;
 
 // TBD: think about better allocation for this data block
-static IRHandler _IRq_Table[_maxIRq];
+static IRqHandler _IRq_Table[_maxIRq];
 
 IC_Core::IC_Core()
 	: IRq_Table(_IRq_Table)
@@ -116,7 +116,19 @@ void IC_Core::Handle_IRq()
 	CpuIface->EOI(id);
 }
 
-void IC_Core::Default_Handler(uint8_t id)
+void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
+{
+	if (id < GicDist->Get_Max_Lines())
+	{
+		IRq_Table[id] = handler;
+	}
+	else
+	{
+		Log() << "!error: attempt to register INT handler with ID (" << id << ") out of supported range" << fmt::endl;
+	}
+}
+
+void IC_Core::Default_Handler(uint32_t id)
 {
 	Log() << "!warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
 }

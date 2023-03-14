@@ -12,36 +12,26 @@
 
 #pragma once
 
-#include <iirq>
+#include <basetypes>
 
 namespace saturn {
 namespace core {
+
+using IRqHandler = void(*)(uint32_t);
 
 // Forward declaration
 class CpuInterface;
 class GicDistributor;
 class GicRedistributor;
 
-class IC_Core : public IIC
+class IIC
 {
 public:
-	IC_Core();
-
-public:
-	void Local_IRq_Disable();
-	void Local_IRq_Enable();
-	void Send_SGI(uint32_t targetList, uint8_t id);
-	void Handle_IRq();
-	void Register_IRq_Handler(uint32_t, IRqHandler);
-
-private:
-	CpuInterface* CpuIface;
-	GicDistributor* GicDist;
-	GicRedistributor* GicRedist;
-	IRqHandler (&IRq_Table)[];
-
-private:
-	static void Default_Handler(uint32_t);
+	virtual void Local_IRq_Disable() = 0;
+	virtual void Local_IRq_Enable() = 0;
+	virtual void Send_SGI(uint32_t, uint8_t) = 0;
+	virtual void Handle_IRq() = 0;
+	virtual void Register_IRq_Handler(uint32_t, IRqHandler) = 0;
 };
 
 }; // namespace core
