@@ -37,6 +37,11 @@ IC_Core*		Saturn_IC = nullptr;		// Interrupt controller pointer for IRq manageme
 void Exceptions_Init();
 void Register_CPU();
 
+void SGI0_Handler(uint32_t id)
+{
+	Log() << "SGI 0 handler" << fmt::endl;
+}
+
 static void Main(void)
 {
 	// The Main function will never quit, so all the allocated on stack objects
@@ -71,6 +76,9 @@ static void Main(void)
 	// Finally we are ready to receive interrupts
 	Saturn_IC->Local_IRq_Enable();
 
+	// TBD: For testing purpose
+	Saturn_IC->Register_IRq_Handler(0, SGI0_Handler);
+	Saturn_IC->Send_SGI(1, 0);
 	Saturn_IC->Send_SGI(1, 0);
 
 	for (;;);
