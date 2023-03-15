@@ -10,23 +10,22 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#pragma once
-
-#include <basetypes>
+#include <core/iconsole>
 
 namespace saturn {
-namespace core {
+namespace apps {
 
-class IHeap
+using namespace core;
+
+// External API:
+void TA_Start(void);
+
+void Applications_Start(void)
 {
-public:
-	virtual void*	Alloc(size_t size) = 0;
-	virtual void	Free(void *base) = 0;
-	virtual void	State(void) = 0;
-};
+	Log() << "<application layer>" << fmt::endl;
 
-// Access to heap
-IHeap& Allocator(void);
+	TA_Start();
+}
 
-}; // namespace core
+}; // namespace apps
 }; // namespace saturn

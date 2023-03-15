@@ -79,13 +79,13 @@ static bool Heap_Free_Block(list_head_t* avail, list_head_t* alloc, void* block)
 
 // Template to dump blocks in the heap list
 template<typename T>
-static void Dump_Block_List(IConsole& console, list_head_t* head)
+static void Dump_Block_List(list_head_t* head)
 {
 	size_t i = 0;
 	list_head_t *entry = head->next;
 	while (entry != head)
 	{
-		console << "      Data[" << i++ << "] = 0x" << fmt::hex << fmt::fill
+		Log() << "      Data[" << i++ << "] = 0x" << fmt::hex << fmt::fill
 			<< (unsigned long)List_Entry(entry, T, List)->Data << fmt::endl;
 		entry = entry->next;
 	}
@@ -152,33 +152,33 @@ void Heap::Free(void *base)
 	}
 }
 
-void Heap::State(IConsole& console)
+void Heap::State(void)
 {
-	console << "Saturn heap state:" << fmt::endl;
+	Log() << "Saturn heap state:" << fmt::endl;
 
-	console << "  Data block 16 bytes:" << fmt::endl;
-	console << "    Available = " << List_Size(&List16_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<16>>(console, &List16_Available);
-	console << "    Allocated = " << List_Size(&List16_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<16>>(console, &List16_Allocated);
+	Log() << "  Data block 16 bytes:" << fmt::endl;
+	Log() << "    Available = " << List_Size(&List16_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<16>>(&List16_Available);
+	Log() << "    Allocated = " << List_Size(&List16_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<16>>(&List16_Allocated);
 
-	console << "  Data block 32 bytes:" << fmt::endl;
-	console << "    Available = " << List_Size(&List32_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<32>>(console, &List32_Available);
-	console << "    Allocated = " << List_Size(&List32_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<32>>(console, &List32_Allocated);
+	Log() << "  Data block 32 bytes:" << fmt::endl;
+	Log() << "    Available = " << List_Size(&List32_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<32>>(&List32_Available);
+	Log() << "    Allocated = " << List_Size(&List32_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<32>>(&List32_Allocated);
 
-	console << "  Data block 48 bytes:" << fmt::endl;
-	console << "    Available = " << List_Size(&List48_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<48>>(console, &List48_Available);
-	console << "    Allocated = " << List_Size(&List48_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<48>>(console, &List48_Allocated);
+	Log() << "  Data block 48 bytes:" << fmt::endl;
+	Log() << "    Available = " << List_Size(&List48_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<48>>(&List48_Available);
+	Log() << "    Allocated = " << List_Size(&List48_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<48>>(&List48_Allocated);
 
-	console << "  Data block 64 bytes:" << fmt::endl;
-	console << "    Available = " << List_Size(&List64_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<64>>(console, &List64_Available);
-	console << "    Allocated = " << List_Size(&List64_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<64>>(console, &List64_Allocated);
+	Log() << "  Data block 64 bytes:" << fmt::endl;
+	Log() << "    Available = " << List_Size(&List64_Available) << fmt::endl;
+	Dump_Block_List<Data_Block<64>>(&List64_Available);
+	Log() << "    Allocated = " << List_Size(&List64_Allocated) << fmt::endl;
+	Dump_Block_List<Data_Block<64>>(&List64_Allocated);
 }
 
 } // namespace core
