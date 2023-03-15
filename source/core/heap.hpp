@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include <iconsole>
-#include <iheap>
+#include <core/iheap>
 #include <list>
 
 namespace saturn {

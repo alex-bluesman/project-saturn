@@ -10,15 +10,10 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include <system>
-
-#include "console.hpp"
-#include "heap.hpp"
-#include "ic/ic_core.hpp"
-#include "mmu.hpp"
+#include "main.hpp"
 #include "uart_pl011.hpp"
 
-using namespace saturn;
+#include <system>
 
 // Saturn stack definition
 unsigned int boot_stack[_stack_size] __align(_page_size);
@@ -26,16 +21,8 @@ unsigned int boot_stack[_stack_size] __align(_page_size);
 namespace saturn {
 namespace core {
 
-// Saturn core components
-// TBD: think about better way how to manage this objects (for example shift this )
-static Heap* 		Saturn_Heap = nullptr;		// Heap object pointer to implement operators new/delete
-MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer to implement I/O mapping
-static Console* 	Saturn_Console = nullptr;	// Console pointer for trace and logging
-IC_Core*		Saturn_IC = nullptr;		// Interrupt controller pointer for IRq management
-
 // External API:
 void Exceptions_Init();
-void Register_CPU();
 
 void SGI0_Handler(uint32_t id)
 {
@@ -57,6 +44,7 @@ static void Main(void)
 	// Also let's keep heap initialization before, we could use it for buffering.
 	Saturn_Console = new Console();
 
+	// Create MMU object
 	Saturn_MMU = new MemoryManagementUnit();
 
 	device::UartPl011& Uart = *new device::UartPl011();
@@ -67,26 +55,23 @@ static void Main(void)
 	// Starting from now there is Fault Mode available, so it makes sense to do sanity checks
 	// for memory allocations and return values from calls
 
-	Register_CPU();
+	// Create CPU object
+	Local_CPU = new CpuInfo();
 
+	// Create interrupt controller object
 	Saturn_IC = new IC_Core();
 
 	Log() << fmt::endl << "<core initialization complete>" << fmt::endl;
 
 	// Finally we are ready to receive interrupts
-	Saturn_IC->Local_IRq_Enable();
+	IC().Local_IRq_Enable();
 
 	// TBD: For testing purpose
-	Saturn_IC->Register_IRq_Handler(0, SGI0_Handler);
-	Saturn_IC->Send_SGI(1, 0);
-	Saturn_IC->Send_SGI(1, 0);
+	IC().Register_IRq_Handler(0, SGI0_Handler);
+	IC().Send_SGI(1, 0);
+	IC().Send_SGI(1, 0);
 
 	for (;;);
-}
-
-IConsole& Log()
-{
-	return *Saturn_Console;
 }
 
 }; // namespace core
@@ -96,14 +81,4 @@ extern "C" void saturn_init()
 {
 	// Let's switch to C++ world!
 	saturn::core::Main();
-}
-
-void* operator new(size_t size) noexcept
-{
-	return saturn::core::Saturn_Heap->Alloc(size);
-}
-
-void operator delete(void* base, size_t size) noexcept
-{
-	return saturn::core::Saturn_Heap->Free(base);
 }

@@ -13,12 +13,10 @@
 #include "cpu.hpp"
 
 #include <arm64/registers>
-#include <iconsole>
+#include <core/iconsole>
 
 namespace saturn {
 namespace core {
-
-static CpuInfo* Local_CPU = nullptr;
 
 CpuInfo::CpuInfo()
 {
@@ -44,16 +42,6 @@ CpuInfo::CpuInfo()
 uint64_t CpuInfo::Id()
 {
 	return CoreId;
-}
-
-void Register_CPU()
-{
-	Local_CPU = new CpuInfo();
-}
-
-ICpuInfo* This_CPU()
-{
-	return Local_CPU;
 }
 
 }; // namespace core

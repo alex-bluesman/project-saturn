@@ -15,6 +15,7 @@
 #include <basetypes>
 
 namespace saturn {
+namespace core {
 
 // Memory mapping types:
 enum class MMapType {
@@ -28,4 +29,8 @@ public:
 	virtual void MemoryUnmap(uint64_t base_addr, size_t size) = 0;
 };
 
+// Access to memory management unit
+IMemoryManagementUnit& MMU(void);
+
+}; // namespace core
 }; // namespace saturn
