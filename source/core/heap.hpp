@@ -18,8 +18,6 @@
 namespace saturn {
 namespace core {
 
-class IConsole;
-
 // Data block structure
 template <size_t _block_size>
 struct Data_Block
@@ -40,7 +38,7 @@ public:
 
 // Debugging interface
 public:
-	void	State(IConsole& console);
+	void	State(void);
 
 private:
 	Data_Block<16> (&Data16)[];
