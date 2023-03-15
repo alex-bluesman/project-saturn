@@ -18,16 +18,17 @@
 // Saturn stack definition
 unsigned int boot_stack[_stack_size] __align(_page_size);
 
+
 namespace saturn {
+
+namespace apps {
+	void Applications_Start();
+};
+
 namespace core {
 
 // External API:
 void Exceptions_Init();
-
-void SGI0_Handler(uint32_t id)
-{
-	Log() << "SGI 0 handler" << fmt::endl;
-}
 
 static void Main(void)
 {
@@ -66,10 +67,7 @@ static void Main(void)
 	// Finally we are ready to receive interrupts
 	IC().Local_IRq_Enable();
 
-	// TBD: For testing purpose
-	IC().Register_IRq_Handler(0, SGI0_Handler);
-	IC().Send_SGI(1, 0);
-	IC().Send_SGI(1, 0);
+	saturn::apps::Applications_Start();
 
 	for (;;);
 }
