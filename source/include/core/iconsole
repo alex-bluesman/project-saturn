@@ -41,7 +41,8 @@ public:
 	virtual IConsole& operator<<(size_t num) = 0;
 };
 
-IConsole& Log();
+// Access to console
+IConsole& Log(void);
 
 }; // namespace core
 }; // namespace saturn

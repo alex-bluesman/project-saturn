@@ -12,14 +12,10 @@
 
 #pragma once
 
-#include <immu>
+#include <core/immu>
 #include <io>
 
 namespace saturn {
-
-namespace core {
-	extern IMemoryManagementUnit* Saturn_MMU;
-}; // namespace core
 
 class MMap {
 public:
@@ -30,19 +26,19 @@ public:
 	};
 
 public:
-	MMap(const IO_Region& io, MMapType type = MMapType::Device)
+	MMap(const IO_Region& io, core::MMapType type = core::MMapType::Device)
 		: Base(io.Base)
 		, Size(io.Size)
 		, Type(type)
 	{
 		// TBD: check return value
-		core::Saturn_MMU->MemoryMap(Base, Size, Type);
+		core::MMU().MemoryMap(Base, Size, Type);
 	};
 
 	~MMap()
 	{
 		// TBD: check return value
-		core::Saturn_MMU->MemoryUnmap(Base, Size);
+		core::MMU().MemoryUnmap(Base, Size);
 	};
 
 public:
@@ -61,7 +57,7 @@ public:
 private:
 	uint64_t	Base;
 	size_t		Size;
-	MMapType	Type;
+	core::MMapType	Type;
 };
 
 }; // namespace saturn

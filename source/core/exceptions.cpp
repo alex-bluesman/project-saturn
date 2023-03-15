@@ -13,14 +13,13 @@
 #include "ic/ic_core.hpp"
 
 #include <arm64/registers>
-#include <iconsole>
+#include <core/iconsole>
+#include <core/iirq>
 
 extern saturn::uint64_t saturn_vector;
 
 namespace saturn {
 namespace core {
-
-extern IC_Core* Saturn_IC;
 
 void Exceptions_Init()
 {
@@ -112,7 +111,7 @@ void System_Error(struct AArch64_Regs* Regs)
 
 void IRq_Handler(struct AArch64_Regs* Regs)
 {
-	core::Saturn_IC->Handle_IRq();
+	core::IC().Handle_IRq();
 }
 
 } // extern "C"

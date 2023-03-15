@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <icpu>
+#include <core/icpu>
 
 namespace saturn {
 namespace core {

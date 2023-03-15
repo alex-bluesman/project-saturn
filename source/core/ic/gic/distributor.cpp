@@ -13,7 +13,7 @@
 #include "distributor.hpp"
 
 #include <arm64/registers>
-#include <icpu>
+#include <core/icpu>
 #include <fault>
 #include <platform/qemuarm64>
 
@@ -84,7 +84,7 @@ GicDistributor::GicDistributor()
 	Regs->Write<uint32_t>(Gic_Dist::CTRL, (1 << 4) | (1 << 1) | (1 << 0)); // EnableGrp0 | EnableGrp1NS | ARE_NS
 
 	// TBD: let's assume that we have only 16 cores maximum, so the only Aff0 is used
-	uint32_t affinity = This_CPU()->Id() & 0x7;
+	uint32_t affinity = This_CPU().Id() & 0x7;
 
 	// Disable broadcast rounting
 	affinity &= ~(1 << 31);

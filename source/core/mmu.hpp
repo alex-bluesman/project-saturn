@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <immu>
+#include <core/immu>
 #include <system>
 
 namespace saturn {

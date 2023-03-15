@@ -17,22 +17,14 @@
 namespace saturn {
 namespace core {
 
-using IRqHandler = void(*)(uint32_t);
-
-// Forward declaration
-class CpuInterface;
-class GicDistributor;
-class GicRedistributor;
-
-class IIC
+class ICpuInfo
 {
 public:
-	virtual void Local_IRq_Disable() = 0;
-	virtual void Local_IRq_Enable() = 0;
-	virtual void Send_SGI(uint32_t, uint8_t) = 0;
-	virtual void Handle_IRq() = 0;
-	virtual void Register_IRq_Handler(uint32_t, IRqHandler) = 0;
+	virtual uint64_t Id() = 0;	
 };
+
+// Access to CPU interface
+ICpuInfo& This_CPU(void);
 
 }; // namespace core
 }; // namespace saturn

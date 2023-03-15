@@ -24,5 +24,8 @@ public:
 	virtual void	Free(void *base) = 0;
 };
 
+// Access to heap
+IHeap& Allocator(void);
+
 }; // namespace core
 }; // namespace saturn

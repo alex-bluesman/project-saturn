@@ -13,7 +13,7 @@
 #include "cpu_interface.hpp"
 
 #include <arm64/registers>
-#include <iconsole>
+#include <core/iconsole>
 
 namespace saturn {
 namespace core {

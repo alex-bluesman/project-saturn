@@ -12,8 +12,8 @@
 
 #pragma once
 
+#include <core/iconsole>
 #include <dev/uart>
-#include <iconsole>
 
 namespace saturn {
 namespace core {

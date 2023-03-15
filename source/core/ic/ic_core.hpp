@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <iirq>
+#include <core/iirq>
 
 namespace saturn {
 namespace core {
