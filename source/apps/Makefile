@@ -36,5 +36,7 @@ built_in.o: $(objs)
 clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/ta/*.o"
+	@-rm -f ta/*.o ta/*.d
 
 -include .depend
