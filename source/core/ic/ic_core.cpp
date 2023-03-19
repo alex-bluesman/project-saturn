@@ -121,6 +121,7 @@ void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
 	if (id < GicDist->Get_Max_Lines())
 	{
 		IRq_Table[id] = handler;
+		GicDist->IRq_Enable(id);
 	}
 	else
 	{
