@@ -32,6 +32,13 @@ public:
 public:
 	void Rx(uint8_t *buff, size_t len);
 	void Tx(uint8_t *buff, size_t len);
+	void EnableRx(void);
+	void HandleIRq(void);
+
+private:
+	// INT handling routine
+	static void UartIRqHandler(uint32_t);
+	static UartPl011* Self;
 
 private:
 	MMap* Regs;
