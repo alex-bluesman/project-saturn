@@ -67,7 +67,10 @@ static void Main(void)
 	// Finally we are ready to receive interrupts
 	IC().Local_IRq_Enable();
 
-	saturn::apps::Applications_Start();
+	// Now we are ready to receive data from console
+	Uart.EnableRx();
+
+	//saturn::apps::Applications_Start();
 
 	for (;;);
 }

@@ -58,7 +58,7 @@ GicRedistributor::GicRedistributor()
 	// Disable all the SGIs and PPIs on start up
 	Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ICACTIVER0, 0xffffffff);
 
-	// Disable all the SGIs and PPIs on start up
+	// Enable all the SGIs and PPIs on start up
 	Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ICENABLER0, 0xffff0000);
 	Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ISENABLER0, 0x0000ffff);
 
