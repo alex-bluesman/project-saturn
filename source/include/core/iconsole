@@ -39,6 +39,7 @@ public:
 	virtual IConsole& operator<<(llevel level) = 0;
 
 	virtual IConsole& operator<<(char const *msg) = 0;
+	virtual IConsole& operator<<(char c) = 0;
 
 	// NOTE: At the moment no need to support 8- and 16-bit numbers
 	//       to keep the interface simple

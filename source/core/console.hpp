@@ -35,6 +35,7 @@ public:
 	Console& operator<<(llevel level);
 
 	Console& operator<<(char const *msg);
+	Console& operator<<(char c);
 
 	Console& operator<<(int32_t num);
 	Console& operator<<(uint32_t num);

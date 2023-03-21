@@ -51,6 +51,16 @@ void Console::RegisterUart(UartDevice& u)
 	// TBD: flush buffered output
 }
 
+Console& Console::operator<<(char c)
+{
+	if (isActive)
+	{
+		uart->Tx(reinterpret_cast<uint8_t *>(&c), 1);
+	}
+
+	return *this;
+}
+
 Console& Console::operator<<(char const *msg)
 {
 	uint8_t buf[max_message_size];

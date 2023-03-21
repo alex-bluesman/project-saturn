@@ -91,7 +91,7 @@ void UartPl011::HandleIRq(void)
 
 		uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
 
-		Log() << "uart: RX (0x" << fmt::hex << data << ")" << fmt::endl;
+		Log() << "uart: RX (" << fmt::hex << (char)data << ")" << fmt::endl;
 	}
 
 	if (status != 0)
