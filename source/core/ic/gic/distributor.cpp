@@ -41,7 +41,7 @@ GicDistributor::GicDistributor()
 	Regs = new MMap(MMap::IO_Region(_gic_dist_addr));
 
 	uint32_t ArchRev = (Regs->Read<uint32_t>(Dist_Regs::PIDR2) >> 4) & 0x0f;
-	Log() << "  /found GICv" << ArchRev << fmt::endl;
+	Info() << "  /found GICv" << ArchRev << fmt::endl;
 
 	if (ArchRev != 3)
 	{
@@ -54,7 +54,7 @@ GicDistributor::GicDistributor()
 	// Maximum SPI INTID could be calculated by: 32 * (N + 1)
 	size_t ITLinesNumber = Regs->Read<uint32_t>(Dist_Regs::TYPER) & 0x1f;
 	linesNumber = 32 * (ITLinesNumber + 1);
-	Log() << "  /found " << linesNumber << " interrupt lines" << fmt::endl;
+	Info() << "  /found " << linesNumber << " interrupt lines" << fmt::endl;
 
 	// So we have now:
 	//   SGIs: 0  - 15
@@ -103,7 +103,7 @@ GicDistributor::GicDistributor()
 		Regs->Write<uint32_t>(Dist_Regs::IROUTER + i * 8, affinity);
 	}
 
-	Log() << "  /distributor initialized" << fmt::endl;
+	Info() << "  /distributor initialized" << fmt::endl;
 }
 
 void GicDistributor::Send_SGI(uint32_t targetList, uint8_t id)

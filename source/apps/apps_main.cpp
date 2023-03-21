@@ -22,7 +22,7 @@ void TA_Start(void);
 
 void Applications_Start(void)
 {
-	Log() << "<application layer>" << fmt::endl;
+	Info() << "<application layer>" << fmt::endl;
 
 	TA_Start();
 }
