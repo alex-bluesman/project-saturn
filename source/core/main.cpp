@@ -70,7 +70,7 @@ static void Main(void)
 	// Now we are ready to receive data from console
 	Uart.EnableRx();
 
-	//saturn::apps::Applications_Start();
+	saturn::apps::Applications_Start();
 
 	for (;;);
 }
