@@ -25,7 +25,7 @@ Console::Console()
 	, isFill(false)
 	, isLevel(false)
 	, uart(nullptr)
-	, currentMsgLevel(llevel::none)
+	, currentMsgLevel(llevel::info)
 {
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 }
@@ -34,7 +34,9 @@ Console::Console(UartDevice& u)
 	: isActive(false)
 	, isHex(false)
 	, isFill(false)
+	, isLevel(false)
 	, uart(&u)
+	, currentMsgLevel(llevel::info)
 {
 	isActive = true;
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;

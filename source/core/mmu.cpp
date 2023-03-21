@@ -39,7 +39,7 @@ MemoryManagementUnit::MemoryManagementUnit()
 	, PTable3(ptable_l3)
 	, FreeMaskL3(0)
 {
-	Log() << "memory management unit initialized" << fmt::endl;
+	Info() << "memory management unit initialized" << fmt::endl;
 }
 
 uint16_t MemoryManagementUnit::FindFreeL3(void)

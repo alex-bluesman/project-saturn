@@ -62,7 +62,7 @@ static void Main(void)
 	// Create interrupt controller object
 	Saturn_IC = new IC_Core();
 
-	Log() << fmt::endl << "<core initialization complete>" << fmt::endl;
+	Info() << fmt::endl << "<core initialization complete>" << fmt::endl;
 
 	// Finally we are ready to receive interrupts
 	IC().Local_IRq_Enable();
