@@ -32,6 +32,8 @@ public:
 
 public:
 	Console& operator<<(fmt format);
+	Console& operator<<(llevel level);
+
 	Console& operator<<(char const *msg);
 
 	Console& operator<<(int32_t num);
@@ -48,11 +50,17 @@ private:
 	Console& SignedToStr(int64_t num, uint8_t fillSize = 0);
 	Console& UnsignedToStr(uint64_t num, uint8_t fillSize = 0);
 
+	inline void ShowLogLevel(void);
+
 private:
 	bool isActive;
 	bool isHex;
 	bool isFill;
+	bool isLevel;
+
 	UartDevice* uart;
+
+	llevel currentMsgLevel;
 };
 
 }; // namespace core

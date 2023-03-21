@@ -23,7 +23,9 @@ Console::Console()
 	: isActive(false)
 	, isHex(false)
 	, isFill(false)
+	, isLevel(false)
 	, uart(nullptr)
+	, currentMsgLevel(llevel::none)
 {
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 }
@@ -52,6 +54,10 @@ Console& Console::operator<<(char const *msg)
 	uint8_t buf[max_message_size];
 	size_t len = 0;
 	char c;
+
+	// We need this to handle line breaks in the middle of message, for example:
+	//   Log() << "Line break" << fmt::endl << "in the middle of message" << fmt::endl;
+	ShowLogLevel();
 
 	while ((c = *msg++) != 0)
 	{
@@ -179,6 +185,29 @@ Console& Console::UnsignedToStr(uint64_t num, uint8_t fillSize)
 	return *this << s;
 }
 
+void Console::ShowLogLevel()
+{
+	if (false == isLevel)
+	{
+		isLevel = true;
+
+		switch (currentMsgLevel)
+		{
+		case llevel::log:
+			*this << "[log] ";
+			break;
+		case llevel::info:
+			*this << "[inf] ";
+			break;
+		case llevel::error:
+			*this << "[err] ";
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 Console& Console::operator<<(fmt format)
 {
 	switch (format)
@@ -187,6 +216,7 @@ Console& Console::operator<<(fmt format)
 		*this << "\r\n";
 		isHex = false;
 		isFill = false;
+		isLevel = false;
 		break;
 	case fmt::dec:
 		isHex = false;
@@ -203,6 +233,14 @@ Console& Console::operator<<(fmt format)
 	default:
 		break;
 	}
+
+	return *this;
+}
+
+Console& Console::operator<<(llevel level)
+{
+	currentMsgLevel = level;
+	ShowLogLevel();
 
 	return *this;
 }

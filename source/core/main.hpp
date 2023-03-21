@@ -35,7 +35,7 @@ static CpuInfo*			Local_CPU = nullptr;		// CPU information pointer
 //  - Memory Management		(MMU)
 //  - Heap			(Allocator)
 
-IConsole& Log(void)
+IConsole& ConIO(void)
 {
 	return *Saturn_Console;
 }
