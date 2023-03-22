@@ -49,6 +49,11 @@ public:
 	virtual IConsole& operator<<(uint64_t num) = 0;
 
 	virtual IConsole& operator<<(size_t num) = 0;
+
+public:
+	virtual bool UartRX(char sym) = 0;
+	virtual char GetChar(void) = 0;
+
 };
 
 // Access to console

@@ -14,11 +14,14 @@
 
 #include <core/iconsole>
 #include <dev/uart>
+#include <ringbuffer>
 
 namespace saturn {
 namespace core {
 
 using namespace device;
+
+static const size_t _rx_size = 16;
 
 class Console : public IConsole
 {
@@ -28,7 +31,6 @@ class Console : public IConsole
 
 public:
 	Console();
-	Console(UartDevice&);
 
 public:
 	Console& operator<<(fmt format);
@@ -46,6 +48,8 @@ public:
 
 public:
 	void RegisterUart(UartDevice&);
+	bool UartRX(char sym);
+	char GetChar(void);
 
 private:
 	Console& SignedToStr(int64_t num, uint8_t fillSize = 0);
@@ -62,6 +66,8 @@ private:
 	UartDevice* uart;
 
 	llevel currentMsgLevel;
+
+	RingBuffer<char, _rx_size> *rxBuffer;
 };
 
 }; // namespace core

@@ -17,7 +17,7 @@ namespace core {
 
 using namespace device;
 
-static const size_t max_message_size = 128;
+static const size_t _max_message_size = 128;
 
 Console::Console()
 	: isActive(false)
@@ -28,20 +28,9 @@ Console::Console()
 	, currentMsgLevel(llevel::info)
 {
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
-}
 
-Console::Console(UartDevice& u)
-	: isActive(false)
-	, isHex(false)
-	, isFill(false)
-	, isLevel(false)
-	, uart(&u)
-	, currentMsgLevel(llevel::info)
-{
-	isActive = true;
-	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
+	rxBuffer = new RingBuffer<char, _rx_size>(rb::full_ignore);
 }
-
 
 void Console::RegisterUart(UartDevice& u)
 {
@@ -49,6 +38,24 @@ void Console::RegisterUart(UartDevice& u)
 	isActive = true;
 
 	// TBD: flush buffered output
+}
+
+bool Console::UartRX(char sym)
+{
+	return rxBuffer->In(sym);
+}
+
+
+char Console::GetChar(void)
+{
+	char c;
+
+	while (rxBuffer->Out(c) == false)
+	{
+		asm volatile("wfi" : : : "memory");
+	}
+
+	return c;
 }
 
 Console& Console::operator<<(char c)
@@ -63,7 +70,7 @@ Console& Console::operator<<(char c)
 
 Console& Console::operator<<(char const *msg)
 {
-	uint8_t buf[max_message_size];
+	uint8_t buf[_max_message_size];
 	size_t len = 0;
 	char c;
 
