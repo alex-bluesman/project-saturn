@@ -74,6 +74,13 @@ void TA_Start(void)
 		}
 	}
 
+	Log() << "Console simulation:" << fmt::endl;
+	Log() << "=> ";
+	while (true)
+	{
+		char c = ConIO().GetChar();
+		Log() << c;
+	}
 }
 
 }; // namespace apps
