@@ -24,18 +24,18 @@ CpuInfo::CpuInfo()
 
 	if (mpidr & (1 << 30))
 	{
-		Log() << "found single processor system" << fmt::endl;
+		Info() << "found single processor system" << fmt::endl;
 		CoreId = 0;
 	}
 	else
 	{
-		Log() << "found SMP system" << fmt::endl;
+		Info() << "found SMP system" << fmt::endl;
 		uint64_t affinity = mpidr & 0xff00ffffff;
 
 		// TBD: let's limit to 16 cores only. It needs more investigation later
 		//      how to properly handle SMP
 		CoreId = affinity & 0xf;
-		Log() << "register CPU core " << CoreId << fmt::endl;
+		Info() << "register CPU core " << CoreId << fmt::endl;
 	}
 }
 

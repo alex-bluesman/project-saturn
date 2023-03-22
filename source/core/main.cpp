@@ -62,7 +62,7 @@ static void Main(void)
 	// Create interrupt controller object
 	Saturn_IC = new IC_Core();
 
-	Log() << fmt::endl << "<core initialization complete>" << fmt::endl;
+	Info() << fmt::endl << "<core initialization complete>" << fmt::endl;
 
 	// Finally we are ready to receive interrupts
 	IC().Local_IRq_Enable();
@@ -70,7 +70,7 @@ static void Main(void)
 	// Now we are ready to receive data from console
 	Uart.EnableRx();
 
-	//saturn::apps::Applications_Start();
+	saturn::apps::Applications_Start();
 
 	for (;;);
 }

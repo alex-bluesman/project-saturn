@@ -15,6 +15,8 @@
 #include <core/iheap>
 #include <core/iirq>
 
+#include <ringbuffer>
+
 namespace saturn {
 namespace apps {
 
@@ -45,6 +47,40 @@ void TA_Start(void)
 	uint64_t* val = new(uint64_t);
 	Log() << "    <-- Got allocation at: 0x" << fmt::hex << fmt::fill << (uint64_t)val << fmt::endl;
 	delete val;
+
+	// Test ring buffer
+	RingBuffer<uint32_t, 4> buf(rb::full_overwrite);
+
+	for (uint32_t i = 0; i < 4; i++)
+	{
+		uint32_t val;
+		if (buf.Out(val))
+		{
+			Log() << "empty ringbuffer returns value, test failed!" << fmt::endl;
+		}
+	}
+
+	for (uint32_t i = 0; i < 10; i++)
+	{
+		buf.In(i);
+	}
+
+	for (uint32_t i = 0; i < 5; i++)
+	{
+		uint32_t val;
+		if (buf.Out(val))
+		{
+			Log() << "ringbuffer out: " << val << fmt::endl;
+		}
+	}
+
+	Log() << "Console simulation:" << fmt::endl;
+	Log() << "=> ";
+	while (true)
+	{
+		char c = ConIO().GetChar();
+		Log() << c;
+	}
 }
 
 }; // namespace apps
