@@ -4,6 +4,7 @@ AFLAGS +=
 CFLAGS += -MMD -MP
 
 src := apps_main.cpp		\
+       cmdline/cmdline.cpp	\
        ta/test_adapter.cpp
 
 objs := $(src:.c=.o)
@@ -36,7 +37,7 @@ built_in.o: $(objs)
 clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
-	@echo "[CLEAN]		$(CURRENT_DIR)/ta/*.o"
 	@-rm -f ta/*.o ta/*.d
+	@-rm -f cmdline/*.o cmdline/*.d
 
 -include .depend

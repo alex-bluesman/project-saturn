@@ -75,5 +75,12 @@ static inline IConsole& Error(void)
 	return ConIO() << llevel::error;
 }
 
+// Could be usefull for certain case, for example command line application
+static inline IConsole& Raw(void)
+{
+	return ConIO() << llevel::none;
+}
+
+
 }; // namespace core
 }; // namespace saturn

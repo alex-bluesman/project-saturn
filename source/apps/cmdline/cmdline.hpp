@@ -10,28 +10,28 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "cmdline/cmdline.hpp"
-
-#include <core/iconsole>
+#pragma once
 
 namespace saturn {
 namespace apps {
 
-using namespace core;
-
-// External API:
-void TA_Start(void);
-
-void Applications_Start(void)
+class CommandLine
 {
-	Info() << "<application layer>" << fmt::endl;
+public:
+	CommandLine();
 
-	CommandLine* CmdLine = new CommandLine();
+public:
+	void Start_Loop(void);
 
-	CmdLine->Start_Loop();
+private:
+	bool Parse_Command(char*);
+	bool Str_Cmp(const char*, const char*);
 
-//	TA_Start();
-}
+// Commands
+private:
+	void Do_Help(void);
+	void Do_Bad_Command(void);
+};
 
 }; // namespace apps
 }; // namespace saturn
