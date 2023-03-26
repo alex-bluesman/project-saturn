@@ -80,7 +80,7 @@ Console& Console::operator<<(char const *msg)
 
 	while ((c = *msg++) != 0)
 	{
-		if (c == '/')
+		if (c == '\\')
 		{
 			c = *msg++;
 			switch(c)
@@ -94,10 +94,10 @@ Console& Console::operator<<(char const *msg)
 			case 'b':
 				c = 0x08;
 				break;
-			case '/':
+			case '\\':
 				break;
 			default:
-				buf[len++] = '/';
+				buf[len++] = '\\';
 				break;
 			}
 		}
