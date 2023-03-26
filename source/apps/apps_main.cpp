@@ -10,6 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "cmdline/cmdline.hpp"
+
 #include <core/iconsole>
 
 namespace saturn {
@@ -22,9 +24,13 @@ void TA_Start(void);
 
 void Applications_Start(void)
 {
-	Log() << "<application layer>" << fmt::endl;
+	Info() << "<application layer>" << fmt::endl;
 
-	TA_Start();
+	CommandLine* CmdLine = new CommandLine();
+
+	CmdLine->Start_Loop();
+
+//	TA_Start();
 }
 
 }; // namespace apps

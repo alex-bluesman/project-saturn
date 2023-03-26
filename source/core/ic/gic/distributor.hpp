@@ -27,6 +27,11 @@ public:
 
 public:
 	size_t Get_Max_Lines();
+	void IRq_Enable(uint32_t);
+	void IRq_Disable(uint32_t);
+
+private:
+	inline void RW_Complete(void);
 
 private:
 	MMap* Regs;

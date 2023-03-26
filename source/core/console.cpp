@@ -17,27 +17,20 @@ namespace core {
 
 using namespace device;
 
-static const size_t max_message_size = 128;
+static const size_t _max_message_size = 128;
 
 Console::Console()
 	: isActive(false)
 	, isHex(false)
 	, isFill(false)
+	, isLevel(false)
 	, uart(nullptr)
+	, currentMsgLevel(llevel::info)
 {
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
-}
 
-Console::Console(UartDevice& u)
-	: isActive(false)
-	, isHex(false)
-	, isFill(false)
-	, uart(&u)
-{
-	isActive = true;
-	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
+	rxBuffer = new RingBuffer<char, _rx_size>(rb::full_ignore);
 }
-
 
 void Console::RegisterUart(UartDevice& u)
 {
@@ -47,15 +40,47 @@ void Console::RegisterUart(UartDevice& u)
 	// TBD: flush buffered output
 }
 
+bool Console::UartRX(char sym)
+{
+	return rxBuffer->In(sym);
+}
+
+
+char Console::GetChar(void)
+{
+	char c;
+
+	while (rxBuffer->Out(c) == false)
+	{
+		asm volatile("wfi" : : : "memory");
+	}
+
+	return c;
+}
+
+Console& Console::operator<<(char c)
+{
+	if (isActive)
+	{
+		uart->Tx(reinterpret_cast<uint8_t *>(&c), 1);
+	}
+
+	return *this;
+}
+
 Console& Console::operator<<(char const *msg)
 {
-	uint8_t buf[max_message_size];
+	uint8_t buf[_max_message_size];
 	size_t len = 0;
 	char c;
 
+	// We need this to handle line breaks in the middle of message, for example:
+	//   Log() << "Line break" << fmt::endl << "in the middle of message" << fmt::endl;
+	ShowLogLevel();
+
 	while ((c = *msg++) != 0)
 	{
-		if (c == '/')
+		if (c == '\\')
 		{
 			c = *msg++;
 			switch(c)
@@ -69,10 +94,10 @@ Console& Console::operator<<(char const *msg)
 			case 'b':
 				c = 0x08;
 				break;
-			case '/':
+			case '\\':
 				break;
 			default:
-				buf[len++] = '/';
+				buf[len++] = '\\';
 				break;
 			}
 		}
@@ -179,6 +204,29 @@ Console& Console::UnsignedToStr(uint64_t num, uint8_t fillSize)
 	return *this << s;
 }
 
+void Console::ShowLogLevel()
+{
+	if (false == isLevel)
+	{
+		isLevel = true;
+
+		switch (currentMsgLevel)
+		{
+		case llevel::log:
+			*this << "[log] ";
+			break;
+		case llevel::info:
+			*this << "[inf] ";
+			break;
+		case llevel::error:
+			*this << "[err] ";
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 Console& Console::operator<<(fmt format)
 {
 	switch (format)
@@ -187,6 +235,7 @@ Console& Console::operator<<(fmt format)
 		*this << "\r\n";
 		isHex = false;
 		isFill = false;
+		isLevel = false;
 		break;
 	case fmt::dec:
 		isHex = false;
@@ -203,6 +252,14 @@ Console& Console::operator<<(fmt format)
 	default:
 		break;
 	}
+
+	return *this;
+}
+
+Console& Console::operator<<(llevel level)
+{
+	currentMsgLevel = level;
+	ShowLogLevel();
 
 	return *this;
 }

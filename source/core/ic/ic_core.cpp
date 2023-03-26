@@ -43,7 +43,7 @@ IC_Core::IC_Core()
 
 	// TBD: we should distinguish primary CPU and secondary.
 	//      GIC dist should be initialized only for primary CPU.
-	Log() << "create interrupts infrastructure" << fmt::endl;
+	Info() << "create interrupts infrastructure" << fmt::endl;
 
 
 	GicDist = new GicDistributor();
@@ -96,7 +96,7 @@ void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
 	}
 	else
 	{
-		Log() << "!error: invalid SGI id = " << id << fmt::endl;
+		Error() << "error: invalid SGI id = " << id << fmt::endl;
 	}
 }
 
@@ -110,7 +110,7 @@ void IC_Core::Handle_IRq()
 	}
 	else
 	{
-		Log() << "!error: received INT with ID (" << id << ") out of supported range" << fmt::endl;
+		Error() << "error: received INT with ID (" << id << ") out of supported range" << fmt::endl;
 	}
 
 	CpuIface->EOI(id);
@@ -121,16 +121,17 @@ void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
 	if (id < GicDist->Get_Max_Lines())
 	{
 		IRq_Table[id] = handler;
+		GicDist->IRq_Enable(id);
 	}
 	else
 	{
-		Log() << "!error: attempt to register INT handler with ID (" << id << ") out of supported range" << fmt::endl;
+		Error() << "error: attempt to register INT handler with ID (" << id << ") out of supported range" << fmt::endl;
 	}
 }
 
 void IC_Core::Default_Handler(uint32_t id)
 {
-	Log() << "!warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
+	Error() << "warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
 }
 
 }; // namespace core

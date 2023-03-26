@@ -12,18 +12,26 @@
 
 #pragma once
 
-#include <basetypes>
-
 namespace saturn {
-namespace device {
+namespace apps {
 
-class UartDevice
+class CommandLine
 {
 public:
-	virtual void Rx(uint8_t *buff, size_t len) = 0;
-	virtual void Tx(uint8_t *buff, size_t len) = 0;
-	virtual void EnableRx(void) = 0;
+	CommandLine();
+
+public:
+	void Start_Loop(void);
+
+private:
+	bool Parse_Command(char*);
+	bool Str_Cmp(const char*, const char*);
+
+// Commands
+private:
+	void Do_Help(void);
+	void Do_Bad_Command(void);
 };
 
-}; // namespace device
+}; // namespace apps
 }; // namespace saturn

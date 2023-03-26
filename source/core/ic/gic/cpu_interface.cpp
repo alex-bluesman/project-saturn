@@ -37,7 +37,7 @@ CpuInterface::CpuInterface()
 	// Enable Group1 interrupts
 	WriteICCReg(ICC_IGRPEN1_EL1, 1);
 
-	Log() << "  /CPU interface initialized" << fmt::endl;
+	Info() << "  /CPU interface initialized" << fmt::endl;
 }
 
 uint32_t CpuInterface::Read_Ack_IRq()
