@@ -51,6 +51,9 @@ static void Main(void)
 	device::UartPl011& Uart = *new device::UartPl011();
 	Saturn_Console->RegisterUart(Uart);
 
+	// Set default log level
+	Saturn_Console->SetLevel(llevel::info);
+
 	Exceptions_Init();
 
 	// Starting from now there is Fault Mode available, so it makes sense to do sanity checks
