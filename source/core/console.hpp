@@ -51,6 +51,9 @@ public:
 	bool UartRX(char sym);
 	char GetChar(void);
 
+public:
+	void SetLevel(llevel);
+
 private:
 	Console& SignedToStr(int64_t num, uint8_t fillSize = 0);
 	Console& UnsignedToStr(uint64_t num, uint8_t fillSize = 0);
@@ -66,6 +69,7 @@ private:
 	UartDevice* uart;
 
 	llevel currentMsgLevel;
+	llevel consoleLevel;
 
 	RingBuffer<char, _rx_size> *rxBuffer;
 };

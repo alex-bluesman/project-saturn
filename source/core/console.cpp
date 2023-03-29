@@ -26,6 +26,7 @@ Console::Console()
 	, isLevel(false)
 	, uart(nullptr)
 	, currentMsgLevel(llevel::info)
+	, consoleLevel(llevel::info)
 {
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 
@@ -74,40 +75,43 @@ Console& Console::operator<<(char const *msg)
 	size_t len = 0;
 	char c;
 
-	// We need this to handle line breaks in the middle of message, for example:
-	//   Log() << "Line break" << fmt::endl << "in the middle of message" << fmt::endl;
-	ShowLogLevel();
-
-	while ((c = *msg++) != 0)
+	if (currentMsgLevel >= consoleLevel)
 	{
-		if (c == '\\')
+		// We need this to handle line breaks in the middle of message, for example:
+		//   Log() << "Line break" << fmt::endl << "in the middle of message" << fmt::endl;
+		ShowLogLevel();
+
+		while ((c = *msg++) != 0)
 		{
-			c = *msg++;
-			switch(c)
+			if (c == '\\')
 			{
-			case 'n':
-				c = 0x0a;
-				break;
-			case 'r':
-				c = 0x0d;
-				break;
-			case 'b':
-				c = 0x08;
-				break;
-			case '\\':
-				break;
-			default:
-				buf[len++] = '\\';
-				break;
+				c = *msg++;
+				switch(c)
+				{
+				case 'n':
+					c = 0x0a;
+					break;
+				case 'r':
+					c = 0x0d;
+					break;
+				case 'b':
+					c = 0x08;
+					break;
+				case '\\':
+					break;
+				default:
+					buf[len++] = '\\';
+					break;
+				}
 			}
+
+			buf[len++] = c;
 		}
 
-		buf[len++] = c;
-	}
-
-	if (isActive)
-	{
-		uart->Tx(buf, len);
+		if (isActive)
+		{
+			uart->Tx(buf, len);
+		}
 	}
 
 	return *this;
@@ -225,6 +229,11 @@ void Console::ShowLogLevel()
 			break;
 		}
 	}
+}
+
+void Console::SetLevel(llevel level)
+{
+	consoleLevel = level;
 }
 
 Console& Console::operator<<(fmt format)

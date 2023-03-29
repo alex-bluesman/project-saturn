@@ -26,10 +26,10 @@ enum class fmt {
 };
 
 enum class llevel {
-	log,
-	info,
-	error,
-	none
+	log	= 0,
+	info	= 1,
+	error	= 2,
+	none	= 3
 };
 
 class IConsole
@@ -54,6 +54,8 @@ public:
 	virtual bool UartRX(char sym) = 0;
 	virtual char GetChar(void) = 0;
 
+public:
+	virtual void SetLevel(llevel level) = 0;
 };
 
 // Access to console
