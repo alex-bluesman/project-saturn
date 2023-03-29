@@ -16,7 +16,7 @@
 #include "cpu.hpp"
 #include "heap.hpp"
 #include "ic/ic_core.hpp"
-#include "mmu.hpp"
+#include "mm/mmu.hpp"
 
 namespace saturn {
 namespace core {
