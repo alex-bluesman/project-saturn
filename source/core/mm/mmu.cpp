@@ -309,58 +309,47 @@ lpae_table_t* MemoryManagementUnit::Map_L2_PTable(uint64_t virt_addr)
 	return entry;
 }
 
-bool MemoryManagementUnit::Map_Memory_Block(uint64_t base_addr, BlockSize size)
-{
-	bool ret = true;
-
-	// Check if address is properly aligned
-	if (base_addr & (size - 1) != 0)
-	{
-		ret = false;
-	}
-	else
-	{
-		switch (size)
-		{
-		case BlockSize::L1_Block:
-			break;
-		
-		case BlockSize::L2_Block:
-			break;
-
-		case BlockSize::L3_Page:
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	return ret;
-}
-
-void MemoryManagementUnit::MemoryMap(uint64_t virt_addr, size_t size, MMapType type)
+void* MemoryManagementUnit::MemoryMap(uint64_t virt_addr, size_t size, MMapType type)
 {
 	uint64_t start = virt_addr & _page_base;
 	uint64_t end = (virt_addr + size) & _page_base;
+
+	void* ret = reinterpret_cast<void*>(start);
 
 	do
 	{
 		if (((start & _l1_block_mask) == 0) &&	// virtual address is 1GB aligned
 		    ((end - start) >= BlockSize::L1_Block))
 		{
-			Map_L1_Block(start, type);
+			if (nullptr == Map_L1_Block(start, type))
+			{
+				ret = nullptr;
+				break;
+			}
+
 			start += BlockSize::L1_Block;
 		}
 		else
 		if (((start & _l2_block_mask) == 0) &&	// virtual address is 2MB aligned
 		    ((end - start) >= BlockSize::L2_Block))
 		{
+			if (nullptr == Map_L2_Block(start, type))
+			{
+				ret = nullptr;
+				break;
+			}
+
 			Map_L2_Block(start, type);
 			start += BlockSize::L2_Block;
 		}
 		else					// then just map a page
 		{
+			if (nullptr == Map_L3_Page(start, type))
+			{
+				ret = nullptr;
+				break;
+			}
+
 			Map_L3_Page(start, type);
 			start += BlockSize::L3_Page;
 		}
@@ -374,6 +363,14 @@ void MemoryManagementUnit::MemoryMap(uint64_t virt_addr, size_t size, MMapType t
 //			dsb	ish;	\
 //			isb;		\
 //	             " : : : "memory");
+
+	if (nullptr == ret)
+	{
+		// TBD: does it make any sense to switch to Fault Mode?
+		Fault("invalid MMU mapping, please check your configuration");
+	}
+
+	return ret;
 }
 
 void MemoryManagementUnit::MemoryUnmap(uint64_t base_addr, size_t size)

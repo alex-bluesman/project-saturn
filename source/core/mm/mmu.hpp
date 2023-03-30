@@ -52,7 +52,7 @@ public:
 	MemoryManagementUnit();
 
 public:
-	void MemoryMap(uint64_t base_addr, size_t size, MMapType type);
+	void* MemoryMap(uint64_t base_addr, size_t size, MMapType type);
 	void MemoryUnmap(uint64_t base_addr, size_t size);
 
 private:
@@ -65,9 +65,6 @@ private:
 	lpae_block_t* Map_L1_Block(uint64_t virt_addr, MMapType type);
 	lpae_block_t* Map_L2_Block(uint64_t virt_addr, MMapType type);
 	lpae_page_t*  Map_L3_Page(uint64_t virt_addr, MMapType type);
-
-	bool Map_Memory_Block(uint64_t base_addr, BlockSize size);
-
 
 private:
 	tt_desc_t (&PTable0)[];
