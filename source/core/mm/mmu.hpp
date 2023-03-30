@@ -20,11 +20,6 @@
 namespace saturn {
 namespace core {
 
-// Page definitions:
-static const size_t _page_size = 4096;
-static const size_t _page_mask = (_page_size - 1);
-static const size_t _page_base = (~_page_mask);
-
 // Table could have only 512 entries
 static const size_t _ptable_size_mask = 0x1ff;
 
@@ -35,6 +30,18 @@ enum BlockSize
 	L2_Block = 2 * 1024 * 1024,	// 2MB block
 	L1_Block = 1024 * 1024 * 1024	// 1GB block
 };
+
+// L1 page definitions:
+static const size_t _l1_block_mask = (BlockSize::L1_Block - 1);
+
+// L2 page definitions:
+static const size_t _l2_block_mask = (BlockSize::L2_Block - 1);
+
+// L3 page definitions:
+static const size_t _page_size = BlockSize::L3_Page;
+static const size_t _page_mask = (_page_size - 1);
+static const size_t _page_base = (~_page_mask);
+
 
 // 64-bit blob for LPAE table entry
 using tt_desc_t = uint64_t;
@@ -54,7 +61,10 @@ private:
 private:
 	lpae_table_t* Map_L1_PTable(uint64_t virt_addr);
 	lpae_table_t* Map_L2_PTable(uint64_t virt_addr);
-	bool Map_L3_Page(uint64_t base_addr, MMapType type);
+
+	lpae_block_t* Map_L1_Block(uint64_t virt_addr, MMapType type);
+	lpae_block_t* Map_L2_Block(uint64_t virt_addr, MMapType type);
+	lpae_page_t*  Map_L3_Page(uint64_t virt_addr, MMapType type);
 
 	bool Map_Memory_Block(uint64_t base_addr, BlockSize size);
 

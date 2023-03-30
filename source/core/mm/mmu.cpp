@@ -64,12 +64,123 @@ uint16_t MemoryManagementUnit::FindFreeL3(void)
 	return i;
 }
 
-bool MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, MMapType type)
+lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, MMapType type)
 {
-	uint16_t index;
+	size_t index;
+	lpae_table_t* pt;
+	lpae_block_t* entry = nullptr;
+
+	index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
+
+	if (index < _l1_size)
+	{
+		entry = reinterpret_cast<lpae_block_t *>(&PTable1[index]);
+
+		// Check if the entry is not already mapped
+		if (entry->valid == 0)
+		{
+			entry->valid = 1;
+			entry->type = LPAE_Type::Block;
+			entry->addr = virt_addr >> 12;
+			entry->ns = 1;
+			entry->ap = 1;
+			entry->af = 1;
+			entry->ng = 1;
+
+			switch (type)
+			{
+			case MMapType::Device:
+				entry->attr = 4;
+				entry->sh = 2;
+				break;
+			case MMapType::Normal:
+				entry->attr = 7;
+				entry->sh = 3;
+				break;
+			default:
+				break;
+			}
+
+			Log() << "mm: PTable1[" << index << "] -> 1GB block for address 0x"
+			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+		}
+		else
+		{
+			// Entry is already mapped as page table
+			if (entry->type == LPAE_Type::Table)
+			{
+				entry = nullptr;
+			}
+		}
+	}
+
+	return entry;
+}
+
+lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, MMapType type)
+{
+	size_t index;
+	lpae_table_t* pt;
+	lpae_block_t* entry = nullptr;
+
+	pt = Map_L1_PTable(virt_addr);
+	if (nullptr != pt)
+	{
+		// L2 page table
+		uint64_t pt_addr = static_cast<uint64_t>(pt->addr << 12U);
+		pt = reinterpret_cast<lpae_table_t *>(pt_addr);
+
+		// L2 table entry
+		index = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
+		entry = (lpae_block_t *)&pt[index];
+
+
+		// Check if the entry is not already mapped
+		if (entry->valid == 0)
+		{
+			entry->valid = 1;
+			entry->type = LPAE_Type::Block;
+			entry->addr = virt_addr >> 12;
+			entry->ns = 1;
+			entry->ap = 1;
+			entry->af = 1;
+			entry->ng = 1;
+
+			switch (type)
+			{
+			case MMapType::Device:
+				entry->attr = 4;
+				entry->sh = 2;
+				break;
+			case MMapType::Normal:
+				entry->attr = 7;
+				entry->sh = 3;
+				break;
+			default:
+				break;
+			}
+
+			Log() << "mm:   PTable2[][" << index << "] -> 2MB block for address 0x"
+			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+		}
+		else
+		{
+			// Entry is already mapped as page table
+			if (entry->type == LPAE_Type::Table)
+			{
+				entry = nullptr;
+			}
+		}
+	}
+
+	return entry;
+}
+
+lpae_page_t* MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, MMapType type)
+{
+	size_t index;
 	lpae_table_t *pt, *entry;
-	lpae_page_t *page;
-	bool ret = true;
+	lpae_page_t *page = nullptr;
 
 	entry = Map_L1_PTable(virt_addr);
 	if (nullptr != entry)
@@ -89,7 +200,7 @@ bool MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, MMapType type)
 			if (page->valid == 0)
 			{
 				page->valid = 1;
-				page->type = 1;
+				page->type = LPAE_Type::Page;
 				page->ns = 1;
 				page->ap = 1;
 				page->af = 1;
@@ -111,20 +222,21 @@ bool MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, MMapType type)
 
 				page->addr = virt_addr >> 12;
 			}
+
+			Log() << "mm:     PTable3[][" << index << "] -> 4KB page for address 0x"
+			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 		}
 		else
 		{
 			Error() << "level-2 mapping failed for address: 0x" << fmt::fill << fmt::hex << virt_addr << fmt::endl;
-			ret = false;
 		}
 	}
 	else
 	{
 		Error() << "level-1 mapping failed for address: 0x" << fmt::fill << fmt::hex << virt_addr << fmt::endl;
-		ret = false;
 	}
 
-	return ret;
+	return page;
 }
 
 lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
@@ -145,6 +257,9 @@ lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
 			entry->valid = 1;
 			entry->type = LPAE_Type::Table;
 			entry->addr = reinterpret_cast<uint64_t>(PTable2[index])>> 12;
+
+			Log() << "mm: PTable1[" << index << "] -> PTable2[" << index << "][] for address 0x"
+			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 		}
 		else
 		{
@@ -161,26 +276,27 @@ lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
 
 lpae_table_t* MemoryManagementUnit::Map_L2_PTable(uint64_t virt_addr)
 {
-	size_t index;
-	lpae_table_t* pt;
-	lpae_table_t* entry = nullptr;
+	lpae_table_t *pt, *entry;
 
 	// L2 page table
 	// NOTE: no need to check index because it's already checked by L1 mapping
-	index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
-	pt = reinterpret_cast<lpae_table_t *>(&PTable2[index]);
+	size_t l1  = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
+	pt = reinterpret_cast<lpae_table_t *>(&PTable2[l1]);
 
 	// L2 table entry
-	index = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
-	entry = reinterpret_cast<lpae_table_t *>(&pt[index]);
+	size_t l2 = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
+	entry = reinterpret_cast<lpae_table_t *>(&pt[l2]);
 
 	if (entry->valid == 0)
 	{
-		index = FindFreeL3();
+		size_t index = FindFreeL3();
 
 		entry->valid = 1;
 		entry->type = LPAE_Type::Table;
 		entry->addr = ((uint64_t)&PTable3[index]) >> 12;
+
+		Log() << "mm:   PTable2[" << l1 << "][" << l2 << "] -> PTable3[" << index << "] for address 0x"
+		      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 	}
 	else
 	{
@@ -223,15 +339,31 @@ bool MemoryManagementUnit::Map_Memory_Block(uint64_t base_addr, BlockSize size)
 	return ret;
 }
 
-void MemoryManagementUnit::MemoryMap(uint64_t base_addr, size_t size, MMapType type)
+void MemoryManagementUnit::MemoryMap(uint64_t virt_addr, size_t size, MMapType type)
 {
-	uint64_t start = base_addr & _page_base;
-	uint64_t end = (base_addr + size) & _page_base;
+	uint64_t start = virt_addr & _page_base;
+	uint64_t end = (virt_addr + size) & _page_base;
 
 	do
 	{
-		Map_L3_Page(start, type);
-		start += _page_size;
+		if (((start & _l1_block_mask) == 0) &&	// virtual address is 1GB aligned
+		    ((end - start) >= BlockSize::L1_Block))
+		{
+			Map_L1_Block(start, type);
+			start += BlockSize::L1_Block;
+		}
+		else
+		if (((start & _l2_block_mask) == 0) &&	// virtual address is 2MB aligned
+		    ((end - start) >= BlockSize::L2_Block))
+		{
+			Map_L2_Block(start, type);
+			start += BlockSize::L2_Block;
+		}
+		else					// then just map a page
+		{
+			Map_L3_Page(start, type);
+			start += BlockSize::L3_Page;
+		}
 	}
 	while (start < end);
 
