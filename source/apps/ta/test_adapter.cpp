@@ -22,65 +22,126 @@ namespace apps {
 
 using namespace core;
 
-static const uint32_t _testIRQ = 10;
+// INT test data
+static const uint32_t _testINT = 10;
+static uint32_t valueINT = 0;
 
-static void SGI0_Handler(uint32_t id)
+static void SGI_Handler(uint32_t id)
 {
-	Log() << "     <- SGI " << _testIRQ << " handler triggerred" << fmt::endl;
+	valueINT = _testINT;
+	Log() << "     <- SGI " << id << " handler triggerred" << fmt::endl;
+}
+
+static bool INT_Smoke_Test(void)
+{
+	Log() << "  /register INT(" << _testINT << ") handler and send SGI" << fmt::endl;
+	IC().Register_IRq_Handler(_testINT, SGI_Handler);
+	IC().Send_SGI(1, _testINT);
+
+	bool ret;
+
+	if (_testINT == valueINT)
+	{
+		ret = true;
+		Info() << "ta: " << __func__ << ": PASSED" << fmt::endl;
+	}
+	else
+	{
+		ret = false;
+		Info() << "ta: " << __func__ << ": FAILED" << fmt::endl;
+	}
+
+	return ret;
+}
+
+static bool CPU_Smoke_Test(void)
+{
+	uint16_t cpu_id = This_CPU().Id();
+
+	Log() << "  /request CPU information" << fmt::endl;
+	Log() << "    <- CPU id = " << cpu_id << fmt::endl;
+
+	bool ret;
+
+	if (0 == cpu_id)
+	{
+		ret = true;
+		Info() << "ta: " << __func__ << ": PASSED" << fmt::endl;
+	}
+	else
+	{
+		ret = false;
+		Info() << "ta: " << __func__ << ": FAILED" << fmt::endl;
+	}
+
+	return ret;
+}
+
+static bool HEAP_Smoke_Test(void)
+{
+	Log() << "  /call 'new' and 'delete'" << fmt::endl;
+	uint64_t* val = new(uint64_t);
+
+	bool ret;
+
+	if (nullptr != val)
+	{
+		delete val;
+		ret = true;
+		Info() << "ta: " << __func__ << ": PASSED" << fmt::endl;
+	}
+	else
+	{
+		ret = false;
+		Info() << "ta: " << __func__ << ": FAILED" << fmt::endl;
+	}
+
+	return ret;
+}
+
+static bool RINGBUFFER_Smoke_Test(void)
+{
+	// Test ring buffer
+	RingBuffer<uint32_t, 4> buf(rb::full_overwrite);
+
+	bool ret = true;
+
+	Log() << "/try to out element from empty ring buffer" << fmt::endl;
+	uint32_t val;
+	if (buf.Out(val))
+	{
+		Log() << "  !empty ringbuffer returns value" << fmt::endl;
+		ret = false;
+	}
+
+	Log() << "/fill ring buffer with data overwrite" << fmt::endl;
+	for (uint32_t i = 0; i < 10; i++)
+	{
+		buf.In(i);
+	}
+
+	if (buf.Out(val) && val == 6)
+	{
+		ret = true;
+		Info() << "ta: " << __func__ << ": PASSED" << fmt::endl;
+	}
+	else
+	{
+		ret = false;
+		Info() << "ta: " << __func__ << ": FAILED" << fmt::endl;
+	}
+
+	return ret;
 }
 
 void TA_Start(void)
 {
 	Log() << "app: testing adapter" << fmt::endl;
 
-	Log() << "  //register INT(" << _testIRQ << ") handler and send SGI" << fmt::endl;
-	IC().Register_IRq_Handler(_testIRQ, SGI0_Handler);
-	IC().Send_SGI(1, _testIRQ);
-
-	Log() << "  //request CPU information" << fmt::endl;
-	Log() << "    <- CPU id = " << This_CPU().Id() << fmt::endl;
-
-	Log() << "  //request heap state" << fmt::endl;
-	Allocator().State();
-
-	Log() << "  //call 'new' and 'delete'" << fmt::endl;
-	uint64_t* val = new(uint64_t);
-	Log() << "    <-- Got allocation at: 0x" << fmt::hex << fmt::fill << (uint64_t)val << fmt::endl;
-	delete val;
-
-	// Test ring buffer
-	RingBuffer<uint32_t, 4> buf(rb::full_overwrite);
-
-	for (uint32_t i = 0; i < 4; i++)
-	{
-		uint32_t val;
-		if (buf.Out(val))
-		{
-			Log() << "empty ringbuffer returns value, test failed!" << fmt::endl;
-		}
-	}
-
-	for (uint32_t i = 0; i < 10; i++)
-	{
-		buf.In(i);
-	}
-
-	for (uint32_t i = 0; i < 5; i++)
-	{
-		uint32_t val;
-		if (buf.Out(val))
-		{
-			Log() << "ringbuffer out: " << val << fmt::endl;
-		}
-	}
-
-	Log() << "Console simulation:" << fmt::endl;
-	Log() << "=> ";
-	while (true)
-	{
-		char c = ConIO().GetChar();
-		Log() << c;
-	}
+	INT_Smoke_Test();
+	CPU_Smoke_Test();
+	HEAP_Smoke_Test();
+	RINGBUFFER_Smoke_Test();
 }
 
 }; // namespace apps
