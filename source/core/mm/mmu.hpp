@@ -23,14 +23,6 @@ namespace core {
 // Table could have only 512 entries
 static const size_t _ptable_size_mask = 0x1ff;
 
-// Supported memory block sizes
-enum BlockSize
-{
-	L3_Page = 4 * 1024,		// 4KB page
-	L2_Block = 2 * 1024 * 1024,	// 2MB block
-	L1_Block = 1024 * 1024 * 1024	// 1GB block
-};
-
 // L1 page definitions:
 static const size_t _l1_block_mask = (BlockSize::L1_Block - 1);
 
@@ -52,7 +44,7 @@ public:
 	MemoryManagementUnit();
 
 public:
-	void* MemoryMap(uint64_t base_addr, size_t size, MMapType type);
+	void* MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type);
 	void MemoryUnmap(uint64_t base_addr, size_t size);
 
 private:
@@ -62,9 +54,9 @@ private:
 	lpae_table_t* Map_L1_PTable(uint64_t virt_addr);
 	lpae_table_t* Map_L2_PTable(uint64_t virt_addr);
 
-	lpae_block_t* Map_L1_Block(uint64_t virt_addr, MMapType type);
-	lpae_block_t* Map_L2_Block(uint64_t virt_addr, MMapType type);
-	lpae_page_t*  Map_L3_Page(uint64_t virt_addr, MMapType type);
+	lpae_block_t* Map_L1_Block(uint64_t virt_addr, uint64_t phys_addr, MMapType type);
+	lpae_block_t* Map_L2_Block(uint64_t virt_addr, uint64_t phys_addr, MMapType type);
+	lpae_page_t*  Map_L3_Page(uint64_t virt_addr, uint64_t phys_addr, MMapType type);
 
 private:
 	tt_desc_t (&PTable0)[];
