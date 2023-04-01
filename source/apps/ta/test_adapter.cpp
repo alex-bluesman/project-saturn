@@ -14,7 +14,9 @@
 #include <core/icpu>
 #include <core/iheap>
 #include <core/iirq>
+#include <core/immu>
 
+#include <io>
 #include <ringbuffer>
 
 namespace saturn {
@@ -134,6 +136,42 @@ static bool RINGBUFFER_Smoke_Test(void)
 	return ret;
 }
 
+static bool MMU_Smoke_Test(void)
+{
+	uint64_t pa  = 0x41000000;
+	uint64_t va1 = 0x41000000;
+	uint64_t va2 = 0x42000000;
+
+	// map the same physical address to different virtual addresses with
+	// different block sizes
+	core::MMU().MemoryMap(va1, pa, BlockSize::L2_Block, MMapType::Normal);
+	core::MMU().MemoryMap(va2, pa, BlockSize::L3_Page, MMapType::Normal);
+
+	// Ensure both addresses contain no random data
+	Write<uint64_t>(va1, 0);
+	Write<uint64_t>(va2, 0);
+
+	uint64_t value = 0xcafe;
+	bool ret;
+
+	Write<uint64_t>(va1, value);
+
+	if (Read<uint64_t>(va2) == value)
+	{
+		ret = true;
+		Info() << "ta: " << __func__ << ": PASSED" << fmt::endl;
+	}
+	else
+	{
+		ret = false;
+		Info() << "ta: " << __func__ << ": FAILED" << fmt::endl;
+	}
+
+	// TBD: unmap regions
+
+	return ret;
+}
+
 void TA_Start(void)
 {
 	Log() << "app: testing adapter" << fmt::endl;
@@ -142,6 +180,7 @@ void TA_Start(void)
 	CPU_Smoke_Test();
 	HEAP_Smoke_Test();
 	RINGBUFFER_Smoke_Test();
+	MMU_Smoke_Test();
 }
 
 }; // namespace apps
