@@ -20,12 +20,10 @@
 namespace saturn {
 namespace core {
 
-MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level0)[],
-					   tt_desc_t (&Level1)[],
+MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level1)[],
 					   tt_desc_t (&Level2)[][_l2_size],
 					   tt_desc_t (&Level3)[][_l3_size])
-	: PTable0(Level0)
-	, PTable1(Level1)
+	: PTable1(Level1)
 	, PTable2(Level2)
 	, PTable3(Level3)
 {

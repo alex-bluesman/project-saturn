@@ -41,11 +41,9 @@ using tt_desc_t = uint64_t;
 
 class MemoryManagementUnit : public IMemoryManagementUnit {
 public:
-	MemoryManagementUnit(
-				tt_desc_t (&Level0)[],
-				tt_desc_t (&Level1)[],
-				tt_desc_t (&Level2)[][_l2_size],
-				tt_desc_t (&Level3)[][_l3_size]
+	MemoryManagementUnit(tt_desc_t (&Level1)[],
+			     tt_desc_t (&Level2)[][_l2_size],
+			     tt_desc_t (&Level3)[][_l3_size]
 			    );
 
 public:
@@ -64,7 +62,6 @@ private:
 	lpae_page_t*  Map_L3_Page(uint64_t virt_addr, uint64_t phys_addr, MMapType type);
 
 private:
-	tt_desc_t (&PTable0)[];
 	tt_desc_t (&PTable1)[];
 	tt_desc_t (&PTable2)[][_l2_size];
 	tt_desc_t (&PTable3)[][_l3_size];
