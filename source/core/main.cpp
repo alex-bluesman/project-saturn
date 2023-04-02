@@ -29,6 +29,7 @@ namespace core {
 
 // External API:
 void Exceptions_Init();
+void MMU_Init();
 
 static void Main(void)
 {
@@ -45,8 +46,8 @@ static void Main(void)
 	// Also let's keep heap initialization before, we could use it for buffering.
 	Saturn_Console = new Console();
 
-	// Create MMU object
-	Saturn_MMU = new MemoryManagementUnit();
+	// Initialize hypervisor and guest MMUs
+	MMU_Init();
 
 	device::UartPl011& Uart = *new device::UartPl011();
 	Saturn_Console->RegisterUart(Uart);

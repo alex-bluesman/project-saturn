@@ -17,27 +17,17 @@
 #include <asm/mmu.h>
 #include <fault>
 
-using namespace saturn::core;
-
-// Should be global without namespace to be visible in assembly boot code
-tt_desc_t ptable_l0[_l0_size]			__align(_page_size);
-tt_desc_t ptable_l1[_l1_size]			__align(_page_size);
-tt_desc_t ptable_l2[_l1_size][_l2_size]		__align(_page_size);
-
 namespace saturn {
 namespace core {
 
-// Number of tables for hypervisor level-3 page mapping. Hypervisor uses them
-// to map I/O peripheral regions. And due to only certain devices are used
-// (like UART and GIC), no need to create many tables
-static const size_t _l3_tables = 16;
-static tt_desc_t ptable_l3[_l3_tables][_l3_size]	__align(_page_size);
-
-MemoryManagementUnit::MemoryManagementUnit()
-	: PTable0(ptable_l0)
-	, PTable1(ptable_l1)
-	, PTable2(ptable_l2)
-	, PTable3(ptable_l3)
+MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level0)[],
+					   tt_desc_t (&Level1)[],
+					   tt_desc_t (&Level2)[][_l2_size],
+					   tt_desc_t (&Level3)[][_l3_size])
+	: PTable0(Level0)
+	, PTable1(Level1)
+	, PTable2(Level2)
+	, PTable3(Level3)
 	, FreeMaskL3(0)
 {
 	Info() << "memory management unit initialized" << fmt::endl;

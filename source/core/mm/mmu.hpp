@@ -41,7 +41,12 @@ using tt_desc_t = uint64_t;
 
 class MemoryManagementUnit : public IMemoryManagementUnit {
 public:
-	MemoryManagementUnit();
+	MemoryManagementUnit(
+				tt_desc_t (&Level0)[],
+				tt_desc_t (&Level1)[],
+				tt_desc_t (&Level2)[][_l2_size],
+				tt_desc_t (&Level3)[][_l3_size]
+			    );
 
 public:
 	void* MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type);

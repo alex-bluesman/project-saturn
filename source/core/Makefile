@@ -14,6 +14,7 @@ src := main.cpp			\
        ic/gic/cpu_interface.cpp	\
        ic/gic/distributor.cpp	\
        ic/gic/redistributor.cpp	\
+       mm/mm_core.cpp		\
        mm/mmu.cpp
 
 objs := $(src:.c=.o)
