@@ -28,20 +28,32 @@ MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level0)[],
 	, PTable1(Level1)
 	, PTable2(Level2)
 	, PTable3(Level3)
-	, FreeMaskL3(0)
 {
+	size_t maskSize = sizeof(FreeMaskL3) / sizeof(FreeMaskL3[0]);
+
+	for (size_t i = 0; i < maskSize; i++)
+	{
+		FreeMaskL3[i] = 0;
+	}
+
 	Info() << "memory management unit initialized" << fmt::endl;
 }
 
 uint16_t MemoryManagementUnit::FindFreeL3(void)
 {
-	uint64_t i;
+	size_t i;
 
 	for (i = 0; i < _l3_tables; i++)
 	{
-		if (((FreeMaskL3 >> i) & 1) == 0)
+		size_t a, b;
+
+		// The target bit would be _FreeMaskL3[a] position 'b'
+		a = i / sizeof(FreeMaskL3[0]);
+		b = i % sizeof(FreeMaskL3[0]);
+
+		if (((FreeMaskL3[a] >> b) & 1) == 0)
 		{
-			FreeMaskL3 |= 1U << i;
+			FreeMaskL3[a] |= 1U << b;
 			break;
 		}
 	}

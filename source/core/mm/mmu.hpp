@@ -69,7 +69,7 @@ private:
 	tt_desc_t (&PTable2)[][_l2_size];
 	tt_desc_t (&PTable3)[][_l3_size];
 
-	uint64_t FreeMaskL3;
+	uint8_t FreeMaskL3[(_l3_tables + 7) / 8];
 };
 
 }; // namespace core
