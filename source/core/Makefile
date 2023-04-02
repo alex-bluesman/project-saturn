@@ -4,7 +4,6 @@ AFLAGS +=
 CFLAGS += -MMD -MP
 
 src := main.cpp			\
-       mmu.cpp			\
        heap.cpp			\
        console.cpp		\
        cpu.cpp			\
@@ -14,7 +13,9 @@ src := main.cpp			\
        ic/ic_core.cpp		\
        ic/gic/cpu_interface.cpp	\
        ic/gic/distributor.cpp	\
-       ic/gic/redistributor.cpp
+       ic/gic/redistributor.cpp	\
+       mm/mm_core.cpp		\
+       mm/mmu.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
@@ -48,5 +49,7 @@ clean:
 	@-rm -f *.o *.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/ic/*.o"
 	@-rm -f ic/gic/*.o ic/gic/*.d ic/*.o ic/*.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/mm/*.o"
+	@-rm -f mm/*.o mm/*.d
 
 -include .depend

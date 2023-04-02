@@ -31,8 +31,8 @@ public:
 		, Size(io.Size)
 		, Type(type)
 	{
-		// TBD: check return value
-		core::MMU().MemoryMap(Base, Size, Type);
+		// one-to-one mapping
+		core::MMU().MemoryMap(Base, Base, Size, Type);
 	};
 
 	~MMap()

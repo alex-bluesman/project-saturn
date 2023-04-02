@@ -16,14 +16,13 @@
 #include "cpu.hpp"
 #include "heap.hpp"
 #include "ic/ic_core.hpp"
-#include "mmu.hpp"
+#include "mm/mmu.hpp"
 
 namespace saturn {
 namespace core {
 
 // Saturn core components:
 static Heap* 			Saturn_Heap = nullptr;		// Heap object pointer to implement operators new/delete
-static MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer to implement I/O mapping
 static Console* 		Saturn_Console = nullptr;	// Console pointer for trace and logging
 static IC_Core*			Saturn_IC = nullptr;		// Interrupt controller pointer for IRq management
 static CpuInfo*			Local_CPU = nullptr;		// CPU information pointer
@@ -43,11 +42,6 @@ IConsole& ConIO(void)
 IIC& IC(void)
 {
 	return *Saturn_IC;
-}
-
-IMemoryManagementUnit& MMU(void)
-{
-	return *Saturn_MMU;
 }
 
 IHeap& Allocator(void)

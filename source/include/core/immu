@@ -23,9 +23,17 @@ enum class MMapType {
 	Normal
 };
 
+// Supported memory block sizes
+enum BlockSize
+{
+	L3_Page = 4 * 1024,		// 4KB page
+	L2_Block = 2 * 1024 * 1024,	// 2MB block
+	L1_Block = 1024 * 1024 * 1024	// 1GB block
+};
+
 class IMemoryManagementUnit {
 public:
-	virtual void MemoryMap(uint64_t base_addr, size_t size, MMapType type) = 0;
+	virtual void *MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type) = 0;
 	virtual void MemoryUnmap(uint64_t base_addr, size_t size) = 0;
 };
 

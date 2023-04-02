@@ -40,9 +40,9 @@
 
 /* Initial value for TCR_EL2:
  * 
- *                  RES1     |    RES1    |   SH0_IS   | ORGN0_WBWA | IRGN0_WBWA | T0SZ = 48 bits
+ *                   TG1    |    EPD1    |   SH0_IS   | ORGN0_WBWA | IRGN0_WBWA | T0SZ = 48 bits
  */
-#define TCR_EL2 ( (1U << 31) | (1U << 23) | (3U << 12) | (1U << 10) | (1U << 8) | (64 - 48) )
+#define TCR_EL2 ( (2U << 30) | (1U << 23) | (3U << 12) | (1U << 10) | (1U << 8) | (64 - 48) )
 
 /* Let's map 4GB of RAM using 4KB page granularity:
  *
