@@ -22,6 +22,9 @@ using namespace core;
 static const char* _prompt = "$ ";
 static const size_t _cmd_max_len = 32;
 
+// External API:
+void TA_Start();
+
 CommandLine::CommandLine()
 {
 	Info() << "command line application is started" << fmt::endl;
@@ -112,6 +115,11 @@ bool CommandLine::Parse_Command(char* cmdInput)
 		Do_Help();
 	}
 	else
+	if (Str_Cmp(cmdName, "ta"))
+	{
+		Do_Test_Adapter(cmdArgs);
+	}
+	else
 	{
 		Do_Bad_Command();
 	}
@@ -150,14 +158,29 @@ bool CommandLine::Str_Cmp(const char* firstLine, const char* secondLine)
 void CommandLine::Do_Help(void)
 {
 	Raw() << "Saturn Hypervisor console, please use the following commands:" << fmt::endl;
-	Raw() << "  help	- display usage information" << fmt::endl;
-	Raw() << "  quit	- stop console application" << fmt::endl;
+	Raw() << "  help        - display usage information" << fmt::endl;
+	Raw() << "  ta          - test adapter to run smoke tests" << fmt::endl;
+	Raw() << "  quit        - stop console application" << fmt::endl;
 	Raw() << fmt::endl;
 }
 
 void CommandLine::Do_Bad_Command(void)
 {
 	Raw() << "error: invalid command, please use 'help' to see list of support commands" << fmt::endl;
+	Raw() << fmt::endl;
+}
+
+void CommandLine::Do_Test_Adapter(const char* args)
+{
+	if (Str_Cmp(args, "run"))
+	{
+		TA_Start();
+	}
+	else
+	{
+		Raw() << "error: 'ta' arguments missed, please use 'run' to execute smoke tests" << fmt::endl;
+	}
+
 	Raw() << fmt::endl;
 }
 

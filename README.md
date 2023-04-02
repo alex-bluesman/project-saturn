@@ -1,8 +1,24 @@
 # General
 
-Project Saturn is a hypervisor for Aarch64 platforms.
+Project Saturn is a lightweight hypervisor for AArch64 platforms which provides
+static hardware resources split. The static configuration makes possible to
+significantly reduce the complexity of hypervisor architecture, what simplifies
+configuration and qualification. In general 10K lines of source code should be
+enough to run two Linux images in parallel.
 
-Copyright (c) 2022
+Project scope (not fully implemented yet):
+
+ - The Saturn core
+ - QEMU AArch64 reference BSP (a part of core for today)
+ - Configuration tools (not available for today)
+ - Guest images and respective source projects (not available for today)
+
+Additionally could be provided on request:
+ - Requirements specification
+ - Architecture design
+ - Test suit
+
+Copyright (c) 2023
 Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
 
 # QEMU Aarch64 Target
