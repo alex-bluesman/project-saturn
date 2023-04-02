@@ -12,6 +12,8 @@
 
 #include "mmu.hpp"
 
+#include <arm64/registers>
+
 using namespace saturn::core;
 
 // Should be global without namespace to be visible in assembly boot code
@@ -22,22 +24,59 @@ tt_desc_t ptable_l2[_l1_size][_l2_size]			__align(_page_size);
 namespace saturn {
 namespace core {
 
+// Hypervisor PA-VA data
 static tt_desc_t ptable_l3[_l3_tables][_l3_size]	__align(_page_size);
 
-static MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer to implement I/O mapping
+// Guest PA-IPA data
+static tt_desc_t ipa_ptable_l1[_l1_size]		__align(_page_size);
+static tt_desc_t ipa_ptable_l2[_l1_size][_l2_size]	__align(_page_size);
+static tt_desc_t ipa_ptable_l3[_l3_tables][_l3_size]	__align(_page_size);
+
+static MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer for hypervisor mapping
+static MemoryManagementUnit* 	Guest_MMU = nullptr;		// MMU object pointer for guest mapping
 
 void MMU_Init(void)
 {
-	// Create MMU object
-	Saturn_MMU = new MemoryManagementUnit(ptable_l0, ptable_l1, ptable_l2, ptable_l3);
+	// Create Saturn MMU
+	Saturn_MMU = new MemoryManagementUnit(ptable_l1, ptable_l2, ptable_l3);
 
+	// Initial value for VTCR_EL2:
+	//		  SH0_IS   | ORGN0_WBWA | IRGN0_WBWA | T0SZ = 48 bits
+	uint64_t vtcr = (3U << 12) | (1U << 10) | (1U << 8)  | (64 - 48);
+	WriteArm64Reg(VTCR_EL2, vtcr);
+	
+	// Set IPA page tables to 0 value
+	for (size_t i = 0; i < _l1_size; i++)
+	{
+		ipa_ptable_l1[i] = 0;
+
+		for (size_t j = 0; j < _l2_size; j++)
+		{
+			ipa_ptable_l2[i][j] = 0;
+		}
+	}
+
+	for (size_t i = 0; i < _l3_tables; i++)
+	{
+		for (size_t j = 0; j < _l3_size; j++)
+		{
+			ipa_ptable_l3[i][j] = 0;
+		}
+	}
+
+	// Initial value for VTTBR_EL2
+	// TBD: set real VMID instead of '1'
+	uint64_t vttbr = reinterpret_cast<uint64_t>(&ipa_ptable_l1[0]) | (1UL << 48);
+	WriteArm64Reg(VTTBR_EL2, vttbr);
+
+	// Create guest IPA MMU
+	Guest_MMU = new MemoryManagementUnit(ipa_ptable_l1, ipa_ptable_l2, ipa_ptable_l3);
 }
 
 IMemoryManagementUnit& MMU(void)
 {
 	return *Saturn_MMU;
 }
-
 
 }; // namespace core
 }; // namespace saturn
