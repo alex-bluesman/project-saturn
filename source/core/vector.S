@@ -13,16 +13,26 @@
 /* NOTE: this must be aligned with arm64/registers structure
  *       should be reworked later
  */
-#define Regs_LR_Offset		(30 * 8)
-#define Regs_PC_Offset		(32 * 8)
-#define Regs_CPSR_Offset	(33 * 8)
-#define Regs_End_Offset		(34 * 8)
+#define Regs_EL2_LR_Offset		(30 * 8)
+#define Regs_EL2_SP_Offset		(31 * 8)
+#define Regs_EL2_PC_Offset		(32 * 8)
+#define Regs_EL2_CPSR_Offset		(33 * 8)
 
-	/* Store PE state before start exception processing */
-	.macro Store_Context
-		sub	sp, sp, #(Regs_End_Offset - Regs_LR_Offset)	/* LR, SP, PC, CPSR */
+#define Regs_EL1_LR_Offset		(34 * 8)
+#define Regs_EL1_SP_Offset		(35 * 8)
+#define Regs_EL1_PC_Offset		(36 * 8)
+#define Regs_EL1_CPSR_Offset		(37 * 8)
 
-		/* First save GP registers to be able to use them */
+#define Regs_End_Offset			(38 * 8)
+
+	// Store PE state before start exception processing
+	.macro Store_Hyp_Frame
+		// Skip Sys and Hyp mode frames:
+		//  - Sys mode we just ignore here, because it's hypervisor context
+		//  - Hyp mode will be filled in the end of macro
+		sub	sp, sp, #(Regs_End_Offset - Regs_EL2_LR_Offset)
+
+		// First save GP registers to be able to use them
 		stp     x28, x29, [sp, #-16]!
 		stp     x26, x27, [sp, #-16]!
 		stp     x24, x25, [sp, #-16]!
@@ -40,24 +50,24 @@
 		stp     x0, x1, [sp, #-16]!
 
 		add	x0, sp, #Regs_End_Offset
-		stp	lr, x0, [sp, #Regs_LR_Offset]
+		stp	lr, x0, [sp, #Regs_EL2_LR_Offset]	// Store LR_EL2 and SP_EL2
 
 		mrs	x0, elr_el2
-		str	x0, [sp, #Regs_PC_Offset]
+		str	x0, [sp, #Regs_EL2_PC_Offset]		// Store PC_EL2
 
 		mrs	x0, spsr_el2
-		str	x0, [sp, #Regs_CPSR_Offset]
+		str	x0, [sp, #Regs_EL2_CPSR_Offset]		// Store CPSR_EL2
 	.endm
 
 	/* Restore PE state after exception processing */
-	.macro Restore_Context
-		ldr	x0, [sp, #Regs_CPSR_Offset]
+	.macro Restore_Hyp_Frame
+		ldr	x0, [sp, #Regs_EL2_CPSR_Offset]
 		msr	spsr_el2, x0
 
-		ldr	x0, [sp, #Regs_PC_Offset]
+		ldr	x0, [sp, #Regs_EL2_PC_Offset]
 		msr	elr_el2, x0
 
-		ldr	lr, [sp, #Regs_LR_Offset]
+		ldr	lr, [sp, #Regs_EL2_LR_Offset]
 
 		ldp	x0, x1, [sp], #16
 		ldp	x2, x3, [sp], #16
@@ -75,7 +85,34 @@
 		ldp	x26, x27, [sp], #16
 		ldp	x28, x29, [sp], #16
 
-		add	sp, sp, #(Regs_End_Offset - Regs_LR_Offset)	/* LR, SP, PC, CPSR */
+		// Skip Sys and Hyp mode frames to wipe AArch64_Regs structure out from stack
+		add	sp, sp, #(Regs_End_Offset - Regs_EL2_LR_Offset)
+	.endm
+
+	.macro Store_Sys_Frame
+		str	lr, [sp, #Regs_EL1_LR_Offset]
+
+		mrs	x0, sp_el1
+		str	x0, [sp, #Regs_EL1_SP_Offset]
+
+		mrs	x0, elr_el1
+		str	x0, [sp, #Regs_EL1_PC_Offset]
+
+		mrs	x0, spsr_el1
+		str	x0, [sp, #Regs_EL1_CPSR_Offset]
+	.endm
+
+	.macro Restore_Sys_Frame
+		ldr	x0, [sp, #Regs_EL1_CPSR_Offset]
+		msr	spsr_el1, x0
+
+		ldr	x0, [sp, #Regs_EL1_PC_Offset]
+		msr	elr_el1, x0
+
+		ldr	x0, [sp, #Regs_EL1_SP_Offset]
+		msr	sp_el1, x0
+
+		ldr	lr, [sp, #Regs_EL1_LR_Offset]
 	.endm
 
 	/* TBD: dummy handler for unsupported features */
@@ -84,18 +121,18 @@ unused:
 
 saturn_sync:
 	msr	DAIFSet, #15	/* Mask {D, A, I, F} due to we never return */
-	Store_Context
+	Store_Hyp_Frame
 	mov	x0, sp
 	b	Sync_Abort
 
 saturn_irq:
 	msr	DAIFSet, #2	/* Mask {I} to avoid nested interrupts */
-	Store_Context
+	Store_Hyp_Frame
 
 	mov	x0, sp
 	bl	IRq_Handler
 
-	Restore_Context
+	Restore_Hyp_Frame
 	msr	DAIFClr, #2	/* Unmask {I} to enable interrupts back */
 	eret
 
@@ -103,9 +140,22 @@ saturn_fiq:
 	b	.
 
 saturn_error:
-	Store_Context
+	Store_Hyp_Frame
 	mov	x0, sp
 	b	System_Error
+
+guest_sync:
+	Store_Hyp_Frame
+	Store_Sys_Frame
+	mov	x0, sp
+	mov	x1, #0
+	b	Guest_Error
+
+guest_error:
+	Store_Hyp_Frame
+	mov	x0, sp
+	mov	x1, #1
+	b	Guest_Error
 
 	.macro	entry	handler
 	.align 7
@@ -129,13 +179,59 @@ saturn_vector:
 	entry	saturn_error
 
 	/* Lower Exception level using AArch64 */
+	entry	guest_sync
 	entry	unused
 	entry	unused
-	entry	unused
-	entry	unused
+	entry	guest_error
 
 	/* Lower Exception level using AArch32 */
 	entry	unused
 	entry	unused
 	entry	unused
 	entry	unused
+
+	.align 3
+	.global Switch_EL12
+Switch_EL12:
+	// We will not return from this function to current hypervisor running
+	// context, so this means we don't need hypervisor stack anymore. After
+	// all the registers are set, we could reset the stack to the initial
+	// boot state to avoid stack leak
+
+	// x0 contains pointer to AArch64_Regs structure
+	mov	sp, x0
+
+	// Restore the VM context
+	Restore_Sys_Frame
+	Restore_Hyp_Frame
+
+	// Reset hypervisor stack to initial value
+	ldr	x20, =boot_stack
+	ldr	x21, =STACK_SIZE
+	lsl	x21, x21, #3
+	add	x20, x20, x21
+	mov	sp, x20
+	mov	x20, xzr
+	mov	x21, xzr
+
+	eret
+
+// ----------- TBD: temporary block to simulate guest -----------
+
+#define early_print(_s)			\
+	adr	x0, 98f;		\
+	bl	early_uart_print;	\
+	b	99f;			\
+98:					\
+	.asciz _s;			\
+	.align 2;			\
+99:
+
+	// While there is no guest image available, let's create a small
+	// loop to park EL1 execution flow
+	.align 3
+	.global Parking_Lot_EL1
+Parking_Lot_EL1:
+	mov	x23, #0x09000000	// UART base address
+	early_print("This message printed from EL1 mode!\r\n")
+	b	.

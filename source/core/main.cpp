@@ -16,7 +16,7 @@
 #include <system>
 
 // Saturn stack definition
-unsigned int boot_stack[_stack_size] __align(_page_size);
+saturn::uint64_t boot_stack[_stack_size] __align(_page_size);
 
 
 namespace saturn {
@@ -30,6 +30,7 @@ namespace core {
 // External API:
 void Exceptions_Init();
 void MMU_Init();
+void Start_VM_Manager();
 
 static void Main(void)
 {
@@ -73,6 +74,8 @@ static void Main(void)
 
 	// Now we are ready to receive data from console
 	Uart.EnableRx();
+
+	Start_VM_Manager();
 
 	saturn::apps::Applications_Start();
 

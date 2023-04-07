@@ -22,10 +22,12 @@ namespace core {
 
 MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level1)[],
 					   tt_desc_t (&Level2)[][_l2_size],
-					   tt_desc_t (&Level3)[][_l3_size])
+					   tt_desc_t (&Level3)[][_l3_size],
+					   MMapStage Stage)
 	: PTable1(Level1)
 	, PTable2(Level2)
 	, PTable3(Level3)
+	, TStage(Stage)
 {
 	size_t maskSize = sizeof(FreeMaskL3) / sizeof(FreeMaskL3[0]);
 
@@ -83,7 +85,7 @@ lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, uint64_t ph
 			entry->type = LPAE_Type::Block;
 			entry->addr = phys_addr >> 30;
 			entry->ns = 1;
-			entry->ap = 1;
+			entry->ap = 1 | TStage; // R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
 			entry->af = 1;
 			entry->ng = 1;
 
@@ -142,7 +144,7 @@ lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, uint64_t ph
 			entry->type = LPAE_Type::Block;
 			entry->addr = phys_addr >> 21;
 			entry->ns = 1;
-			entry->ap = 1;
+			entry->ap = 1 | TStage; // R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
 			entry->af = 1;
 			entry->ng = 1;
 
@@ -203,7 +205,7 @@ lpae_page_t* MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, uint64_t phys
 				page->type = LPAE_Type::Page;
 				page->addr = phys_addr >> 12;
 				page->ns = 1;
-				page->ap = 1;
+				page->ap = 1 | TStage;	// R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
 				page->af = 1;
 				page->ng = 1;
 
