@@ -32,6 +32,7 @@ private:
 	void Do_Help(void);
 	void Do_Bad_Command(void);
 	void Do_Test_Adapter(const char*);
+	void Do_Vm(const char*);
 };
 
 }; // namespace apps
