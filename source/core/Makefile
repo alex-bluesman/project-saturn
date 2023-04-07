@@ -15,7 +15,8 @@ src := main.cpp			\
        ic/gic/distributor.cpp	\
        ic/gic/redistributor.cpp	\
        mm/mm_core.cpp		\
-       mm/mmu.cpp
+       mm/mmu.cpp		\
+       vm/vm_core.cpp
 
 objs := $(src:.c=.o)
 objs := $(objs:.cpp=.o)
@@ -51,5 +52,7 @@ clean:
 	@-rm -f ic/gic/*.o ic/gic/*.d ic/*.o ic/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/mm/*.o"
 	@-rm -f mm/*.o mm/*.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/vm/*.o"
+	@-rm -f vm/*.o vm/*.d
 
 -include .depend
