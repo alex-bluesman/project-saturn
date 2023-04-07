@@ -35,6 +35,7 @@ namespace saturn {
 	})
 
 struct AArch64_Regs {
+	// General purpose registers
 	uint64_t	x0;
 	uint64_t	x1;
 	uint64_t	x2;
@@ -66,10 +67,17 @@ struct AArch64_Regs {
 	uint64_t	x28;
 	uint64_t	x29;
 
-	uint64_t	lr;
-	uint64_t	sp;
-	uint64_t	pc; // ELR_EL2
-	uint64_t	cpsr;
+	// EL2 (Hyp) mode registers
+	uint64_t	lr_el2;
+	uint64_t	sp_el2;
+	uint64_t	pc_el2;
+	uint64_t	cpsr_el2;
+
+	// EL1 (Sys) mode registers
+	uint64_t	lr_el1;
+	uint64_t	sp_el1;
+	uint64_t	pc_el1;
+	uint64_t	cpsr_el1;
 } __packed;
 
 // Let's use these wrappers to correclty expand macro parameters
