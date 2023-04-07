@@ -38,11 +38,11 @@ static MemoryManagementUnit* 	Guest_MMU = nullptr;		// MMU object pointer for gu
 void MMU_Init(void)
 {
 	// Create Saturn MMU
-	Saturn_MMU = new MemoryManagementUnit(ptable_l1, ptable_l2, ptable_l3);
+	Saturn_MMU = new MemoryManagementUnit(ptable_l1, ptable_l2, ptable_l3, MMapStage::Stage1);
 
 	// Initial value for VTCR_EL2:
-	//		  SH0_IS   | ORGN0_WBWA | IRGN0_WBWA | T0SZ = 48 bits
-	uint64_t vtcr = (3U << 12) | (1U << 10) | (1U << 8)  | (64 - 48);
+	//		  SH0_IS   | ORGN0_WBWA | IRGN0_WBWA |  SL0_L1   | T0SZ = 32 bits
+	uint64_t vtcr = (3U << 12) | (1U << 10) | (1U << 8)  | (1U << 6) | (64 - 32);
 	WriteArm64Reg(VTCR_EL2, vtcr);
 	
 	// Set IPA page tables to 0 value
@@ -70,12 +70,17 @@ void MMU_Init(void)
 	WriteArm64Reg(VTTBR_EL2, vttbr);
 
 	// Create guest IPA MMU
-	Guest_MMU = new MemoryManagementUnit(ipa_ptable_l1, ipa_ptable_l2, ipa_ptable_l3);
+	Guest_MMU = new MemoryManagementUnit(ipa_ptable_l1, ipa_ptable_l2, ipa_ptable_l3, MMapStage::Stage2);
 }
 
 IMemoryManagementUnit& MMU(void)
 {
 	return *Saturn_MMU;
+}
+
+IMemoryManagementUnit& IPA_MMU(void)
+{
+	return *Guest_MMU;
 }
 
 }; // namespace core
