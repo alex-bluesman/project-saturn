@@ -15,6 +15,11 @@
 #include <core/iconsole>
 
 namespace saturn {
+
+namespace core {
+	extern void VM_Start();
+};
+
 namespace apps {
 
 using namespace core;
@@ -115,9 +120,14 @@ bool CommandLine::Parse_Command(char* cmdInput)
 		Do_Help();
 	}
 	else
-	if (Str_Cmp(cmdName, "ta"))
+	if (Str_Cmp(cmdName, "test"))
 	{
 		Do_Test_Adapter(cmdArgs);
+	}
+	else
+	if (Str_Cmp(cmdName, "vm"))
+	{
+		Do_Vm(cmdArgs);
 	}
 	else
 	{
@@ -159,8 +169,9 @@ void CommandLine::Do_Help(void)
 {
 	Raw() << "Saturn Hypervisor console, please use the following commands:" << fmt::endl;
 	Raw() << "  help        - display usage information" << fmt::endl;
-	Raw() << "  ta          - test adapter to run smoke tests" << fmt::endl;
 	Raw() << "  quit        - stop console application" << fmt::endl;
+	Raw() << "  test        - test adapter to run smoke tests" << fmt::endl;
+	Raw() << "  vm          - virtual machine management" << fmt::endl;
 	Raw() << fmt::endl;
 }
 
@@ -178,7 +189,21 @@ void CommandLine::Do_Test_Adapter(const char* args)
 	}
 	else
 	{
-		Raw() << "error: 'ta' arguments missed, please use 'run' to execute smoke tests" << fmt::endl;
+		Raw() << "error: 'test' arguments missed, please use 'run' to execute smoke tests" << fmt::endl;
+	}
+
+	Raw() << fmt::endl;
+}
+
+void CommandLine::Do_Vm(const char* args)
+{
+	if (Str_Cmp(args, "start"))
+	{
+		VM_Start();
+	}
+	else
+	{
+		Raw() << "error: 'vm' arguments missed, please use 'start' to run guest VM" << fmt::endl;
 	}
 
 	Raw() << fmt::endl;

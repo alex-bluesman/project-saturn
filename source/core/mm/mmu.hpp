@@ -34,16 +34,22 @@ static const size_t _page_size = BlockSize::L3_Page;
 static const size_t _page_mask = (_page_size - 1);
 static const size_t _page_base = (~_page_mask);
 
-
 // 64-bit blob for LPAE table entry
 using tt_desc_t = uint64_t;
 
+// Memory mapping stages:
+enum MMapStage
+{
+	Stage1 = 0,	// Hyp mode
+	Stage2 = 2	// Sys mode (IPA)
+};
 
 class MemoryManagementUnit : public IMemoryManagementUnit {
 public:
 	MemoryManagementUnit(tt_desc_t (&Level1)[],
 			     tt_desc_t (&Level2)[][_l2_size],
-			     tt_desc_t (&Level3)[][_l3_size]
+			     tt_desc_t (&Level3)[][_l3_size],
+			     MMapStage Stage = MMapStage::Stage1
 			    );
 
 public:
@@ -62,6 +68,8 @@ private:
 	lpae_page_t*  Map_L3_Page(uint64_t virt_addr, uint64_t phys_addr, MMapType type);
 
 private:
+	MMapStage TStage;
+
 	tt_desc_t (&PTable1)[];
 	tt_desc_t (&PTable2)[][_l2_size];
 	tt_desc_t (&PTable3)[][_l3_size];

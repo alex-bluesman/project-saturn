@@ -32,9 +32,9 @@ void Exceptions_Init()
 	WriteArm64Reg(HCR_EL2, (1 << 5) | (1 << 4) | (1 << 3));
 }
 
-static void Print_Registers(struct AArch64_Regs* Regs)
+static void Print_Hyp_Frame(struct AArch64_Regs* Regs)
 {
-	Info() << fmt::endl << "AArch64 general purpose registers state:" << fmt::endl;
+	Info() << fmt::endl << "AArch64 general purpose registers EL2 state:" << fmt::endl;
 
 	Info() << fmt::fill << fmt::hex
 	      <<  "  x0  = 0x" << Regs->x0 << "  x1  = 0x" << Regs->x1
@@ -66,22 +66,51 @@ static void Print_Registers(struct AArch64_Regs* Regs)
 	      << fmt::endl;
 	Info() << fmt::fill << fmt::hex
 	      <<  "  x28 = 0x" << Regs->x28 << "  x29 = 0x" << Regs->x29
-	      <<  "  lr =  0x" << Regs->lr <<  "  sp =  0x" << Regs->sp
+	      <<  "  lr =  0x" << Regs->lr_el2 <<  "  sp =  0x" << Regs->sp_el2
 	      << fmt::endl;
 	Info() << fmt::fill << fmt::hex
-	      <<  "  pc  = 0x" << Regs->pc
+	      <<  "  pc  = 0x" << Regs->pc_el2
 	      << fmt::endl;
 
-	Info() << fmt::endl << "AArch64 control registers state:" << fmt::endl;
+	Info() << fmt::endl << "AArch64 control registers EL2 state:" << fmt::endl;
 
 	Info() << fmt::fill << fmt::hex
-	      <<  "  cpsr = 0x" << Regs->cpsr
+	      <<  "  cpsr = 0x" << Regs->cpsr_el2
+	      << fmt::endl;
+
+	uint64_t esr = ReadArm64Reg(ESR_EL2);
+	uint64_t far = ReadArm64Reg(FAR_EL2);
+	Info() << fmt::fill << fmt::hex
+	      <<  "  esr  = 0x" << esr << "  far = 0x" << far
 	      << fmt::endl;
 }
 
-static void Fault_Mode(struct AArch64_Regs* Regs)
+static void Print_Sys_Frame(struct AArch64_Regs* Regs)
 {
-	Print_Registers(Regs);
+	Info() << fmt::endl << "AArch64 general purpose registers EL1 state:" << fmt::endl;
+
+	Info() << fmt::fill << fmt::hex
+	      <<  "  lr =  0x" << Regs->lr_el1 <<  "  sp =  0x" << Regs->sp_el1
+	      << fmt::endl;
+	Info() << fmt::fill << fmt::hex
+	      <<  "  pc  = 0x" << Regs->pc_el1
+	      << fmt::endl;
+
+	Info() << fmt::endl << "AArch64 control registers EL1 state:" << fmt::endl;
+
+	Info() << fmt::fill << fmt::hex
+	      <<  "  cpsr  = 0x" << Regs->cpsr_el1
+	      << fmt::endl;
+}
+
+static void Fault_Mode(struct AArch64_Regs* Regs, bool SysMode)
+{
+	Print_Hyp_Frame(Regs);
+
+	if (SysMode)
+	{
+		Print_Sys_Frame(Regs);
+	}
 
 	Error() << fmt::endl << "Fault Mode: execution stopped" << fmt::endl;
 
@@ -99,19 +128,26 @@ void Sync_Abort(struct AArch64_Regs* Regs)
 {
 	core::Error() << "Exception: Synchronous Abort" << core::fmt::endl;
 
-	core::Fault_Mode(Regs);
+	core::Fault_Mode(Regs, false);
 }
 
 void System_Error(struct AArch64_Regs* Regs)
 {
 	core::Error() << "Exception: System Error" << core::fmt::endl;
 
-	core::Fault_Mode(Regs);
+	core::Fault_Mode(Regs, false);
 }
 
 void IRq_Handler(struct AArch64_Regs* Regs)
 {
 	core::IC().Handle_IRq();
+}
+
+void Guest_Error(struct AArch64_Regs* Regs, int type)
+{
+	core::Error() << "Exception: Guest Error(" << type << ")" << core::fmt::endl;
+
+	core::Fault_Mode(Regs, true);
 }
 
 } // extern "C"
