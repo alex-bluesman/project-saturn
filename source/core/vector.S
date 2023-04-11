@@ -215,23 +215,3 @@ Switch_EL12:
 	mov	x21, xzr
 
 	eret
-
-// ----------- TBD: temporary block to simulate guest -----------
-
-#define early_print(_s)			\
-	adr	x0, 98f;		\
-	bl	early_uart_print;	\
-	b	99f;			\
-98:					\
-	.asciz _s;			\
-	.align 2;			\
-99:
-
-	// While there is no guest image available, let's create a small
-	// loop to park EL1 execution flow
-	.align 3
-	.global Parking_Lot_EL1
-Parking_Lot_EL1:
-	mov	x23, #0x09000000	// UART base address
-	early_print("This message printed from EL1 mode!\r\n")
-	b	.
