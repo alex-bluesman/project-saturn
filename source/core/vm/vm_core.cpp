@@ -27,7 +27,11 @@ namespace core {
 
 IMemoryManagementUnit& IPA_MMU(void);
 
-static const uint64_t _guest_entry = 0x40000000;
+// TBD: introduce configuration interface to avoid hardcoding
+namespace config {
+	static const uint64_t _guest_pa = 0x41000000;
+	static const uint64_t _guest_ipa = 0x40000000;
+}; // namespace config
 
 void VM_Start(void)
 {
@@ -36,17 +40,15 @@ void VM_Start(void)
 	MSet<uint8_t>(&guestContext, sizeof(guestContext), 0);
 
 	guestContext.cpsr_el2 = 0x3c5;
-	guestContext.pc_el2 = reinterpret_cast<uint64_t>(Parking_Lot_EL1);
+	guestContext.pc_el2 = config::_guest_ipa;
 
-	guestContext.sp_el1 = _guest_entry + BlockSize::L3_Page * 256;	// Some temporary space beyond Saturn code
-	guestContext.pc_el1 = 0;
-	guestContext.cpsr_el1 = 0; // TBD: set something realistic
+	guestContext.sp_el1 = config::_guest_ipa + BlockSize::L3_Page;	// Some temporary location in VM address space
 
 	// The following registers to be checked:
 	// MPIDR_EL1, SCTLR_EL1
 	
 	IPA_MMU().MemoryMap(0x09000000, 0x09000000, BlockSize::L3_Page, MMapType::Device);
-	IPA_MMU().MemoryMap(0x40000000, 0x40000000, BlockSize::L2_Block, MMapType::Normal);
+	IPA_MMU().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
 
 	Switch_EL12(&guestContext);
 }
