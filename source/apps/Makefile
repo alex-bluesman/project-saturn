@@ -7,9 +7,7 @@ src := apps_main.cpp		\
        cmdline/cmdline.cpp	\
        ta/test_adapter.cpp
 
-objs := $(src:.c=.o)
-objs := $(objs:.cpp=.o)
-objs := $(objs:.S=.o)
+objs := $(src:.cpp=.o)
 deps := $(objs:.o=.d)
 
 CURRENT_DIR = "apps"
@@ -20,14 +18,6 @@ build: built_in.o
 built_in.o: $(objs)
 	@echo "[LD]		$(CURRENT_DIR)/$@"
 	@$(LD) $(LDFLAGS) -r -o $@ $^
-
-%.o: %.S
-	@echo "[AS]		$(CURRENT_DIR)/$@"
-	@$(CXX) $(AFLAGS) -c $< -o $@
-
-%.o: %.c
-	@echo "[CC]		$(CURRENT_DIR)/$@"
-	@$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp
 	@echo "[CXX]		$(CURRENT_DIR)/$@"

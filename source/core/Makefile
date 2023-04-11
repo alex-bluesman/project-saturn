@@ -18,8 +18,7 @@ src := main.cpp			\
        mm/mmu.cpp		\
        vm/vm_core.cpp
 
-objs := $(src:.c=.o)
-objs := $(objs:.cpp=.o)
+objs := $(src:.cpp=.o)
 objs := $(objs:.S=.o)
 deps := $(objs:.o=.d)
 
@@ -35,10 +34,6 @@ built_in.o: $(objs)
 %.o: %.S
 	@echo "[AS]		$(CURRENT_DIR)/$@"
 	@$(CXX) $(AFLAGS) -c $< -o $@
-
-%.o: %.c
-	@echo "[CC]		$(CURRENT_DIR)/$@"
-	@$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp
 	@echo "[CXX]		$(CURRENT_DIR)/$@"
