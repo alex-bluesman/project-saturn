@@ -17,7 +17,6 @@
 // x30 - Link register (LR)
 
 #include <asm/mmu.h>
-#include <asm/sys_ctrl.h>
 
 #define early_print(_s)		\
 adr	x0, 98f;		\
@@ -46,9 +45,9 @@ smp_entry:
 
 	mov	x24, #0
 	mrs	x0, mpidr_el1
-	tst	x0, MPIDR_UP
+	tst	x0, #(1 << 30)		// MPIDR_UP: 0 - processor is a part of cluster, 1 - uniprocessor system
 	bne	1f
-	ands	x24, x0, #MPIDR_CPUID
+	ands	x24, x0, #3		// MPIDR_CPUID mask
 
 	cbz	x24, 2f
 
