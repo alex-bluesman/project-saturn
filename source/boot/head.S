@@ -16,7 +16,7 @@
 // x24 - Current CPU id
 // x30 - Link register (LR)
 
-#include <asm/mmu.h>
+#include "mmu.inc"
 
 #define early_print(_s)		\
 adr	x0, 98f;		\
@@ -122,10 +122,16 @@ common_start:
 	// TBD
 	msr	spsel, #1
 
+	// NOTE: unfortunately we need to setup MMU here to be able to map data to different
+	//       spaces for each SMP core. If we switch to C++ without MMU, so the critical
+	//       objects like stack and heap could be collapsed.
+
 	// According to the linker script:
 	//
-	//  _start:   Code
-	//  +2MB  :   Data
+	//  start:   Code
+	//  +2MB :   Data CPU 1
+	//  +2MB :   Data CPU 2
+	//  ...
 	//
 	//       L0               L1             L2
 	//  -----------      -----------     -----------

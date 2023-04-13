@@ -14,7 +14,6 @@
 #include "ttable.hpp"
 
 // TBD: rework it
-#include <asm/mmu.h>
 #include <fault>
 
 namespace saturn {
