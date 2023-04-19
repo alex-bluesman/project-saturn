@@ -18,6 +18,10 @@
 // Saturn stack definition
 saturn::uint64_t boot_stack[_stack_size] __align(_page_size);
 
+// When switch to EL1 we don't need EL2 stack anymore except heap, which
+// could be allocated only on stack. So the following marker could be used
+// as SP to which we can reset the stack without damaging heap.
+saturn::uint64_t el2_stack_reset = 0;
 
 namespace saturn {
 
@@ -39,6 +43,9 @@ static void Main(void)
 
 	Heap Main_Heap;
 	Saturn_Heap = &Main_Heap;
+
+	// Set stack marker. Below this marker the stack could be reset during switch to EL1
+	asm volatile("mov %0, sp" : "=r" (el2_stack_reset));
 
 	// TBD: check that all allocations are successful
 
