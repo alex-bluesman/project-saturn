@@ -147,14 +147,18 @@ saturn_error:
 guest_sync:
 	Store_Hyp_Frame
 	Store_Sys_Frame
+
 	mov	x0, sp
-	mov	x1, #0
-	b	Guest_Error
+	bl	Guest_Abort
+
+	Restore_Sys_Frame
+	Restore_Hyp_Frame
+	eret
 
 guest_error:
 	Store_Hyp_Frame
+	Store_Sys_Frame
 	mov	x0, sp
-	mov	x1, #1
 	b	Guest_Error
 
 	.macro	entry	handler
@@ -206,11 +210,9 @@ Switch_EL12:
 	Restore_Hyp_Frame
 
 	// Reset hypervisor stack to initial value
-	ldr	x20, =boot_stack
-	ldr	x21, =STACK_SIZE
-	lsl	x21, x21, #3
-	add	x20, x20, x21
-	mov	sp, x20
+	ldr	x20, =el2_stack_reset
+	ldr	x21, [x20]
+	mov	sp, x21
 	mov	x20, xzr
 	mov	x21, xzr
 

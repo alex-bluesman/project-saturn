@@ -1,0 +1,88 @@
+// Copyright (C) 2023 Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
+//
+// Licensed under the MIT License (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+// http://opensource.org/licenses/MIT
+//
+// Unless required by applicable law or agreed to in writing, software distributed 
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// specific language governing permissions and limitations under the License.
+
+#pragma once
+
+#include <core/immu>
+#include <io>
+#include <list>
+
+namespace saturn {
+
+enum class AccessSize
+{
+	Byte = 0,
+	Halfword,
+	Word,
+	Doubleword
+};
+
+class IVirtIO
+{
+public:
+	virtual void Read(uint64_t addr, void* data, AccessSize size) = 0;
+	virtual void Write(uint64_t addr, void* data, AccessSize size) = 0;
+};
+
+// Forward declaration for API:
+class MTrap;
+
+// External API:
+namespace core {
+	void Register_Trap_Region(MTrap& mt);
+	void Remove_Trap_Region(MTrap& mt);
+}; // namespace core
+
+class MTrap {
+public:
+	struct IO_Region
+	{
+		uint64_t Base;
+		size_t Size;
+	};
+
+public:
+	MTrap(const IO_Region& io, IVirtIO& drv)
+		: Base(io.Base)
+		, Size(io.Size)
+		, VDrv(drv)
+	{
+		core::Register_Trap_Region(*this);
+	};
+
+	~MTrap()
+	{
+		core::Remove_Trap_Region(*this);
+	};
+
+public:
+	bool InRange(uint64_t addr, uint64_t size)
+	{
+		bool ret = false;
+		if ((addr >= Base) && ((addr + size) <= (Base + Size)))
+		{
+			ret = true;
+		}
+		
+		return ret;
+	}
+
+public:
+	IVirtIO&	VDrv;
+	list_head_t	List;
+
+private:
+	uint64_t	Base;
+	size_t		Size;
+};
+
+}; // namespace saturn

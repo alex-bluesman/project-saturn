@@ -16,6 +16,7 @@ src := main.cpp			\
        ic/gic/redistributor.cpp	\
        mm/mm_core.cpp		\
        mm/mmu.cpp		\
+       mm/trap.cpp		\
        vm/vm_core.cpp
 
 objs := $(src:.cpp=.o)

@@ -21,6 +21,9 @@ extern saturn::uint64_t saturn_vector;
 namespace saturn {
 namespace core {
 
+// External API:
+bool Do_Memory_Trap(struct AArch64_Regs*);
+
 void Exceptions_Init()
 {
 	Info() << "register AArch64 EL2 excpetions vector" << fmt::endl;
@@ -143,9 +146,23 @@ void IRq_Handler(struct AArch64_Regs* Regs)
 	core::IC().Handle_IRq();
 }
 
-void Guest_Error(struct AArch64_Regs* Regs, int type)
+void Guest_Abort(struct AArch64_Regs* Regs)
 {
-	core::Error() << "Exception: Guest Error(" << type << ")" << core::fmt::endl;
+	if (saturn::core::Do_Memory_Trap(Regs) == false)
+	{
+		core::Error() << "Exception: Guest Abort" << core::fmt::endl;
+		core::Fault_Mode(Regs, true);
+	}
+	else
+	{
+		// Trap handled, skip current EL1 instruction
+		Regs->pc_el2 += 4;
+	}
+}
+
+void Guest_Error(struct AArch64_Regs* Regs)
+{
+	core::Error() << "Exception: Guest Error" << core::fmt::endl;
 
 	core::Fault_Mode(Regs, true);
 }
