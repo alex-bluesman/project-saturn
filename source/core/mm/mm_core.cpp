@@ -35,6 +35,9 @@ static tt_desc_t ipa_ptable_l3[_l3_tables][_l3_size]	__align(_page_size);
 static MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer for hypervisor mapping
 static MemoryManagementUnit* 	Guest_MMU = nullptr;		// MMU object pointer for guest mapping
 
+// External API:
+void Memory_Trap_Init(void);
+
 void MMU_Init(void)
 {
 	// Create Saturn MMU
@@ -71,6 +74,9 @@ void MMU_Init(void)
 
 	// Create guest IPA MMU
 	Guest_MMU = new MemoryManagementUnit(ipa_ptable_l1, ipa_ptable_l2, ipa_ptable_l3, MMapStage::Stage2);
+
+	// Initialize guest memory traps
+	Memory_Trap_Init();
 }
 
 IMemoryManagementUnit& MMU(void)
