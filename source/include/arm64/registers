@@ -78,7 +78,7 @@ struct AArch64_Regs {
 	uint64_t	sp_el1;
 	uint64_t	pc_el1;
 	uint64_t	cpsr_el1;
-} __packed;
+};
 
 // Let's use these wrappers to correclty expand macro parameters
 // We need it to access GIC system registers
