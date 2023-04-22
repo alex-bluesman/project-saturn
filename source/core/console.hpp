@@ -22,6 +22,7 @@ namespace core {
 using namespace device;
 
 static const size_t _rx_size = 16;
+static const size_t _buffer_size = 1024;
 
 class Console : public IConsole
 {
@@ -72,6 +73,7 @@ private:
 	llevel consoleLevel;
 
 	RingBuffer<char, _rx_size> *rxBuffer;
+	RingBuffer<uint8_t, _buffer_size> *consoleBuffer;
 };
 
 }; // namespace core
