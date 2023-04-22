@@ -70,3 +70,13 @@ void operator delete(void* base, size_t size) noexcept
 {
 	return saturn::core::Allocator().Free(base);
 }
+
+void* operator new[](size_t size) noexcept
+{
+	return saturn::core::Allocator().Alloc(size);
+}
+
+void operator delete[](void* base) noexcept
+{
+	return saturn::core::Allocator().Free(base);
+}
