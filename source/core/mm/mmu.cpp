@@ -34,8 +34,6 @@ MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level1)[],
 	{
 		FreeMaskL3[i] = 0;
 	}
-
-	Info() << "memory management unit initialized" << fmt::endl;
 }
 
 uint16_t MemoryManagementUnit::FindFreeL3(void)
