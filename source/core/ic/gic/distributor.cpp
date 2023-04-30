@@ -13,9 +13,9 @@
 #include "distributor.hpp"
 
 #include <arm64/registers>
+#include <bsp/platform>
 #include <core/icpu>
 #include <fault>
-#include <platform/qemuarm64>
 
 namespace saturn {
 namespace core {

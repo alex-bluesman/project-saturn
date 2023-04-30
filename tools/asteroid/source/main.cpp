@@ -50,7 +50,7 @@ void Main()
 }; // namespace asteroid
 
 extern "C" {
-	uint64_t boot_stack[STACK_SIZE];
+	uint64_t boot_stack[_stack_size];
 
 	void Asteroid_Init()
 	{
