@@ -15,6 +15,14 @@
 #include <basetypes>
 
 namespace saturn {
+
+namespace device {
+
+// Forward declaration:
+class UartDevice;
+
+}; // namespace device
+
 namespace core {
 
 enum class fmt {
@@ -53,6 +61,7 @@ public:
 public:
 	virtual bool UartRX(char sym) = 0;
 	virtual char GetChar(void) = 0;
+	virtual void RegisterUart(device::UartDevice&) = 0;
 
 public:
 	virtual void SetLevel(llevel level) = 0;
@@ -82,7 +91,6 @@ static inline IConsole& Raw(void)
 {
 	return ConIO() << llevel::none;
 }
-
 
 }; // namespace core
 }; // namespace saturn

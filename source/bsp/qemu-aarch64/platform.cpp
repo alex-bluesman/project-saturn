@@ -10,21 +10,20 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#pragma once
+#include "uart_pl011.hpp"
 
-#include <basetypes>
+#include <core/iconsole>
 
 namespace saturn {
 namespace device {
 
-#define _gic_dist_addr		{ 0x08000000, 0x00010000 }
-#define _gic_cpu_addr		{ 0x08010000, 0x00010000 }
-#define _gic_v2m_addr		{ 0x08020000, 0x00010000 }
-#define _gic_hyp_addr		{ 0x08030000, 0x00010000 }
-#define _gic_vcpu_addr		{ 0x08040000, 0x00010000 }
-#define _gic_redist_addr	{ 0x080a0000, 0x00f60000 }
+static device::UartPl011* Uart = nullptr;
 
-#define _uart_addr	{ 0x09000000, 0x00001000 }
+void BSP_Init(void)
+{
+	Uart = new device::UartPl011();
+	core::ConIO().RegisterUart(*Uart);
+}
 
 }; // namespace device
 }; // namespace saturn

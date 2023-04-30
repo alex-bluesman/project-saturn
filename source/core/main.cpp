@@ -11,8 +11,9 @@
 // specific language governing permissions and limitations under the License.
 
 #include "main.hpp"
-#include "uart_pl011.hpp"
 
+#include <bsp/platform>
+#include <core/iconsole>
 #include <system>
 
 // Saturn stack definition
@@ -57,9 +58,6 @@ static void Main(void)
 	// Initialize hypervisor and guest MMUs
 	MMU_Init();
 
-	device::UartPl011& Uart = *new device::UartPl011();
-	Saturn_Console->RegisterUart(Uart);
-
 	// Set default log level
 	Saturn_Console->SetLevel(llevel::info);
 
@@ -76,11 +74,11 @@ static void Main(void)
 
 	Info() << fmt::endl << "<core initialization complete>" << fmt::endl;
 
+	// Setup platform BSP
+	device::BSP_Init();
+
 	// Finally we are ready to receive interrupts
 	IC().Local_IRq_Enable();
-
-	// Now we are ready to receive data from console
-	Uart.EnableRx();
 
 	Start_VM_Manager();
 

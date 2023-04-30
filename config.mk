@@ -1,9 +1,13 @@
-MACHINE := qemuarm64
+MACHINE := qemu-aarch64
 
-SATURN_CONFIG = -DSTACK_SIZE=1024
+SATURN_CONFIG := -DSTACK_SIZE=1024
 
-AFLAGS += $(SATURN_CONFIG) -I$(TOP_DIR)/source/include
-CFLAGS += $(SATURN_CONFIG) -I$(TOP_DIR)/source/include -fno-rtti -fno-exceptions
+INCLUDES := -I$(TOP_DIR)/source/include			\
+	    -I$(TOP_DIR)/source/bsp/$(MACHINE)/include
+
+ASMFLAGS := $(SATURN_CONFIG) $(INCLUDES)
+CXXFLAGS := $(SATURN_CONFIG) $(INCLUDES) -MMD -MP -fno-rtti -fno-exceptions
+LDFLAGS  :=
 
 
 # Toolchain parameters

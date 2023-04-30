@@ -13,8 +13,8 @@
 #include "mmap.hpp"
 #include "uart_pl011.hpp"
 
+#include <bsp/platform>
 #include <core/iconsole>
-#include <platform/qemuarm64>
 #include <system>
 
 namespace saturn {

@@ -1,9 +1,6 @@
 include $(TOP_DIR)/config.mk
 
-AFLAGS +=
-CFLAGS += -MMD -MP
-
-src := head.S early_uart_pl011.S
+src := head.S
 
 objs := $(src:.S=.o)
 deps := $(objs:.o=.d)
@@ -19,7 +16,7 @@ built_in.o: $(objs)
 
 %.o: %.S
 	@echo "[AS]		$(CURRENT_DIR)/$@"
-	@$(CXX) $(AFLAGS) -c $< -o $@
+	@$(CXX) $(ASMFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
