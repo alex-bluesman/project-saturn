@@ -28,30 +28,6 @@ static const uint32_t _pl011_int = 33;	// PL011 UART interrupt in QEMU virt mach
 // TBD: workaround to let INT handler access driver instance from outside
 UartPl011* UartPl011::Self = nullptr;
 
-enum Pl011_Regs {
-	TDR	= 0x00,		// Data register
-	FR	= 0x18,		// Flag register
-	IBRD	= 0x24,		// Integer baud rate register
-	FBRD	= 0x28,		// Fractional baud rate register
-	LCR_H	= 0x2c,		// Line control register
-	CR	= 0x30,		// Control register
-	RIS	= 0x3c,		// Raw interrupt status register
-	IMSC	= 0x38,		// Interrupt mask register
-	ICR	= 0x44		// Interrupt clear register
-};
-
-enum Reg_CR {
-	Enable	= 1 << 0	// UART enable bit
-};
-
-enum Reg_FR {
-	Busy	= 1 << 3	// UART busy bit
-};
-
-enum Pl011_INT {
-	RX	= 1 << 4	// RX interrupt
-};
-
 UartPl011::UartPl011()
 {
 	UartPl011::Self = this;
