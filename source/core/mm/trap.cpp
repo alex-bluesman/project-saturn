@@ -152,13 +152,15 @@ bool Do_Memory_Trap(struct AArch64_Regs* Regs)
 
 			if (mt != nullptr)
 			{
+				uint64_t offset = far - mt->GetBase();
+
 				if (wnr == 0)
 				{
-					mt->VDrv.Read(far, reg, static_cast<AccessSize>(sas));
+					mt->VDrv.Read(offset, reg, static_cast<AccessSize>(sas));
 				}
 				else
 				{
-					mt->VDrv.Write(far, reg, static_cast<AccessSize>(sas));
+					mt->VDrv.Write(offset, reg, static_cast<AccessSize>(sas));
 				}
 
 				ret = true;
