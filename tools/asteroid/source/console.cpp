@@ -33,7 +33,7 @@ Console::Console()
 	rxBuffer = new RingBuffer<char, _rx_size>(rb::full_ignore);
 }
 
-void Console::RegisterUart(UartDevice& u)
+void Console::RegisterUart(IUartDevice& u)
 {
 	uart = &u;
 	isActive = true;

@@ -38,7 +38,7 @@ Console::Console()
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 }
 
-void Console::RegisterUart(UartDevice& u)
+void Console::RegisterUart(IUartDevice& u)
 {
 	uint8_t c;
 
