@@ -22,8 +22,7 @@ class MMap;
 
 namespace device {
 
-
-class UartPl011 : public UartDevice
+class UartPl011 : public IUartDevice
 {
 public:
 	UartPl011();

@@ -12,17 +12,9 @@
 
 #pragma once
 
-#include <basetypes>
+#include <dev/uart>
 
 namespace saturn {
-
-namespace device {
-
-// Forward declaration:
-class UartDevice;
-
-}; // namespace device
-
 namespace core {
 
 enum class fmt {
@@ -40,7 +32,7 @@ enum class llevel {
 	none	= 3
 };
 
-class IConsole
+class IConsole : public device::IUartConsole
 {
 public:
 	virtual IConsole& operator<<(fmt format) = 0;
@@ -59,9 +51,7 @@ public:
 	virtual IConsole& operator<<(size_t num) = 0;
 
 public:
-	virtual bool UartRX(char sym) = 0;
 	virtual char GetChar(void) = 0;
-	virtual void RegisterUart(device::UartDevice&) = 0;
 
 public:
 	virtual void SetLevel(llevel level) = 0;
