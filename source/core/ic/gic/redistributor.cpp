@@ -13,8 +13,8 @@
 #include "redistributor.hpp"
 
 #include <arm64/registers>
+#include <bsp/platform>
 #include <core/iconsole>
-#include <platform/qemuarm64>
 
 namespace saturn {
 namespace core {

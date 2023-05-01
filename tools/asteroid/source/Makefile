@@ -1,8 +1,5 @@
 include $(TOP_DIR)/config.mk
 
-AFLAGS +=
-CFLAGS += -MMD -MP
-
 src := head.S			\
        main.cpp			\
        console.cpp		\
@@ -24,11 +21,11 @@ built_in.o: $(objs)
 
 %.o: %.S
 	@echo "[AS]		$(CURRENT_DIR)/$@"
-	@$(CXX) $(AFLAGS) -c $< -o $@
+	@$(CXX) $(ASMFLAGS) -c $< -o $@
 
 %.o: %.cpp
 	@echo "[CXX]		$(CURRENT_DIR)/$@"
-	@$(CXX) $(CFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:

@@ -1,13 +1,9 @@
 include $(TOP_DIR)/config.mk
 
-AFLAGS +=
-CFLAGS += -MMD -MP
-
 src := main.cpp			\
        heap.cpp			\
        console.cpp		\
        cpu.cpp			\
-       uart_pl011.cpp		\
        exceptions.cpp		\
        vector.S			\
        ic/ic_core.cpp		\
@@ -34,11 +30,11 @@ built_in.o: $(objs)
 
 %.o: %.S
 	@echo "[AS]		$(CURRENT_DIR)/$@"
-	@$(CXX) $(AFLAGS) -c $< -o $@
+	@$(CXX) $(ASMFLAGS) -c $< -o $@
 
 %.o: %.cpp
 	@echo "[CXX]		$(CURRENT_DIR)/$@"
-	@$(CXX) $(CFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:

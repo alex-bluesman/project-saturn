@@ -26,13 +26,32 @@ template<typename T, size_t S>
 class RingBuffer
 {
 public:
-	RingBuffer(rb policy = rb::full_ignore)
+	RingBuffer(rb policy = rb::full_ignore, T* buf = nullptr)
 		: Head(0)
 		, Tail(0)
 		, Size(S)
 		, Fill(0)
 		, Policy(policy)
-	{}
+	{
+		if (nullptr == buf)
+		{
+			Buffer = new T[S];
+			Extern = true;
+		}
+		else
+		{
+			Buffer = buf;
+			Extern = false;
+		}
+	}
+
+	~RingBuffer()
+	{
+		if (!Extern)
+		{
+			delete [] Buffer;
+		}
+	}
 
 public:
 	bool	In(T element)
@@ -82,7 +101,9 @@ public:
 	}
 
 private:
-	T	Buffer[S];
+	T*	Buffer;
+	bool	Extern;
+
 	size_t	Head;
 	size_t	Tail;
 	size_t	Size;

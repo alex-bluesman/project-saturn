@@ -12,10 +12,10 @@
 
 #include "uart_pl011.hpp"
 
+#include <bsp/platform>
 #include <core/iconsole>
 #include <core/iirq>
 #include <mmap>
-#include <platform/qemuarm64>
 #include <system>
 
 namespace saturn {
@@ -28,36 +28,38 @@ static const uint32_t _pl011_int = 33;	// PL011 UART interrupt in QEMU virt mach
 // TBD: workaround to let INT handler access driver instance from outside
 UartPl011* UartPl011::Self = nullptr;
 
-enum Pl011_Regs {
-	TDR	= 0x00,		// Data register
-	FR	= 0x18,		// Flag register
-	IBRD	= 0x24,		// Integer baud rate register
-	FBRD	= 0x28,		// Fractional baud rate register
-	LCR_H	= 0x2c,		// Line control register
-	CR	= 0x30,		// Control register
-	RIS	= 0x3c,		// Raw interrupt status register
-	IMSC	= 0x38,		// Interrupt mask register
-	ICR	= 0x44		// Interrupt clear register
-};
-
-enum Reg_CR {
-	Enable	= 1 << 0	// UART enable bit
-};
-
-enum Reg_FR {
-	Busy	= 1 << 3	// UART busy bit
-};
-
-enum Pl011_INT {
-	RX	= 1 << 4	// RX interrupt
-};
-
 UartPl011::UartPl011()
 {
 	UartPl011::Self = this;
 
 	// TBD: destroy the allocated data
 	Regs = new MMap(MMap::IO_Region(_uart_addr));
+
+	// Register INT handler and enable respective interrupt
+	IC().Register_IRq_Handler(_pl011_int, &UartIRqHandler);
+
+	// Disable UART
+	uint32_t cr = Regs->Read<uint32_t>(Pl011_Regs::CR);
+	cr &= ~Reg_CR::Enable;
+	Regs->Write<uint32_t>(Pl011_Regs::CR, cr);
+
+	// Disable FIFO to flush the buffer
+	uint32_t lcr_h = Regs->Read<uint32_t>(Pl011_Regs::LCR_H);
+	lcr_h &= ~(1 << 4);
+	Regs->Write<uint32_t>(Pl011_Regs::LCR_H, lcr_h);
+
+	// Mask all the interrupts to properly initialize
+	Regs->Write<uint32_t>(Pl011_Regs::IMSC, 0);
+
+	// Enable FIFO
+	lcr_h |= (1 << 4);
+	Regs->Write<uint32_t>(Pl011_Regs::LCR_H, lcr_h);
+
+	// Enable RX interrupts
+	Regs->Write<uint32_t>(Pl011_Regs::IMSC, Pl011_INT::RX);
+
+	// Enable UART back
+	Regs->Write<uint32_t>(Pl011_Regs::CR, cr | Reg_CR::Enable);
 }
 
 //UartPl011::~UartPl011()
@@ -105,35 +107,6 @@ void UartPl011::HandleIRq(void)
 void UartPl011::UartIRqHandler(uint32_t id)
 {
 	Self->HandleIRq();
-}
-
-void UartPl011::EnableRx(void)
-{
-	// Register INT handler and enable respective interrupt
-	IC().Register_IRq_Handler(_pl011_int, &UartIRqHandler);
-
-	// Disable UART
-	uint32_t cr = Regs->Read<uint32_t>(Pl011_Regs::CR);
-	cr &= ~Reg_CR::Enable;
-	Regs->Write<uint32_t>(Pl011_Regs::CR, cr);
-
-	// Disable FIFO to flush the buffer
-	uint32_t lcr_h = Regs->Read<uint32_t>(Pl011_Regs::LCR_H);
-	lcr_h &= ~(1 << 4);
-	Regs->Write<uint32_t>(Pl011_Regs::LCR_H, lcr_h);
-
-	// Mask all the interrupts to properly initialize
-	Regs->Write<uint32_t>(Pl011_Regs::IMSC, 0);
-
-	// Enable FIFO
-	lcr_h |= (1 << 4);
-	Regs->Write<uint32_t>(Pl011_Regs::LCR_H, lcr_h);
-
-	// Enable RX interrupts
-	Regs->Write<uint32_t>(Pl011_Regs::IMSC, Pl011_INT::RX);
-
-	// Enable UART back
-	Regs->Write<uint32_t>(Pl011_Regs::CR, cr | Reg_CR::Enable);
 }
 
 }; // namespace device

@@ -13,6 +13,7 @@
 #include "mmu.hpp"
 
 #include <arm64/registers>
+#include <core/iconsole>
 
 using namespace saturn::core;
 
@@ -77,6 +78,8 @@ void MMU_Init(void)
 
 	// Initialize guest memory traps
 	Memory_Trap_Init();
+
+	Info() << "memory management is initialized" << fmt::endl;
 }
 
 IMemoryManagementUnit& MMU(void)

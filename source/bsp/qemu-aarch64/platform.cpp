@@ -10,26 +10,24 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#pragma once
+#include "uart_pl011.hpp"
+#include "virt_uart_pl011.hpp"
 
-#include <basetypes>
+#include <core/iconsole>
 
 namespace saturn {
 namespace device {
 
-class IUartDevice
-{
-public:
-	virtual void Rx(uint8_t *buff, size_t len) = 0;
-	virtual void Tx(uint8_t *buff, size_t len) = 0;
-};
+static device::UartPl011* Uart = nullptr;
+static device::VirtUartPl011* VirtUart = nullptr;
 
-class IUartConsole
+void BSP_Init(void)
 {
-public:
-	virtual bool UartRX(char sym) = 0;
-	virtual void RegisterUart(IUartDevice&) = 0;
-};
+	Uart = new device::UartPl011();
+	core::ConIO().RegisterUart(*Uart);
+
+	VirtUart = new device::VirtUartPl011();
+}
 
 }; // namespace device
 }; // namespace saturn

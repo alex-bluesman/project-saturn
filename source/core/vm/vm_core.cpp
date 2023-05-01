@@ -47,7 +47,6 @@ void VM_Start(void)
 	// The following registers to be checked:
 	// MPIDR_EL1, SCTLR_EL1
 	
-	IPA_MMU().MemoryMap(0x09000000, 0x09000000, BlockSize::L3_Page, MMapType::Device);
 	IPA_MMU().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
 
 	Switch_EL12(&guestContext);

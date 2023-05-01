@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <basetypes>
+#include <dev/uart>
 
 namespace saturn {
 namespace core {
@@ -32,7 +32,7 @@ enum class llevel {
 	none	= 3
 };
 
-class IConsole
+class IConsole : public device::IUartConsole
 {
 public:
 	virtual IConsole& operator<<(fmt format) = 0;
@@ -51,7 +51,6 @@ public:
 	virtual IConsole& operator<<(size_t num) = 0;
 
 public:
-	virtual bool UartRX(char sym) = 0;
 	virtual char GetChar(void) = 0;
 
 public:
@@ -82,7 +81,6 @@ static inline IConsole& Raw(void)
 {
 	return ConIO() << llevel::none;
 }
-
 
 }; // namespace core
 }; // namespace saturn

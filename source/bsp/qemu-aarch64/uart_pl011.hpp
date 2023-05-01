@@ -10,23 +10,18 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "mmap.hpp"
-#include "uart_pl011.hpp"
+#pragma once
 
-#include <bsp/platform>
-#include <core/iconsole>
-#include <system>
+#include <dev/uart>
 
 namespace saturn {
+
+// Forward declaration
+class MMap;
+
 namespace device {
 
-using namespace core;
-
-static const uint32_t _pl011_int = 33;	// PL011 UART interrupt in QEMU virt machine
-
-// TBD: workaround to let INT handler access driver instance from outside
-UartPl011* UartPl011::Self = nullptr;
-
+// PL011 registers table:
 enum Pl011_Regs {
 	TDR	= 0x00,		// Data register
 	FR	= 0x18,		// Flag register
@@ -51,47 +46,25 @@ enum Pl011_INT {
 	RX	= 1 << 4	// RX interrupt
 };
 
-UartPl011::UartPl011()
+class UartPl011 : public IUartDevice
 {
-	UartPl011::Self = this;
+public:
+	UartPl011();
+//	~UartPl011();
 
-	// TBD: destroy the allocated data
-	Regs = new MMap(MMap::IO_Region(_uart_addr));
-}
+public:
+	void Rx(uint8_t *buff, size_t len);
+	void Tx(uint8_t *buff, size_t len);
+	void HandleIRq(void);
 
-//UartPl011::~UartPl011()
-//{
-//}
+private:
+	// INT handling routine
+	static void UartIRqHandler(uint32_t);
+	static UartPl011* Self;
 
-void UartPl011::Rx(uint8_t *buff, size_t len)
-{}
-
-void UartPl011::Tx(uint8_t *buff, size_t len)
-{
-	while (len--)
-	{
-		// Wait for UART to be ready
-		while (!(Regs->Read<uint32_t>(Pl011_Regs::FR) && Reg_FR::Busy));
-
-		Regs->Write<uint8_t>(Pl011_Regs::TDR, *buff++);
-	}
-}
-
-void UartPl011::HandleIRq(void)
-{
-	// TBD: enalbe when Asteroid INT handling implemented
-}
-
-// Static method to register within IC. It forwards the handling to Pl011 object via static pointer.
-void UartPl011::UartIRqHandler(uint32_t id)
-{
-	// TBD: enalbe when Asteroid INT handling implemented
-}
-
-void UartPl011::EnableRx(void)
-{
-	// TBD: enalbe when Asteroid INT handling implemented
-}
+private:
+	MMap* Regs;
+};
 
 }; // namespace device
 }; // namespace saturn

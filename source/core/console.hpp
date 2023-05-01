@@ -13,7 +13,6 @@
 #pragma once
 
 #include <core/iconsole>
-#include <dev/uart>
 #include <ringbuffer>
 
 namespace saturn {
@@ -22,13 +21,10 @@ namespace core {
 using namespace device;
 
 static const size_t _rx_size = 16;
+static const size_t _buffer_size = 1024;
 
 class Console : public IConsole
 {
-//public:
-//	void * operator new(long unsigned int size);
-//	void operator delete(void * p, unsigned long){};
-
 public:
 	Console();
 
@@ -47,7 +43,7 @@ public:
 	Console& operator<<(size_t num);
 
 public:
-	void RegisterUart(UartDevice&);
+	void RegisterUart(IUartDevice&);
 	bool UartRX(char sym);
 	char GetChar(void);
 
@@ -66,12 +62,13 @@ private:
 	bool isFill;
 	bool isLevel;
 
-	UartDevice* uart;
+	IUartDevice* uart;
 
 	llevel currentMsgLevel;
 	llevel consoleLevel;
 
 	RingBuffer<char, _rx_size> *rxBuffer;
+	RingBuffer<uint8_t, _buffer_size> *consoleBuffer;
 };
 
 }; // namespace core

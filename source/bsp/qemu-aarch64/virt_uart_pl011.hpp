@@ -12,36 +12,23 @@
 
 #pragma once
 
-#include <dev/uart>
-
+#include <mtrap>
 
 namespace saturn {
-
-// Forward declaration
-class MMap;
-
 namespace device {
 
-
-class UartPl011 : public UartDevice
+class VirtUartPl011 : public IVirtIO
 {
 public:
-	UartPl011();
-//	~UartPl011();
+	VirtUartPl011();
+	~VirtUartPl011();
 
 public:
-	void Rx(uint8_t *buff, size_t len);
-	void Tx(uint8_t *buff, size_t len);
-	void EnableRx(void);
-	void HandleIRq(void);
+	void Read(uint64_t addr, void* data, AccessSize size);
+	void Write(uint64_t addr, void* data, AccessSize size);
 
 private:
-	// INT handling routine
-	static void UartIRqHandler(uint32_t);
-	static UartPl011* Self;
-
-private:
-	MMap* Regs;
+	MTrap* mTrap;
 };
 
 }; // namespace device
