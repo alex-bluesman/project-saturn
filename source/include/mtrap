@@ -76,6 +76,11 @@ public:
 		return ret;
 	}
 
+	uint64_t GetBase()
+	{
+		return Base;
+	}
+
 public:
 	IVirtIO&	VDrv;
 	list_head_t	List;

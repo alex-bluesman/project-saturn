@@ -13,20 +13,54 @@
 #include "uart_pl011.hpp"
 #include "virt_uart_pl011.hpp"
 
+#include <bsp/platform>
 #include <core/iconsole>
 
 namespace saturn {
 namespace device {
 
-static device::UartPl011* Uart = nullptr;
-static device::VirtUartPl011* VirtUart = nullptr;
+using namespace core;
 
-void BSP_Init(void)
+VirtUartPl011::VirtUartPl011()
 {
-	Uart = new device::UartPl011();
-	core::ConIO().RegisterUart(*Uart);
+	mTrap = new MTrap(_uart_addr, *this);
+}
 
-	VirtUart = new device::VirtUartPl011();
+VirtUartPl011::~VirtUartPl011()
+{}
+
+void VirtUartPl011::Read(uint64_t reg, void* data, AccessSize size)
+{
+	switch (reg)
+	{
+	case Pl011_Regs::FR:
+		{
+			// Notify that UART is always ready
+			uint8_t* fr = static_cast<uint8_t*>(data);
+			fr = 0;
+			break;
+		}
+	default:
+		// TBD: ignore others for now
+		break;
+	}
+}
+
+void VirtUartPl011::Write(uint64_t reg, void* data, AccessSize size)
+{
+	switch (reg)
+	{
+	case Pl011_Regs::TDR:
+		{
+			// Send char to TX
+			char c = *static_cast<char *>(data);
+			Raw() << c;
+			break;
+		}
+	default:
+		// TBD: ignore others for now
+		break;
+	}
 }
 
 }; // namespace device

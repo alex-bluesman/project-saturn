@@ -2,7 +2,8 @@ include $(TOP_DIR)/config.mk
 
 src := platform.cpp		\
        early_uart_pl011.S	\
-       uart_pl011.cpp
+       uart_pl011.cpp		\
+       virt_uart_pl011.cpp
 
 objs := $(src:.cpp=.o)
 objs := $(objs:.S=.o)
