@@ -27,4 +27,16 @@ static inline void MSet(void* addr, size_t n, T val)
 	}
 }
 
+template<typename T>
+static inline void MCopy(void* src, void* dst, size_t n)
+{
+	volatile T* s = static_cast<T*>(src);
+	volatile T* d = static_cast<T*>(dst);
+
+	while (n--)
+	{
+		*d++ = *s++;
+	}
+}
+
 }; // namespace saturn
