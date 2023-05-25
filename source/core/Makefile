@@ -1,19 +1,20 @@
 include $(TOP_DIR)/config.mk
 
-src := main.cpp			\
-       heap.cpp			\
-       console.cpp		\
-       cpu.cpp			\
-       exceptions.cpp		\
-       vector.S			\
-       ic/ic_core.cpp		\
-       ic/gic/cpu_interface.cpp	\
-       ic/gic/distributor.cpp	\
-       ic/gic/redistributor.cpp	\
-       mm/mm_core.cpp		\
-       mm/mmu.cpp		\
-       mm/trap.cpp		\
-       vm/vm_core.cpp
+src := main.cpp				\
+       heap.cpp				\
+       console.cpp			\
+       cpu.cpp				\
+       exceptions.cpp			\
+       vector.S				\
+       ic/ic_core.cpp			\
+       ic/gic/cpu_interface.cpp		\
+       ic/gic/distributor.cpp		\
+       ic/gic/redistributor.cpp		\
+       ic/gic/virt_distributor.cpp	\
+       mm/mm_core.cpp			\
+       mm/mmu.cpp			\
+       mm/trap.cpp			\
+       vmm/vm_manager.cpp
 
 objs := $(src:.cpp=.o)
 objs := $(objs:.S=.o)
@@ -44,7 +45,7 @@ clean:
 	@-rm -f ic/gic/*.o ic/gic/*.d ic/*.o ic/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/mm/*.o"
 	@-rm -f mm/*.o mm/*.d
-	@echo "[CLEAN]		$(CURRENT_DIR)/vm/*.o"
-	@-rm -f vm/*.o vm/*.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/vmm/*.o"
+	@-rm -f vmm/*.o vmm/*.d
 
 -include .depend
