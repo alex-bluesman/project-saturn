@@ -10,22 +10,22 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "vm_manager.hpp"
+
 #include <arm64/registers>
 #include <core/iconsole>
+#include <core/iic>
 #include <core/immu>
-#include <mset>
+#include <mops>
 
 extern saturn::uint64_t* boot_stack;
 
 extern "C" {
 	extern void Switch_EL12(struct saturn::AArch64_Regs*);
-	extern void Parking_Lot_EL1();
 }
 
 namespace saturn {
 namespace core {
-
-IMemoryManagementUnit& IPA_MMU(void);
 
 // TBD: introduce configuration interface to avoid hardcoding
 namespace config {
@@ -33,35 +33,8 @@ namespace config {
 	static const uint64_t _guest_ipa = 0x40000000;
 }; // namespace config
 
-void VM_Start(void)
-{
-	struct AArch64_Regs guestContext;
-
-	MSet<uint8_t>(&guestContext, sizeof(guestContext), 0);
-
-	guestContext.cpsr_el2 = 0x3c5;
-	guestContext.pc_el2 = config::_guest_ipa;
-
-	guestContext.sp_el1 = config::_guest_ipa + BlockSize::L3_Page;	// Some temporary location in VM address space
-
-	// The following registers to be checked:
-	// MPIDR_EL1, SCTLR_EL1
-	
-	IPA_MMU().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
-
-	Switch_EL12(&guestContext);
-}
-
-static void Stop_VM(void)
-{
-	struct AArch64_Regs saturnContext;
-
-	// TBD: fill properly context to return to Saturn
-	
-	Switch_EL12(&saturnContext);
-}
-
-void Start_VM_Manager(void)
+VM_Manager::VM_Manager()
+	: vmState(vm_state::stopped)
 {
 	// Enable Stage-2 translation for EL1&0 and use AArch64 mode
 	uint64_t hcr = ReadArm64Reg(HCR_EL2);
@@ -69,6 +42,45 @@ void Start_VM_Manager(void)
 	WriteArm64Reg(HCR_EL2, hcr);
 
 	Info() << "VM manager started" << fmt::endl;
+}
+
+VM_Manager::~VM_Manager()
+{}
+
+void VM_Manager::Start_VM()
+{
+	struct AArch64_Regs guestContext;
+
+	MSet<uint8_t>(&guestContext, sizeof(guestContext), 0);
+
+	guestContext.cpsr_el2 = 0x3c5;
+	guestContext.pc_el2 = config::_guest_ipa;
+	guestContext.sp_el1 = config::_guest_ipa + BlockSize::L3_Page;	// Some temporary location in VM address space
+
+	// The following registers to be checked:
+	// MPIDR_EL1, SCTLR_EL1
+	
+	iMMU_VM().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
+	iMMU_VM().MemoryMap(0x08010000, 0x08040000, 0x00010000, MMapType::Device);
+	iIC().Start_Virt_IC();
+
+	vmState = vm_state::running;
+	Switch_EL12(&guestContext);
+}
+
+void VM_Manager::Stop_VM()
+{
+	struct AArch64_Regs saturnContext;
+
+	// TBD: fill properly context to return to Saturn
+	
+	vmState = vm_state::stopped;
+	Switch_EL12(&saturnContext);
+}
+
+vm_state VM_Manager::Get_VM_State()
+{
+	return vmState;
 }
 
 }; // namespace core
