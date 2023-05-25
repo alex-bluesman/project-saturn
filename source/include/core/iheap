@@ -26,7 +26,7 @@ public:
 };
 
 // Access to heap
-IHeap& Allocator(void);
+IHeap& iHeap(void);
 
 }; // namespace core
 }; // namespace saturn
