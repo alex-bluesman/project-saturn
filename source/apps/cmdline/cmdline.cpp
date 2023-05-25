@@ -13,13 +13,9 @@
 #include "cmdline.hpp"
 
 #include <core/iconsole>
+#include <core/ivmm>
 
 namespace saturn {
-
-namespace core {
-	extern void VM_Start();
-};
-
 namespace apps {
 
 using namespace core;
@@ -49,7 +45,7 @@ void CommandLine::Start_Loop(void)
 
 		do
 		{
-			char c = ConIO().GetChar();
+			char c = iConsole().GetChar(iomode::sync);
 
 			switch (c)
 			{
@@ -199,7 +195,7 @@ void CommandLine::Do_Vm(const char* args)
 {
 	if (Str_Cmp(args, "start"))
 	{
-		VM_Start();
+		iVMM().Start_VM();
 	}
 	else
 	{
