@@ -17,7 +17,7 @@
 namespace saturn {
 namespace core {
 
-class CpuInfo : public ICpuInfo
+class CpuInfo : public ICPU
 {
 public:
 	CpuInfo();

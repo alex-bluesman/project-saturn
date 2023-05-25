@@ -32,13 +32,13 @@ public:
 		, Type(type)
 	{
 		// one-to-one mapping
-		core::MMU().MemoryMap(Base, Base, Size, Type);
+		core::iMMU().MemoryMap(Base, Base, Size, Type);
 	};
 
 	~MMap()
 	{
 		// TBD: check return value
-		core::MMU().MemoryUnmap(Base, Size);
+		core::iMMU().MemoryUnmap(Base, Size);
 	};
 
 public:

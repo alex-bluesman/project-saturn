@@ -12,19 +12,32 @@
 
 #pragma once
 
-#include <basetypes>
+#include "distributor.hpp"
+
+#include <mtrap>
 
 namespace saturn {
 namespace core {
 
-class ICPU
+// Forward declaration:
+class GicDistributor;
+
+class VirtGicDistributor : public IVirtIO
 {
 public:
-	virtual uint64_t Id() = 0;	
-};
+	VirtGicDistributor(GicDistributor&);
+	~VirtGicDistributor();
 
-// Access to CPU interface
-ICPU& iCPU(void);
+public:
+	void Read(uint64_t addr, void* data, AccessSize size);
+	void Write(uint64_t addr, void* data, AccessSize size);
+	bool IRq_Enabled(uint32_t nr);
+
+private:
+	MTrap* mTrap;
+	GicDistributor& gicDist;
+	GicDistRegs& vGicState;
+};
 
 }; // namespace core
 }; // namespace saturn

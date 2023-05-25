@@ -10,21 +10,25 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#pragma once
-
-#include <basetypes>
+#include <core/ivmm>
 
 namespace saturn {
 namespace core {
 
-class ICPU
+class VM_Manager : public IVirtualMachineManager
 {
 public:
-	virtual uint64_t Id() = 0;	
-};
+	VM_Manager();
+	~VM_Manager();
 
-// Access to CPU interface
-ICPU& iCPU(void);
+public:
+	void Start_VM();
+	void Stop_VM();
+	vm_state Get_VM_State();
+
+private:
+	vm_state	vmState;
+};
 
 }; // namespace core
 }; // namespace saturn

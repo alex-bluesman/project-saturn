@@ -57,14 +57,23 @@ bool Console::UartRX(char sym)
 	return rxBuffer->In(sym);
 }
 
-
-char Console::GetChar(void)
+char Console::GetChar(iomode mode)
 {
 	char c;
 
-	while (rxBuffer->Out(c) == false)
+	if (mode == iomode::sync)
 	{
-		asm volatile("wfi" : : : "memory");
+		while (rxBuffer->Out(c) == false)
+		{
+			asm volatile("wfi" : : : "memory");
+		}
+	}
+	else
+	{
+		if (rxBuffer->Out(c) == false)
+		{
+			c = 0;
+		}
 	}
 
 	return c;

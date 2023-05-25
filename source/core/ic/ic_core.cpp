@@ -16,6 +16,10 @@
 #include "gic/distributor.hpp"
 #include "gic/redistributor.hpp"
 
+#include "gic/virt_distributor.hpp"
+
+#include <arm64/registers>
+#include <core/ivmm>
 #include <fault>
 
 namespace saturn {
@@ -132,6 +136,46 @@ void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
 void IC_Core::Default_Handler(uint32_t id)
 {
 	Error() << "warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
+}
+
+void IC_Core::Start_Virt_IC()
+{
+	// TBD: sanity checks and use return code
+	vGicDist = new VirtGicDistributor(*GicDist);
+
+	uint64_t hcr = ReadICCReg(ICH_HCR_EL2);
+	hcr |= 1;	// En bit
+	WriteICCReg(ICH_HCR_EL2, hcr);
+	
+	WriteICCReg(ICH_VMCR_EL2, (1 << 9) | (1 << 1));	// VEOIM (Maintenance Int), VENG1 (Group 1 Ints)
+}
+
+void IC_Core::Stop_Virt_IC()
+{
+	delete vGicDist;
+	vGicDist = nullptr;
+}
+
+void IC_Core::Inject_VM_IRq(uint32_t nr)
+{
+	if (iVMM().Get_VM_State() == vm_state::running)
+	{
+		if (nr < 32)
+		{
+			// TBD: handle SGI and PPI via virtual redistributor
+		}
+		else
+		{
+			if (vGicDist->IRq_Enabled(nr))
+			{
+				// Inject the IRq
+				uint64_t lr = (1UL << 62) | (1UL << 60) | (0x80UL << 48) | nr;	// State (Pending), Group (1), Priority (0x80)
+				WriteICCReg(ICH_LR0_EL2, lr);
+
+				// TBD: register maintenance interrupt handler and clean up LR
+			}
+		}
+	}
 }
 
 }; // namespace core

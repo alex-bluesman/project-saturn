@@ -45,7 +45,7 @@ public:
 public:
 	void RegisterUart(IUartDevice&);
 	bool UartRX(char sym);
-	char GetChar(void);
+	char GetChar(iomode mode);
 
 public:
 	void SetLevel(llevel);

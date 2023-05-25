@@ -17,6 +17,7 @@
 #include "heap.hpp"
 #include "ic/ic_core.hpp"
 #include "mm/mmu.hpp"
+#include "vmm/vm_manager.hpp"
 
 namespace saturn {
 namespace core {
@@ -26,7 +27,7 @@ static Heap* 			Saturn_Heap = nullptr;		// Heap object pointer to implement oper
 static Console* 		Saturn_Console = nullptr;	// Console pointer for trace and logging
 static IC_Core*			Saturn_IC = nullptr;		// Interrupt controller pointer for IRq management
 static CpuInfo*			Local_CPU = nullptr;		// CPU information pointer
-
+static VM_Manager*		Saturn_VMM = nullptr;		// Virtual machine manager subsystem
 
 // Access to global core components:
 //  - Console			(Log)
@@ -34,24 +35,29 @@ static CpuInfo*			Local_CPU = nullptr;		// CPU information pointer
 //  - Memory Management		(MMU)
 //  - Heap			(Allocator)
 
-IConsole& ConIO(void)
+IConsole& iConsole(void)
 {
 	return *Saturn_Console;
 }
 
-IIC& IC(void)
+IIC& iIC(void)
 {
 	return *Saturn_IC;
 }
 
-IHeap& Allocator(void)
+IHeap& iHeap(void)
 {
 	return *Saturn_Heap;
 }
 
-ICpuInfo& This_CPU(void)
+ICPU& iCPU(void)
 {
 	return *Local_CPU;
+}
+
+IVirtualMachineManager& iVMM(void)
+{
+	return *Saturn_VMM;
 }
 
 }; // namespace core
@@ -63,20 +69,20 @@ using namespace saturn;
 
 void* operator new(size_t size) noexcept
 {
-	return saturn::core::Allocator().Alloc(size);
+	return saturn::core::iHeap().Alloc(size);
 }
 
 void operator delete(void* base, size_t size) noexcept
 {
-	return saturn::core::Allocator().Free(base);
+	return saturn::core::iHeap().Free(base);
 }
 
 void* operator new[](size_t size) noexcept
 {
-	return saturn::core::Allocator().Alloc(size);
+	return saturn::core::iHeap().Alloc(size);
 }
 
 void operator delete[](void* base) noexcept
 {
-	return saturn::core::Allocator().Free(base);
+	return saturn::core::iHeap().Free(base);
 }

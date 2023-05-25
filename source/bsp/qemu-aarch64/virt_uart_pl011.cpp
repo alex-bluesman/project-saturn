@@ -33,11 +33,19 @@ void VirtUartPl011::Read(uint64_t reg, void* data, AccessSize size)
 {
 	switch (reg)
 	{
+	case Pl011_Regs::TDR:
+		{
+			// Get char from console buffer
+			char c = iConsole().GetChar(iomode::async);
+			uint8_t* tdr = static_cast<uint8_t*>(data);
+			*tdr = c;
+			break;
+		}
 	case Pl011_Regs::FR:
 		{
 			// Notify that UART is always ready
 			uint8_t* fr = static_cast<uint8_t*>(data);
-			fr = 0;
+			*fr = 0;
 			break;
 		}
 	default:

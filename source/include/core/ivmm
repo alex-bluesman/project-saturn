@@ -17,14 +17,23 @@
 namespace saturn {
 namespace core {
 
-class ICPU
+enum class vm_state
+{
+	running,
+	stopped,
+	error
+};
+
+class IVirtualMachineManager
 {
 public:
-	virtual uint64_t Id() = 0;	
+	virtual void Start_VM() = 0;
+	virtual void Stop_VM() = 0;
+	virtual vm_state Get_VM_State() = 0;
 };
 
 // Access to CPU interface
-ICPU& iCPU(void);
+IVirtualMachineManager& iVMM(void);
 
 }; // namespace core
 }; // namespace saturn

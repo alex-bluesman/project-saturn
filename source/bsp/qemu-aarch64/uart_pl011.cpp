@@ -14,7 +14,7 @@
 
 #include <bsp/platform>
 #include <core/iconsole>
-#include <core/iirq>
+#include <core/iic>
 #include <mmap>
 #include <system>
 
@@ -36,7 +36,7 @@ UartPl011::UartPl011()
 	Regs = new MMap(MMap::IO_Region(_uart_addr));
 
 	// Register INT handler and enable respective interrupt
-	IC().Register_IRq_Handler(_pl011_int, &UartIRqHandler);
+	iIC().Register_IRq_Handler(_pl011_int, &UartIRqHandler);
 
 	// Disable UART
 	uint32_t cr = Regs->Read<uint32_t>(Pl011_Regs::CR);
@@ -93,7 +93,7 @@ void UartPl011::HandleIRq(void)
 
 		uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
 
-		ConIO().UartRX(static_cast<char>(data));
+		iConsole().UartRX(static_cast<char>(data));
 	}
 
 	if (status != 0)

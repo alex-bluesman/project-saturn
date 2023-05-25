@@ -24,7 +24,7 @@ static device::VirtUartPl011* VirtUart = nullptr;
 void BSP_Init(void)
 {
 	Uart = new device::UartPl011();
-	core::ConIO().RegisterUart(*Uart);
+	core::iConsole().RegisterUart(*Uart);
 
 	VirtUart = new device::VirtUartPl011();
 }

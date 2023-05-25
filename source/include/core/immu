@@ -38,7 +38,8 @@ public:
 };
 
 // Access to memory management unit
-IMemoryManagementUnit& MMU(void);
+IMemoryManagementUnit& iMMU(void);
+IMemoryManagementUnit& iMMU_VM(void);
 
 }; // namespace core
 }; // namespace saturn

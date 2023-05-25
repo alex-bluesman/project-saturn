@@ -32,6 +32,11 @@ enum class llevel {
 	none	= 3
 };
 
+enum class iomode {
+	sync,
+	async
+};
+
 class IConsole : public device::IUartConsole
 {
 public:
@@ -51,35 +56,35 @@ public:
 	virtual IConsole& operator<<(size_t num) = 0;
 
 public:
-	virtual char GetChar(void) = 0;
+	virtual char GetChar(iomode mode) = 0;
 
 public:
 	virtual void SetLevel(llevel level) = 0;
 };
 
 // Access to console
-IConsole& ConIO(void);
+IConsole& iConsole(void);
 
 // Helper wrappers to use different log levels
 static inline IConsole& Log(void)
 {
-	return ConIO() << llevel::log;
+	return iConsole() << llevel::log;
 }
 
 static inline IConsole& Info(void)
 {
-	return ConIO() << llevel::info;
+	return iConsole() << llevel::info;
 }
 
 static inline IConsole& Error(void)
 {
-	return ConIO() << llevel::error;
+	return iConsole() << llevel::error;
 }
 
 // Could be usefull for certain case, for example command line application
 static inline IConsole& Raw(void)
 {
-	return ConIO() << llevel::none;
+	return iConsole() << llevel::none;
 }
 
 }; // namespace core
