@@ -47,7 +47,7 @@ bool Console::UartRX(char sym)
 }
 
 
-char Console::GetChar(void)
+char Console::GetChar(iomode mode)
 {
 	char c;
 

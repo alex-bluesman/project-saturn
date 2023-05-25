@@ -19,7 +19,7 @@ namespace core {
 static Console*	Asteroid_Console = nullptr;	// Console pointer for trace and logging
 static Heap*	Asteroid_Heap = nullptr;	// Heap object pointer to implement operators new/delete
 
-IConsole& ConIO(void)
+IConsole& iConsole(void)
 {
 	return *Asteroid_Console;
 }
