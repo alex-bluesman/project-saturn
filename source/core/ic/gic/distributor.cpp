@@ -16,29 +16,23 @@
 #include <bsp/platform>
 #include <core/icpu>
 #include <fault>
+#include <mops>
 
 namespace saturn {
 namespace core {
 
-enum Dist_Regs
-{
-	CTRL		= 0x0000,
-	TYPER		= 0x0004,
-	IGROUPR		= 0x0080,
-	ISENABLER	= 0x0100,
-	ICENABLER	= 0x0180,
-	ISACTIVER	= 0x0300,
-	ICACTIVER	= 0x0380,
-	IPRIORITYR	= 0x0400,
-	ICFGR		= 0x0c00,
-	IROUTER		= 0x6100,
-	PIDR2		= 0xffe8,
-};
+// Default boot state of GIC distributor. This state will be used
+// as initial for virtual GIC
+static GicDistRegs _GicDistBootState;
 
 GicDistributor::GicDistributor()
+	: bootState(_GicDistBootState)
 {
 	// TBD: check return value
 	Regs = new MMap(MMap::IO_Region(_gic_dist_addr));
+
+	// Save the GIC state before we modify it
+	Save_State();
 
 	uint32_t ArchRev = (Regs->Read<uint32_t>(Dist_Regs::PIDR2) >> 4) & 0x0f;
 	Info() << "  /found GICv" << ArchRev << fmt::endl;
@@ -92,7 +86,7 @@ GicDistributor::GicDistributor()
 	Regs->Write<uint32_t>(Dist_Regs::CTRL, (1 << 4) | (1 << 1) | (1 << 0)); // EnableGrp0 | EnableGrp1NS | ARE_NS
 
 	// TBD: let's assume that we have only 16 cores maximum, so the only Aff0 is used
-	uint32_t affinity = This_CPU().Id() & 0x7;
+	uint32_t affinity = iCPU().Id() & 0x7;
 
 	// Disable broadcast rounting
 	affinity &= ~(1 << 31);
@@ -142,6 +136,44 @@ void GicDistributor::RW_Complete(void)
 {
 	// TBD: should we introduce timeout?
 	while (Regs->Read<uint32_t>(Dist_Regs::CTRL) & (1 << 31)); // Check RWP bit (Register Write Pending)
+}
+
+void GicDistributor::Save_State(void)
+{
+	bootState.ctrl = Regs->Read<uint32_t>(Dist_Regs::CTRL);
+	bootState.typer = Regs->Read<uint32_t>(Dist_Regs::TYPER);
+
+	for (size_t i = 0; i < linesNumber / 32; i++)
+	{
+		bootState.igroupr[i] = Regs->Read<uint32_t>(Dist_Regs::IGROUPR + i * 4);
+		bootState.isenabler[i] = Regs->Read<uint32_t>(Dist_Regs::ISENABLER + i * 4);
+		bootState.icenabler[i] = Regs->Read<uint32_t>(Dist_Regs::ICENABLER + i * 4);
+		bootState.isactiver[i] = Regs->Read<uint32_t>(Dist_Regs::ISACTIVER + i * 4);
+		bootState.icactiver[i] = Regs->Read<uint32_t>(Dist_Regs::ICACTIVER + i * 4);
+	}
+
+
+	for (size_t i = 0; i < linesNumber / 4; i++)
+	{
+		bootState.ipriorityr[i] = Regs->Read<uint32_t>(Dist_Regs::IPRIORITYR + i * 4);
+	}
+
+	for (size_t i = 0; i < linesNumber / 16; i++)
+	{
+		bootState.icfgr[i] = Regs->Read<uint32_t>(Dist_Regs::ICFGR + i * 4);
+	}
+
+	for (size_t i = 0; i < linesNumber; i++)
+	{
+		bootState.irouter[i] = Regs->Read<uint32_t>(Dist_Regs::IROUTER + i * 8);
+	}
+
+	bootState.pidr2 = Regs->Read<uint32_t>(Dist_Regs::PIDR2);
+}
+
+void GicDistributor::Load_State(GicDistRegs& regs)
+{
+	MCopy<uint8_t>(&bootState, &regs, sizeof(struct GicDistRegs));
 }
 
 }; // namespace core
