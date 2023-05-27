@@ -13,6 +13,7 @@
 #pragma once
 
 #include <core/iic>
+#include <core/ivirtic>
 
 namespace saturn {
 namespace core {
@@ -23,7 +24,7 @@ class GicDistributor;
 class GicRedistributor;
 class VirtGicDistributor;
 
-class IC_Core : public IIC
+class IC_Core : public IIC, public IVirtIC
 {
 public:
 	IC_Core();
@@ -41,6 +42,10 @@ public:
 	void Start_Virt_IC();
 	void Stop_Virt_IC();
 	void Inject_VM_IRq(uint32_t);
+
+private:
+	// Maintenance INT handling routine
+	static void MaintenanceIRqHandler(uint32_t);
 
 private:
 	CpuInterface* CpuIface;

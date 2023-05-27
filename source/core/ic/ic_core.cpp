@@ -28,6 +28,8 @@ namespace core {
 // According to the GICv3 Architecture Specification, the maximal SPI number could be 1020.
 // TBD: due to we do not support ESPIs and LPIs, let's limit table size to 1020.
 static const size_t _maxIRq = 1020;
+// Arm strongly recomments that maintenance interrupts are configured to use INTID 25.
+static const uint32_t _maintenance_int = 25;
 
 // TBD: think about better allocation for this data block
 static IRqHandler _IRq_Table[_maxIRq];
@@ -148,6 +150,8 @@ void IC_Core::Start_Virt_IC()
 	WriteICCReg(ICH_HCR_EL2, hcr);
 	
 	WriteICCReg(ICH_VMCR_EL2, (1 << 9) | (1 << 1));	// VEOIM (Maintenance Int), VENG1 (Group 1 Ints)
+
+	iIC().Register_IRq_Handler(_maintenance_int, &MaintenanceIRqHandler);
 }
 
 void IC_Core::Stop_Virt_IC()
@@ -176,6 +180,12 @@ void IC_Core::Inject_VM_IRq(uint32_t nr)
 			}
 		}
 	}
+}
+
+void IC_Core::MaintenanceIRqHandler(uint32_t id)
+{
+	Info() << "irq: maintenance INT" << fmt::endl;
+	WriteICCReg(ICH_LR0_EL2, 0);
 }
 
 }; // namespace core

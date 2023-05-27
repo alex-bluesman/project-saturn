@@ -45,6 +45,11 @@ IIC& iIC(void)
 	return *Saturn_IC;
 }
 
+IVirtIC& iVirtIC(void)
+{
+	return *Saturn_IC;
+}
+
 IHeap& iHeap(void)
 {
 	return *Saturn_Heap;

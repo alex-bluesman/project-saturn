@@ -15,6 +15,7 @@
 #include <bsp/platform>
 #include <core/iconsole>
 #include <core/iic>
+#include <core/ivirtic>
 
 namespace saturn {
 namespace core {
@@ -166,7 +167,7 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 			vGicState.isenabler[index] = *val;
 			
 			// TBD: only for testing purpose
-			iIC().Inject_VM_IRq(32);
+			iVirtIC().Inject_VM_IRq(32);
 			// -----------------------------
 
 			break;
