@@ -9,9 +9,11 @@ enough to run two Linux images in parallel.
 Project scope (not fully implemented yet):
 
  - The Saturn core
- - QEMU AArch64 reference BSP (a part of core for today)
+ - Reference BSP:
+   * QEMU AArch64 (source/bsp)
  - Configuration tools (not available for today)
- - Guest images and respective source projects (not available for today)
+ - Guest images and respective source projects:
+   * Asteroid micro kernel (tools/asteroid)
 
 Additionally could be provided on request:
  - Requirements specification
