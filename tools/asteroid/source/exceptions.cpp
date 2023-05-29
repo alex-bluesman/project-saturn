@@ -12,6 +12,7 @@
 
 #include <arm64/registers>
 #include <core/iconsole>
+#include <core/iic>
 
 extern saturn::uint64_t asteroid_vector;
 
@@ -92,9 +93,7 @@ using namespace saturn;
 
 void IRq_Handler(struct AArch64_Regs* Regs)
 {
-	core::Info() << "IRQ" << core::fmt::endl;
-
-	for (;;);
+	core::iIC().Handle_IRq();
 }
 
 void Sync_Abort(struct AArch64_Regs* Regs)

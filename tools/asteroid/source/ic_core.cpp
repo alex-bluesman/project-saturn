@@ -12,18 +12,10 @@
 
 #include "ic_core.hpp"
 
-#include "gic/cpu_interface.hpp"
-#include "gic/distributor.hpp"
-#include "gic/redistributor.hpp"
-
-#include "gic/virt_distributor.hpp"
-
 #include <arm64/registers>
-#include <core/ivmm>
 #include <fault>
 
-namespace saturn {
-namespace core {
+namespace asteroid {
 
 // According to the GICv3 Architecture Specification, the maximal SPI number could be 1020.
 // TBD: due to we do not support ESPIs and LPIs, let's limit table size to 1020.
@@ -31,8 +23,25 @@ static const size_t _maxIRq = 1020;
 // Arm strongly recomments that maintenance interrupts are configured to use INTID 25.
 static const uint32_t _maintenance_int = 25;
 
+static const uint64_t _gic_dist_addr = 0x08000000;
+
 // TBD: think about better allocation for this data block
 static IRqHandler _IRq_Table[_maxIRq];
+
+enum Dist_Regs
+{
+	CTRL		= 0x0000,
+	TYPER		= 0x0004,
+	IGROUPR		= 0x0080,
+	ISENABLER	= 0x0100,
+	ICENABLER	= 0x0180,
+	ISACTIVER	= 0x0300,
+	ICACTIVER	= 0x0380,
+	IPRIORITYR	= 0x0400,
+	ICFGR		= 0x0c00,
+	IROUTER		= 0x6100,
+	PIDR2		= 0xffe8,
+};
 
 IC_Core::IC_Core()
 	: IRq_Table(_IRq_Table)
@@ -51,29 +60,25 @@ IC_Core::IC_Core()
 	//      GIC dist should be initialized only for primary CPU.
 	Info() << "create interrupts infrastructure" << fmt::endl;
 
-
-	GicDist = new GicDistributor();
-	if (nullptr == GicDist)
-	{
-		Fault("GIC distributor allocation failed");
-	}
-
-	GicRedist = new GicRedistributor();
-	if (nullptr == GicRedist)
-	{
-		Fault("GIC redistributor allocation failed");
-	}
-
-	CpuIface = new CpuInterface();
-	if (nullptr == CpuIface)
-	{
-		Fault("GIC CPU interface allocation failed");
-	}
-
-	for (int i = 0; i < GicDist->Get_Max_Lines(); i++)
+	for (int i = 0; i < _maxIRq; i++)
 	{
 		IRq_Table[i] = Default_Handler;
 	}
+
+	// Single priority group
+	WriteICCReg(ICC_BPR1_EL1, 0);
+
+	// Set priority mask to handle all interrupts
+	WriteICCReg(ICC_PMR_EL1, 0xff);
+
+	// EOIR provides priority drop functionality only.
+	// DIR provides interrupt deactivation functionality.
+	WriteICCReg(ICC_CTRL_EL1, 1 << 1);
+	
+	// Enable Group1 interrupts
+	WriteICCReg(ICC_IGRPEN1_EL1, 1);
+
+	Info() << "GIC initialization complete" << fmt::endl;
 }
 
 void IC_Core::Local_IRq_Disable()
@@ -98,7 +103,7 @@ void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
 {
 	if (id < 16)
 	{
-		GicDist->Send_SGI(targetList, id);
+		// TBD
 	}
 	else
 	{
@@ -108,41 +113,33 @@ void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
 
 void IC_Core::Handle_IRq()
 {
-	uint32_t nr = CpuIface->Read_Ack_IRq();
+	uint32_t id = ReadICCReg(ICC_IAR1_EL1) & 0xffffff;
 
-	if (iVMM().Guest_IRq(nr) == false)
+	if (id < _maxIRq)
 	{
-		if (nr < GicDist->Get_Max_Lines())
-		{
-			IRq_Table[nr](nr);
-		}
-		else
-		{
-			Error() << "error: received INT with ID (" << nr << ") out of supported range" << fmt::endl;
-		}
-
-		CpuIface->EOI(nr);
+		IRq_Table[id](id);
 	}
 	else
 	{
-		// IRq assigned to the guest, so just route it
-		Inject_VM_IRq(nr);
+		Error() << "error: received INT with ID (" << id << ") out of supported range" << fmt::endl;
 	}
+
+	// Decrease the priority for interrupt
+	WriteICCReg(ICC_EOIR1_EL1, id);
+	// Deactivate the interrupt
+	WriteICCReg(ICC_DIR_EL1, id);
 }
 
 void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
 {
-	if (id < GicDist->Get_Max_Lines())
+	if (id < _maxIRq)
 	{
 		IRq_Table[id] = handler;
 
-		if (id < 32)
+		if (id >= 32)
 		{
-			GicRedist->IRq_Enable(id);
-		}
-		else
-		{
-			GicDist->IRq_Enable(id);
+			// Set INT enable
+			Write<uint32_t>(_gic_dist_addr + Dist_Regs::ISENABLER + (id / 32) * 4, 1 << (id % 32));
 		}
 	}
 	else
@@ -156,53 +153,4 @@ void IC_Core::Default_Handler(uint32_t id)
 	Error() << "warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
 }
 
-void IC_Core::Start_Virt_IC()
-{
-	// TBD: sanity checks and use return code
-	vGicDist = new VirtGicDistributor(*GicDist);
-
-	iIC().Register_IRq_Handler(_maintenance_int, &MaintenanceIRqHandler);
-
-	uint64_t hcr = (1 << 0);			// En bit
-	WriteICCReg(ICH_HCR_EL2, hcr);
-	
-	WriteICCReg(ICH_VMCR_EL2, (1 << 9) | (1 << 1));	// VEOIM (EOI drop only), VENG1 (Group 1 INTs)
-}
-
-void IC_Core::Stop_Virt_IC()
-{
-	delete vGicDist;
-	vGicDist = nullptr;
-}
-
-void IC_Core::Inject_VM_IRq(uint32_t nr)
-{
-	// TBD: there are several things to be implemented:
-	//	1. Properly manage used LR registers
-	//	2. Distinguish software and hardware interrupts
-	if (iVMM().Get_VM_State() == vm_state::running)
-	{
-		if (nr < 32)
-		{
-			// TBD: handle SGI and PPI via virtual redistributor
-		}
-		else
-		{
-			if (vGicDist->IRq_Enabled(nr))
-			{
-				// Inject the IRq
-				uint64_t lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;	// State (Pending), Group (1), Priority (0x80)
-				WriteICCReg(ICH_LR0_EL2, lr);
-			}
-		}
-	}
-}
-
-void IC_Core::MaintenanceIRqHandler(uint32_t id)
-{
-	// TBD: see comment to Inject_VM_IRq function
-	WriteICCReg(ICH_LR0_EL2, 0);
-}
-
-}; // namespace core
-}; // namespace saturn
+}; // namespace asteroid

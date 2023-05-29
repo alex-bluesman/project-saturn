@@ -12,28 +12,21 @@
 
 #pragma once
 
-#include <mtrap>
+#include <basetypes>
 
 namespace saturn {
-namespace device {
+namespace core {
 
-// Forward declaration:
-class UartPl011;
-
-class VirtUartPl011 : public IVirtIO
+class IVirtIC
 {
 public:
-	VirtUartPl011(UartPl011&);
-	~VirtUartPl011();
-
-public:
-	void Read(uint64_t addr, void* data, AccessSize size);
-	void Write(uint64_t addr, void* data, AccessSize size);
-
-private:
-	MTrap* mTrap;
-	UartPl011& hwUart;
+	virtual void Start_Virt_IC() = 0;
+	virtual void Stop_Virt_IC() = 0;
+	virtual void Inject_VM_IRq(uint32_t) = 0;
 };
 
-}; // namespace device
+// Access to interrupt controller
+IVirtIC& iVirtIC(void);
+
+}; // namespace core
 }; // namespace saturn

@@ -26,6 +26,9 @@ public:
 	void Stop_VM();
 	vm_state Get_VM_State();
 
+public:
+	bool Guest_IRq(uint32_t nr);
+
 private:
 	vm_state	vmState;
 };

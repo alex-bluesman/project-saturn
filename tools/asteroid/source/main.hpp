@@ -12,44 +12,54 @@
 
 #include "console.hpp"
 #include "heap.hpp"
+#include "ic_core.hpp"
+
+using namespace asteroid;
 
 namespace saturn {
 namespace core {
 
 static Console*	Asteroid_Console = nullptr;	// Console pointer for trace and logging
 static Heap*	Asteroid_Heap = nullptr;	// Heap object pointer to implement operators new/delete
+static IC_Core* Asteroid_IC = nullptr;		// Interrupt controller pointer
 
 IConsole& iConsole(void)
 {
 	return *Asteroid_Console;
 }
 
-IHeap& Allocator(void)
+IHeap& iHeap(void)
 {
 	return *Asteroid_Heap;
+}
+
+IIC& iIC(void)
+{
+	return *Asteroid_IC;
 }
 
 }; // namespace core
 }; // namespace saturn
 
 using namespace saturn;
+using namespace saturn::core;
 
 void* operator new(size_t size) noexcept
 {
-	return saturn::core::Allocator().Alloc(size);
+	return iHeap().Alloc(size);
 }
 
 void operator delete(void* base, size_t size) noexcept
 {
-	return saturn::core::Allocator().Free(base);
+	return iHeap().Free(base);
 }
 
 void* operator new[](size_t size) noexcept
 {
-	return saturn::core::Allocator().Alloc(size);
+	return iHeap().Alloc(size);
 }
 
 void operator delete[](void* base) noexcept
 {
-       return saturn::core::Allocator().Free(base);
+       return iHeap().Free(base);
 }

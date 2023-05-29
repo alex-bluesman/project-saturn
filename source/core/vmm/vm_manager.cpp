@@ -14,7 +14,7 @@
 
 #include <arm64/registers>
 #include <core/iconsole>
-#include <core/iic>
+#include <core/ivirtic>
 #include <core/immu>
 #include <mops>
 
@@ -62,7 +62,7 @@ void VM_Manager::Start_VM()
 	
 	iMMU_VM().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
 	iMMU_VM().MemoryMap(0x08010000, 0x08040000, 0x00010000, MMapType::Device);
-	iIC().Start_Virt_IC();
+	iVirtIC().Start_Virt_IC();
 
 	vmState = vm_state::running;
 	Switch_EL12(&guestContext);
@@ -70,6 +70,8 @@ void VM_Manager::Start_VM()
 
 void VM_Manager::Stop_VM()
 {
+	iVirtIC().Stop_Virt_IC();
+
 	struct AArch64_Regs saturnContext;
 
 	// TBD: fill properly context to return to Saturn
@@ -81,6 +83,12 @@ void VM_Manager::Stop_VM()
 vm_state VM_Manager::Get_VM_State()
 {
 	return vmState;
+}
+
+bool VM_Manager::Guest_IRq(uint32_t nr)
+{
+	// TBD: use real configuration
+	return false;
 }
 
 }; // namespace core

@@ -27,11 +27,6 @@ public:
 	virtual void Send_SGI(uint32_t, uint8_t) = 0;
 	virtual void Handle_IRq() = 0;
 	virtual void Register_IRq_Handler(uint32_t, IRqHandler) = 0;
-
-public:
-	virtual void Start_Virt_IC() = 0;
-	virtual void Stop_Virt_IC() = 0;
-	virtual void Inject_VM_IRq(uint32_t) = 0;
 };
 
 // Access to interrupt controller

@@ -15,6 +15,7 @@
 
 #include <bsp/platform>
 #include <core/iconsole>
+#include <core/iic>
 #include <system>
 
 namespace saturn {
@@ -57,6 +58,9 @@ UartPl011::UartPl011()
 
 	// TBD: destroy the allocated data
 	Regs = new MMap(MMap::IO_Region(_uart_addr));
+
+	// Register INT handler and enable respective interrupt
+	iIC().Register_IRq_Handler(_pl011_int, &UartIRqHandler);
 }
 
 //UartPl011::~UartPl011()
@@ -79,13 +83,26 @@ void UartPl011::Tx(uint8_t *buff, size_t len)
 
 void UartPl011::HandleIRq(void)
 {
-	// TBD: enalbe when Asteroid INT handling implemented
+	uint32_t status = Regs->Read<uint32_t>(Pl011_Regs::RIS);
+
+	// Clear pending interrupts and process the status
+	Regs->Write<uint32_t>(Pl011_Regs::ICR, status);
+
+	if (status & Pl011_INT::RX)
+	{
+		status &= ~Pl011_INT::RX;
+
+		uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
+
+		//iConsole().UartRX(static_cast<char>(data));
+		Raw() << static_cast<char>(data);
+	}
 }
 
 // Static method to register within IC. It forwards the handling to Pl011 object via static pointer.
 void UartPl011::UartIRqHandler(uint32_t id)
 {
-	// TBD: enalbe when Asteroid INT handling implemented
+	Self->HandleIRq();
 }
 
 void UartPl011::EnableRx(void)
