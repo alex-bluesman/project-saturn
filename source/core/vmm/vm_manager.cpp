@@ -85,5 +85,11 @@ vm_state VM_Manager::Get_VM_State()
 	return vmState;
 }
 
+bool VM_Manager::Guest_IRq(uint32_t nr)
+{
+	// TBD: use real configuration
+	return false;
+}
+
 }; // namespace core
 }; // namespace saturn

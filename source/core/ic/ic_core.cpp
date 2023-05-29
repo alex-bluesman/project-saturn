@@ -108,18 +108,26 @@ void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
 
 void IC_Core::Handle_IRq()
 {
-	uint32_t id = CpuIface->Read_Ack_IRq();
+	uint32_t nr = CpuIface->Read_Ack_IRq();
 
-	if (id < GicDist->Get_Max_Lines())
+	if (iVMM().Guest_IRq(nr) == false)
 	{
-		IRq_Table[id](id);
+		if (nr < GicDist->Get_Max_Lines())
+		{
+			IRq_Table[nr](nr);
+		}
+		else
+		{
+			Error() << "error: received INT with ID (" << nr << ") out of supported range" << fmt::endl;
+		}
+
+		CpuIface->EOI(nr);
 	}
 	else
 	{
-		Error() << "error: received INT with ID (" << id << ") out of supported range" << fmt::endl;
+		// IRq assigned to the guest, so just route it
+		Inject_VM_IRq(nr);
 	}
-
-	CpuIface->EOI(id);
 }
 
 void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
@@ -127,7 +135,15 @@ void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
 	if (id < GicDist->Get_Max_Lines())
 	{
 		IRq_Table[id] = handler;
-		GicDist->IRq_Enable(id);
+
+		if (id < 32)
+		{
+			GicRedist->IRq_Enable(id);
+		}
+		else
+		{
+			GicDist->IRq_Enable(id);
+		}
 	}
 	else
 	{
@@ -145,13 +161,12 @@ void IC_Core::Start_Virt_IC()
 	// TBD: sanity checks and use return code
 	vGicDist = new VirtGicDistributor(*GicDist);
 
-	uint64_t hcr = ReadICCReg(ICH_HCR_EL2);
-	hcr |= 1;	// En bit
+	iIC().Register_IRq_Handler(_maintenance_int, &MaintenanceIRqHandler);
+
+	uint64_t hcr = (1 << 0);			// En bit
 	WriteICCReg(ICH_HCR_EL2, hcr);
 	
-	WriteICCReg(ICH_VMCR_EL2, (1 << 9) | (1 << 1));	// VEOIM (Maintenance Int), VENG1 (Group 1 Ints)
-
-	iIC().Register_IRq_Handler(_maintenance_int, &MaintenanceIRqHandler);
+	WriteICCReg(ICH_VMCR_EL2, (1 << 9) | (1 << 1));	// VEOIM (EOI drop only), VENG1 (Group 1 INTs)
 }
 
 void IC_Core::Stop_Virt_IC()
@@ -162,6 +177,9 @@ void IC_Core::Stop_Virt_IC()
 
 void IC_Core::Inject_VM_IRq(uint32_t nr)
 {
+	// TBD: there are several things to be implemented:
+	//	1. Properly manage used LR registers
+	//	2. Distinguish software and hardware interrupts
 	if (iVMM().Get_VM_State() == vm_state::running)
 	{
 		if (nr < 32)
@@ -173,10 +191,8 @@ void IC_Core::Inject_VM_IRq(uint32_t nr)
 			if (vGicDist->IRq_Enabled(nr))
 			{
 				// Inject the IRq
-				uint64_t lr = (1UL << 62) | (1UL << 60) | (0x80UL << 48) | nr;	// State (Pending), Group (1), Priority (0x80)
+				uint64_t lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;	// State (Pending), Group (1), Priority (0x80)
 				WriteICCReg(ICH_LR0_EL2, lr);
-
-				// TBD: register maintenance interrupt handler and clean up LR
 			}
 		}
 	}
@@ -184,7 +200,7 @@ void IC_Core::Inject_VM_IRq(uint32_t nr)
 
 void IC_Core::MaintenanceIRqHandler(uint32_t id)
 {
-	Info() << "irq: maintenance INT" << fmt::endl;
+	// TBD: see comment to Inject_VM_IRq function
 	WriteICCReg(ICH_LR0_EL2, 0);
 }
 
