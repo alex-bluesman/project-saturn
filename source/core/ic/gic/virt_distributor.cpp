@@ -165,11 +165,6 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			vGicState.isenabler[index] = *val;
-			
-			// TBD: only for testing purpose
-			iVirtIC().Inject_VM_IRq(32);
-			// -----------------------------
-
 			break;
 		}
 		else
@@ -232,7 +227,10 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 bool VirtGicDistributor::IRq_Enabled(uint32_t nr)
 {
 	uint32_t reg = vGicState.isenabler[(nr / 32)];
-	
+
+	Log() << "irq: IRq_Enabled(" << nr << ") = isenabler[" << (nr / 32) << "], i.e 0x"
+	      << fmt::hex << fmt::fill << reg << fmt::endl;
+
 	return reg & (1 << (nr % 32));
 }
 
