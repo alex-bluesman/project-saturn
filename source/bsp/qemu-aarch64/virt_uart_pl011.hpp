@@ -17,10 +17,13 @@
 namespace saturn {
 namespace device {
 
+// Forward declaration:
+class UartPl011;
+
 class VirtUartPl011 : public IVirtIO
 {
 public:
-	VirtUartPl011();
+	VirtUartPl011(UartPl011&);
 	~VirtUartPl011();
 
 public:
@@ -29,6 +32,7 @@ public:
 
 private:
 	MTrap* mTrap;
+	UartPl011& hwUart;
 };
 
 }; // namespace device
