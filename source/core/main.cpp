@@ -78,10 +78,12 @@ static void Main(void)
 	device::BSP_Init();
 
 	// Finally we are ready to receive interrupts
-	IC().Local_IRq_Enable();
+	iIC().Local_IRq_Enable();
 
-	Start_VM_Manager();
+	// Start VM manager
+	Saturn_VMM = new VM_Manager();
 
+	// Core initialization is complete, switch control to applications
 	saturn::apps::Applications_Start();
 
 	for (;;);

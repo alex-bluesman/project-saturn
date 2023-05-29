@@ -10,30 +10,28 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#pragma once
-
-#include <mtrap>
+#include <core/ivmm>
 
 namespace saturn {
-namespace device {
+namespace core {
 
-// Forward declaration:
-class UartPl011;
-
-class VirtUartPl011 : public IVirtIO
+class VM_Manager : public IVirtualMachineManager
 {
 public:
-	VirtUartPl011(UartPl011&);
-	~VirtUartPl011();
+	VM_Manager();
+	~VM_Manager();
 
 public:
-	void Read(uint64_t addr, void* data, AccessSize size);
-	void Write(uint64_t addr, void* data, AccessSize size);
+	void Start_VM();
+	void Stop_VM();
+	vm_state Get_VM_State();
+
+public:
+	bool Guest_IRq(uint32_t nr);
 
 private:
-	MTrap* mTrap;
-	UartPl011& hwUart;
+	vm_state	vmState;
 };
 
-}; // namespace device
+}; // namespace core
 }; // namespace saturn

@@ -4,7 +4,10 @@ src := head.S			\
        main.cpp			\
        console.cpp		\
        heap.cpp			\
-       uart_pl011.cpp
+       uart_pl011.cpp		\
+       exceptions.cpp		\
+       ic_core.cpp		\
+       vector.S
 
 objs := $(src:.cpp=.o)
 objs := $(objs:.S=.o)

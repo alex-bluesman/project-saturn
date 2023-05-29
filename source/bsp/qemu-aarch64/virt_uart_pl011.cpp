@@ -21,7 +21,8 @@ namespace device {
 
 using namespace core;
 
-VirtUartPl011::VirtUartPl011()
+VirtUartPl011::VirtUartPl011(UartPl011& uart)
+	: hwUart(uart)
 {
 	mTrap = new MTrap(_uart_addr, *this);
 }
@@ -33,11 +34,19 @@ void VirtUartPl011::Read(uint64_t reg, void* data, AccessSize size)
 {
 	switch (reg)
 	{
+	case Pl011_Regs::TDR:
+		{
+			// Get char from console buffer
+			char c = iConsole().GetChar(iomode::async);
+			uint8_t* tdr = static_cast<uint8_t*>(data);
+			*tdr = c;
+			break;
+		}
 	case Pl011_Regs::FR:
 		{
 			// Notify that UART is always ready
 			uint8_t* fr = static_cast<uint8_t*>(data);
-			fr = 0;
+			*fr = 0;
 			break;
 		}
 	default:
@@ -53,8 +62,8 @@ void VirtUartPl011::Write(uint64_t reg, void* data, AccessSize size)
 	case Pl011_Regs::TDR:
 		{
 			// Send char to TX
-			char c = *static_cast<char *>(data);
-			Raw() << c;
+			uint8_t c = *static_cast<uint8_t*>(data);
+			hwUart.Tx(&c, 1);
 			break;
 		}
 	default:

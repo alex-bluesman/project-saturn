@@ -17,14 +17,14 @@
 namespace saturn {
 namespace core {
 
-class ICpuInfo
+class ICPU
 {
 public:
 	virtual uint64_t Id() = 0;	
 };
 
 // Access to CPU interface
-ICpuInfo& This_CPU(void);
+ICPU& iCPU(void);
 
 }; // namespace core
 }; // namespace saturn

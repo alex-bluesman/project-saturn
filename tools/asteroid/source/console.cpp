@@ -19,6 +19,10 @@ using namespace device;
 
 static const size_t _max_message_size = 128;
 
+// Local CPU console buffer to cache the data if UART driver is not active.
+// This is very important for early console messages.
+static uint8_t _consoleBuffer[_buffer_size];
+
 Console::Console()
 	: isActive(false)
 	, isHex(false)
@@ -30,15 +34,22 @@ Console::Console()
 {
 	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 
+	consoleBuffer = new RingBuffer<uint8_t, _buffer_size>(rb::full_overwrite, _consoleBuffer);
 	rxBuffer = new RingBuffer<char, _rx_size>(rb::full_ignore);
 }
 
 void Console::RegisterUart(IUartDevice& u)
 {
-	uart = &u;
-	isActive = true;
+	uint8_t c;
 
-	// TBD: flush buffered output
+	uart = &u;
+
+	while (consoleBuffer->Out(c))
+	{
+		uart->Tx(reinterpret_cast<uint8_t *>(&c), 1);
+	}
+
+	isActive = true;
 }
 
 bool Console::UartRX(char sym)
@@ -47,7 +58,7 @@ bool Console::UartRX(char sym)
 }
 
 
-char Console::GetChar(void)
+char Console::GetChar(iomode mode)
 {
 	char c;
 
@@ -64,6 +75,10 @@ Console& Console::operator<<(char c)
 	if (isActive)
 	{
 		uart->Tx(reinterpret_cast<uint8_t *>(&c), 1);
+	}
+	else
+	{
+		consoleBuffer->In(static_cast<uint8_t>(c));
 	}
 
 	return *this;
@@ -111,6 +126,15 @@ Console& Console::operator<<(char const *msg)
 		if (isActive)
 		{
 			uart->Tx(buf, len);
+		}
+		else
+		{
+			size_t i = 0;
+			while (i < len)
+			{
+				consoleBuffer->In(buf[i]);
+				i++;
+			}
 		}
 	}
 

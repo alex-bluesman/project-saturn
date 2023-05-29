@@ -10,9 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-/* NOTE: this must be aligned with arm64/registers structure
- *       should be reworked later
- */
+// NOTE: this must be aligned with arm64/registers structure
+//       should be reworked later
 #define Regs_EL2_LR_Offset		(30 * 8)
 #define Regs_EL2_SP_Offset		(31 * 8)
 #define Regs_EL2_PC_Offset		(32 * 8)
@@ -59,7 +58,7 @@
 		str	x0, [sp, #Regs_EL2_CPSR_Offset]		// Store CPSR_EL2
 	.endm
 
-	/* Restore PE state after exception processing */
+	// Restore PE state after exception processing
 	.macro Restore_Hyp_Frame
 		ldr	x0, [sp, #Regs_EL2_CPSR_Offset]
 		msr	spsr_el2, x0
@@ -115,25 +114,25 @@
 		ldr	lr, [sp, #Regs_EL1_LR_Offset]
 	.endm
 
-	/* TBD: dummy handler for unsupported features */
+	// TBD: dummy handler for unsupported features
 unused:
 	b	.
 
 saturn_sync:
-	msr	DAIFSet, #15	/* Mask {D, A, I, F} due to we never return */
+	msr	DAIFSet, #15	// Mask {D, A, I, F} due to we never return
 	Store_Hyp_Frame
 	mov	x0, sp
 	b	Sync_Abort
 
 saturn_irq:
-	msr	DAIFSet, #2	/* Mask {I} to avoid nested interrupts */
+	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
 	Store_Hyp_Frame
 
 	mov	x0, sp
 	bl	IRq_Handler
 
 	Restore_Hyp_Frame
-	msr	DAIFClr, #2	/* Unmask {I} to enable interrupts back */
+	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	eret
 
 saturn_fiq:
@@ -155,6 +154,19 @@ guest_sync:
 	Restore_Hyp_Frame
 	eret
 
+guest_irq:
+	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
+	Store_Hyp_Frame
+	Store_Sys_Frame
+
+	mov	x0, sp
+	bl	IRq_Handler
+
+	Restore_Sys_Frame
+	Restore_Hyp_Frame
+	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
+	eret
+
 guest_error:
 	Store_Hyp_Frame
 	Store_Sys_Frame
@@ -170,25 +182,25 @@ guest_error:
 	.global saturn_vector
 saturn_vector:
 
-	/* Current Exception level with SP_EL0 (EL2t) */
+	// Current Exception level with SP_EL0 (EL2t)
 	entry	unused
 	entry	unused
 	entry	unused
 	entry	unused
 
-	/* Current Exception level with SP_ELx, x > 0 */
+	// Current Exception level with SP_ELx, x > 0
 	entry	saturn_sync
 	entry	saturn_irq
 	entry	saturn_fiq
 	entry	saturn_error
 
-	/* Lower Exception level using AArch64 */
+	// Lower Exception level using AArch64
 	entry	guest_sync
-	entry	unused
+	entry	guest_irq
 	entry	unused
 	entry	guest_error
 
-	/* Lower Exception level using AArch32 */
+	// Lower Exception level using AArch32
 	entry	unused
 	entry	unused
 	entry	unused

@@ -15,22 +15,28 @@
 #include <basetypes>
 
 namespace saturn {
-namespace core {
 
-using IRqHandler = void(*)(uint32_t);
-
-class IIC
+template<typename T>
+static inline void MSet(void* addr, size_t n, T val)
 {
-public:
-	virtual void Local_IRq_Disable() = 0;
-	virtual void Local_IRq_Enable() = 0;
-	virtual void Send_SGI(uint32_t, uint8_t) = 0;
-	virtual void Handle_IRq() = 0;
-	virtual void Register_IRq_Handler(uint32_t, IRqHandler) = 0;
-};
+	volatile T* ptr = static_cast<T*>(addr);
 
-// Access to interrupt controller
-IIC& IC(void);
+	while (n--)
+	{
+		*ptr++ = val;
+	}
+}
 
-}; // namespace core
+template<typename T>
+static inline void MCopy(void* src, void* dst, size_t n)
+{
+	volatile T* s = static_cast<T*>(src);
+	volatile T* d = static_cast<T*>(dst);
+
+	while (n--)
+	{
+		*d++ = *s++;
+	}
+}
+
 }; // namespace saturn

@@ -22,6 +22,13 @@ class GicRedistributor
 public:
 	GicRedistributor();
 
+public:
+	void IRq_Enable(uint32_t id);
+	void IRq_Disable(uint32_t id);
+
+private:
+	void RW_Complete(void);
+
 private:
 	MMap* Regs;
 };

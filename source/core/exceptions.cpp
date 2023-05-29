@@ -14,12 +14,15 @@
 
 #include <arm64/registers>
 #include <core/iconsole>
-#include <core/iirq>
+#include <core/iic>
 
 extern saturn::uint64_t saturn_vector;
 
 namespace saturn {
 namespace core {
+
+// Static pointer to the saved context. It will simplify access to context from different parts of Saturn
+static AArch64_Regs* Current_Context = nullptr;
 
 // External API:
 bool Do_Memory_Trap(struct AArch64_Regs*);
@@ -143,11 +146,15 @@ void System_Error(struct AArch64_Regs* Regs)
 
 void IRq_Handler(struct AArch64_Regs* Regs)
 {
-	core::IC().Handle_IRq();
+	core::Current_Context = Regs;
+
+	core::iIC().Handle_IRq();
 }
 
 void Guest_Abort(struct AArch64_Regs* Regs)
 {
+	core::Current_Context = Regs;
+
 	if (saturn::core::Do_Memory_Trap(Regs) == false)
 	{
 		core::Error() << "Exception: Guest Abort" << core::fmt::endl;

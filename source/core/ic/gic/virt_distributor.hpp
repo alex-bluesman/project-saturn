@@ -12,19 +12,32 @@
 
 #pragma once
 
-#include <basetypes>
+#include "distributor.hpp"
+
+#include <mtrap>
 
 namespace saturn {
+namespace core {
 
-template<typename T>
-static inline void MSet(void* addr, size_t n, T val)
+// Forward declaration:
+class GicDistributor;
+
+class VirtGicDistributor : public IVirtIO
 {
-	volatile T* ptr = static_cast<T*>(addr);
+public:
+	VirtGicDistributor(GicDistributor&);
+	~VirtGicDistributor();
 
-	while (n--)
-	{
-		*ptr++ = val;
-	}
-}
+public:
+	void Read(uint64_t addr, void* data, AccessSize size);
+	void Write(uint64_t addr, void* data, AccessSize size);
+	bool IRq_Enabled(uint32_t nr);
 
+private:
+	MTrap* mTrap;
+	GicDistributor& gicDist;
+	GicDistRegs& vGicState;
+};
+
+}; // namespace core
 }; // namespace saturn

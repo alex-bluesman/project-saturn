@@ -82,12 +82,12 @@ void MMU_Init(void)
 	Info() << "memory management is initialized" << fmt::endl;
 }
 
-IMemoryManagementUnit& MMU(void)
+IMemoryManagementUnit& iMMU(void)
 {
 	return *Saturn_MMU;
 }
 
-IMemoryManagementUnit& IPA_MMU(void)
+IMemoryManagementUnit& iMMU_VM(void)
 {
 	return *Guest_MMU;
 }

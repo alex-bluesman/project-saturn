@@ -13,7 +13,7 @@
 #include <core/iconsole>
 #include <core/icpu>
 #include <core/iheap>
-#include <core/iirq>
+#include <core/iic>
 #include <core/immu>
 
 #include <io>
@@ -37,8 +37,8 @@ static void SGI_Handler(uint32_t id)
 static bool INT_Smoke_Test(void)
 {
 	Log() << "  /register INT(" << _testINT << ") handler and send SGI" << fmt::endl;
-	IC().Register_IRq_Handler(_testINT, SGI_Handler);
-	IC().Send_SGI(1, _testINT);
+	iIC().Register_IRq_Handler(_testINT, SGI_Handler);
+	iIC().Send_SGI(1, _testINT);
 
 	bool ret;
 
@@ -58,7 +58,7 @@ static bool INT_Smoke_Test(void)
 
 static bool CPU_Smoke_Test(void)
 {
-	uint16_t cpu_id = This_CPU().Id();
+	uint16_t cpu_id = iCPU().Id();
 
 	Log() << "  /request CPU information" << fmt::endl;
 	Log() << "    <- CPU id = " << cpu_id << fmt::endl;
@@ -144,8 +144,8 @@ static bool MMU_Smoke_Test(void)
 
 	// map the same physical address to different virtual addresses with
 	// different block sizes
-	core::MMU().MemoryMap(va1, pa, BlockSize::L2_Block, MMapType::Normal);
-	core::MMU().MemoryMap(va2, pa, BlockSize::L3_Page, MMapType::Normal);
+	core::iMMU().MemoryMap(va1, pa, BlockSize::L2_Block, MMapType::Normal);
+	core::iMMU().MemoryMap(va2, pa, BlockSize::L3_Page, MMapType::Normal);
 
 	// Ensure both addresses contain no random data
 	Write<uint64_t>(va1, 0);

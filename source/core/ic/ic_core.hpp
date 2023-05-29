@@ -12,7 +12,8 @@
 
 #pragma once
 
-#include <core/iirq>
+#include <core/iic>
+#include <core/ivirtic>
 
 namespace saturn {
 namespace core {
@@ -21,12 +22,14 @@ namespace core {
 class CpuInterface;
 class GicDistributor;
 class GicRedistributor;
+class VirtGicDistributor;
 
-class IC_Core : public IIC
+class IC_Core : public IIC, public IVirtIC
 {
 public:
 	IC_Core();
 
+// Saturn Core API:
 public:
 	void Local_IRq_Disable();
 	void Local_IRq_Enable();
@@ -34,10 +37,23 @@ public:
 	void Handle_IRq();
 	void Register_IRq_Handler(uint32_t, IRqHandler);
 
+// Guest VM API:
+public:
+	void Start_Virt_IC();
+	void Stop_Virt_IC();
+	void Inject_VM_IRq(uint32_t);
+
+private:
+	// Maintenance INT handling routine
+	static void MaintenanceIRqHandler(uint32_t);
+
 private:
 	CpuInterface* CpuIface;
 	GicDistributor* GicDist;
 	GicRedistributor* GicRedist;
+
+	VirtGicDistributor* vGicDist;
+
 	IRqHandler (&IRq_Table)[];
 
 private:

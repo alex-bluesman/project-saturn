@@ -17,6 +17,52 @@
 namespace saturn {
 namespace core {
 
+enum Dist_Regs
+{
+	CTRL		= 0x0000,
+	TYPER		= 0x0004,
+	IGROUPR		= 0x0080,
+	ISENABLER	= 0x0100,
+	ICENABLER	= 0x0180,
+	ISACTIVER	= 0x0300,
+	ICACTIVER	= 0x0380,
+	IPRIORITYR	= 0x0400,
+	ICFGR		= 0x0c00,
+	IROUTER		= 0x6100,
+	PIDR2		= 0xffe8,
+};
+
+// According to the GIC manual:
+//
+// INTID       Interrupt Type
+// --------------------------
+//    0 - 15         SGI
+//   16 - 31         PPI
+//   32 - 1019       SPI
+// 1020 - 1023     Special
+// 1024 - 1055        -
+// 1056 - 1119       PPI
+// 1120 - 4095        -
+//
+// TBD: let's limit SPI number to QEMU AArch64 configuration - 256 lines
+
+static const size_t _gicd_nr_lines = 256;
+
+struct GicDistRegs
+{
+	uint32_t ctrl;
+	uint32_t typer;
+	uint32_t igroupr[_gicd_nr_lines / 32];
+	uint32_t isenabler[_gicd_nr_lines / 32];
+	uint32_t icenabler[_gicd_nr_lines / 32];
+	uint32_t isactiver[_gicd_nr_lines / 32];
+	uint32_t icactiver[_gicd_nr_lines / 32];
+	uint32_t ipriorityr[_gicd_nr_lines / 4];
+	uint32_t icfgr[_gicd_nr_lines / 16];
+	uint64_t irouter[_gicd_nr_lines];
+	uint32_t pidr2;
+};
+
 class GicDistributor
 {
 public:
@@ -30,12 +76,19 @@ public:
 	void IRq_Enable(uint32_t);
 	void IRq_Disable(uint32_t);
 
+public:
+	void Load_State(GicDistRegs&);
+
 private:
 	inline void RW_Complete(void);
 
 private:
+	void Save_State(void);
+
+private:
 	MMap* Regs;
 	size_t linesNumber;
+	GicDistRegs& bootState;
 };
 
 }; // namespace core

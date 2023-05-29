@@ -14,18 +14,21 @@
 #include "uart_pl011.hpp"
 
 #include <arm64/registers>
+#include <io>
 
 using namespace saturn;
 using namespace saturn::core;
 
 namespace asteroid {
 
-static void Context_Info(void)
-{
-	uint64_t reg;
+// External API:
+extern void Exceptions_Init();
 
-	reg = ReadArm64Reg(CurrentEL);
-	Info() << "  running in EL" << (reg >> 2) << fmt::endl;
+static void Demo_Application(void)
+{
+	Info() << "* start demo application *" << fmt::endl;
+
+	for (;;);
 }
 
 void Main()
@@ -35,14 +38,26 @@ void Main()
 
 	Asteroid_Console = new Console();
 
-	device::UartPl011& Uart = *new device::UartPl011();
-	Asteroid_Console->RegisterUart(Uart);
-
 	Raw() << fmt::endl;
 	Raw() << " = Asteroid Application 2023 =" << fmt::endl;
 	Raw() << fmt::endl;
 
-	Context_Info();
+	uint64_t reg;
+	reg = ReadArm64Reg(CurrentEL);
+	Info() << "running in EL" << (reg >> 2) << fmt::endl;
+
+	Exceptions_Init();
+	Asteroid_IC = new IC_Core();
+
+	device::UartPl011& Uart = *new device::UartPl011();
+	Asteroid_Console->RegisterUart(Uart);
+
+	iIC().Local_IRq_Enable();
+
+	// Kernel initialization complete
+
+	// Run demo application
+	Demo_Application();
 
 	for (;;);
 }

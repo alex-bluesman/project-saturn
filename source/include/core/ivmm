@@ -12,28 +12,31 @@
 
 #pragma once
 
-#include <mtrap>
+#include <basetypes>
 
 namespace saturn {
-namespace device {
+namespace core {
 
-// Forward declaration:
-class UartPl011;
-
-class VirtUartPl011 : public IVirtIO
+enum class vm_state
 {
-public:
-	VirtUartPl011(UartPl011&);
-	~VirtUartPl011();
-
-public:
-	void Read(uint64_t addr, void* data, AccessSize size);
-	void Write(uint64_t addr, void* data, AccessSize size);
-
-private:
-	MTrap* mTrap;
-	UartPl011& hwUart;
+	running,
+	stopped,
+	error
 };
 
-}; // namespace device
+class IVirtualMachineManager
+{
+public:
+	virtual void Start_VM() = 0;
+	virtual void Stop_VM() = 0;
+	virtual vm_state Get_VM_State() = 0;
+
+public:
+	virtual bool Guest_IRq(uint32_t nr) = 0;
+};
+
+// Access to CPU interface
+IVirtualMachineManager& iVMM(void);
+
+}; // namespace core
 }; // namespace saturn
