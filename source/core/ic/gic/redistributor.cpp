@@ -58,7 +58,7 @@ GicRedistributor::GicRedistributor()
 	// Disable all the SGIs and PPIs on start up
 	Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ICACTIVER0, 0xffffffff);
 
-	// Enable all the SGIs and PPIs on start up
+	// Enable all the SGIs on start up
 	Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ICENABLER0, 0xffff0000);
 	Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ISENABLER0, 0x0000ffff);
 
@@ -71,6 +71,34 @@ GicRedistributor::GicRedistributor()
 
 	Info() << "  /redistributor initialized" << fmt::endl;
 }
+
+void GicRedistributor::IRq_Enable(uint32_t id)
+{
+	// Only for SPIs, SGI and PPI managed by redistributor
+	if (id < 32)
+	{
+		// Set INT enable
+		Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ISENABLER0 + (id / 32) * 4, 1 << (id % 32));
+		RW_Complete();
+	}
+}
+
+void GicRedistributor::IRq_Disable(uint32_t id)
+{
+	if (id < 32)
+	{
+		// Clear INT enable
+		Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ICENABLER0 + (id / 32) * 4, 1 << (id % 32));
+		RW_Complete();
+	}
+}
+
+void GicRedistributor::RW_Complete(void)
+{
+	// TBD: should we introduce timeout?
+	while (Regs->Read<uint32_t>(Gic_Redist::CTRL) & (1 << 31)); // Check RWP bit (Register Write Pending)
+}
+
 
 }; // namespace core
 }; // namespace saturn
