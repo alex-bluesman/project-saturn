@@ -30,6 +30,9 @@ public:
 	virtual void Start_VM() = 0;
 	virtual void Stop_VM() = 0;
 	virtual vm_state Get_VM_State() = 0;
+
+public:
+	virtual bool Guest_IRq(uint32_t nr) = 0;
 };
 
 // Access to CPU interface
