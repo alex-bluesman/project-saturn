@@ -21,43 +21,14 @@ using namespace saturn::core;
 
 namespace asteroid {
 
+// External API:
 extern void Exceptions_Init();
 
-static void Context_Info(void)
+static void Demo_Application(void)
 {
-	uint64_t reg;
+	Info() << "* start demo application *" << fmt::endl;
 
-	reg = ReadArm64Reg(CurrentEL);
-	Info() << "  running in EL" << (reg >> 2) << fmt::endl;
-}
-
-static void Gic_Info(void)
-{
-	uint32_t reg = Read<uint32_t>(0x08000000);
-	Info() << "gicd.ctrl = 0x" << fmt::hex << fmt::fill << reg << fmt::endl;
-
-	// Single priority group
-	WriteICCReg(ICC_BPR1_EL1, 0);
-
-	// Set priority mask to handle all interrupts
-	WriteICCReg(ICC_PMR_EL1, 0xff);
-
-	// EOIR provides priority drop functionality only.
-	// DIR provides interrupt deactivation functionality.
-	WriteICCReg(ICC_CTRL_EL1, 1 << 1);
-	
-	// Enable Group1 interrupts
-	WriteICCReg(ICC_IGRPEN1_EL1, 1);
-
-	asm volatile (
-			"msr daifclr, #2\n"
-			"isb\n"
-			::: "memory"
-		     );
-
-	Info() << "RUN!" << fmt::endl;
-
-	Write<uint32_t>(0x08000000 + 0x0104, 1);
+	for (;;);
 }
 
 void Main()
@@ -67,17 +38,26 @@ void Main()
 
 	Asteroid_Console = new Console();
 
-	device::UartPl011& Uart = *new device::UartPl011();
-	Asteroid_Console->RegisterUart(Uart);
-
-	Exceptions_Init();
-
 	Raw() << fmt::endl;
 	Raw() << " = Asteroid Application 2023 =" << fmt::endl;
 	Raw() << fmt::endl;
 
-	Context_Info();
-	Gic_Info();
+	uint64_t reg;
+	reg = ReadArm64Reg(CurrentEL);
+	Info() << "running in EL" << (reg >> 2) << fmt::endl;
+
+	Exceptions_Init();
+	Asteroid_IC = new IC_Core();
+
+	device::UartPl011& Uart = *new device::UartPl011();
+	Asteroid_Console->RegisterUart(Uart);
+
+	iIC().Local_IRq_Enable();
+
+	// Kernel initialization complete
+
+	// Run demo application
+	Demo_Application();
 
 	for (;;);
 }

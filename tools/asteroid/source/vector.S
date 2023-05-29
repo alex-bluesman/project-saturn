@@ -109,7 +109,7 @@ asteroid_irq:
 	mov	x0, sp
 	bl	IRq_Handler
 
-//	Restore_Context
+	Restore_Context
 	msr	DAIFClr, #2	/* Unmask {I} to enable interrupts back */
 	eret
 

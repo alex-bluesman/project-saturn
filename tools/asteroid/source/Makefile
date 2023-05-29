@@ -6,6 +6,7 @@ src := head.S			\
        heap.cpp			\
        uart_pl011.cpp		\
        exceptions.cpp		\
+       ic_core.cpp		\
        vector.S
 
 objs := $(src:.cpp=.o)
