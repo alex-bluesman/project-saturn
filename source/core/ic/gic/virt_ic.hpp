@@ -12,48 +12,40 @@
 
 #pragma once
 
-#include <core/iic>
-#include <core/ivirtic>
+#include <basetypes>
 
 namespace saturn {
 namespace core {
 
 // Forward declaration
-class CpuInterface;
 class GicDistributor;
-class GicRedistributor;
-class GicVirtIC;
+class VirtGicDistributor;
 
-class IC_Core : public IIC, public IVirtIC
+enum class VICState
+{
+	Stopped,
+	Started,
+	Failed
+};
+
+class GicVirtIC
 {
 public:
-	IC_Core();
+	GicVirtIC(GicDistributor&);
 
-// Saturn Core API:
 public:
-	void Local_IRq_Disable();
-	void Local_IRq_Enable();
-	void Send_SGI(uint32_t targetList, uint8_t id);
-	void Handle_IRq();
-	void Register_IRq_Handler(uint32_t, IRqHandler);
-
-// Guest VM API:
-public:
-	void Start_Virt_IC();
-	void Stop_Virt_IC();
-	void Inject_VM_IRq(uint32_t);
+	void Start(void);
+	void Stop(void);
+	void Inject_IRq(uint32_t nr);
 
 private:
-	CpuInterface* CpuIface;
-	GicDistributor* GicDist;
-	GicRedistributor* GicRedist;
-
-	GicVirtIC* GicVIC;
-
-	IRqHandler (&IRq_Table)[];
+	// Maintenance INT handling routine
+	static void MaintenanceIRqHandler(uint32_t);
 
 private:
-	static void Default_Handler(uint32_t);
+	GicDistributor& GicDist;
+	VirtGicDistributor* vGicDist;
+	VICState vState;
 };
 
 }; // namespace core
