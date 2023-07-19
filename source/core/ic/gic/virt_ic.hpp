@@ -37,6 +37,10 @@ public:
 	void Start(void);
 	void Stop(void);
 	void Inject_IRq(uint32_t nr);
+	void Process_ISR(void);
+
+private:
+	void Set_LR(uint8_t id, uint64_t val);
 
 private:
 	// Maintenance INT handling routine
@@ -46,6 +50,10 @@ private:
 	GicDistributor& GicDist;
 	VirtGicDistributor* vGicDist;
 	VICState vState;
+
+private:
+	uint8_t nrLRs;
+	uint16_t lrMask;
 };
 
 }; // namespace core

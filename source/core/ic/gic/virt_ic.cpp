@@ -14,6 +14,7 @@
 #include "virt_ic.hpp"
 
 #include <arm64/registers>
+#include <bitops>
 #include <core/iic>
 #include <fault>
 
@@ -22,12 +23,19 @@ namespace core {
 
 // Arm strongly recomments that maintenance interrupts are configured to use INTID 25.
 static const uint32_t _maintenance_int = 25;
+// Number of LR registers available for current VM
+static const size_t _nrLRs = 16;
+// TBD: ugly way to have access from static function to class instance
+static GicVirtIC* thisVIC = nullptr;
 
 GicVirtIC::GicVirtIC(GicDistributor& dist)
 	: GicDist(dist)
 	, vGicDist(nullptr)
 	, vState(VICState::Stopped)
+	, nrLRs(_nrLRs)
+	, lrMask(0)
 {
+	thisVIC = this;
 }
 
 void GicVirtIC::Start(void)
@@ -69,27 +77,120 @@ void GicVirtIC::Stop()
 	}
 }
 
+void GicVirtIC::Set_LR(uint8_t id, uint64_t val)
+{
+	switch (id)
+	{
+	case 0:
+		WriteICCReg(ICH_LR0_EL2, val);
+		break;
+	case 1:
+		WriteICCReg(ICH_LR1_EL2, val);
+		break;
+	case 2:
+		WriteICCReg(ICH_LR2_EL2, val);
+		break;
+	case 3:
+		WriteICCReg(ICH_LR3_EL2, val);
+		break;
+	case 4:
+		WriteICCReg(ICH_LR4_EL2, val);
+		break;
+	case 5:
+		WriteICCReg(ICH_LR5_EL2, val);
+		break;
+	case 6:
+		WriteICCReg(ICH_LR6_EL2, val);
+		break;
+	case 7:
+		WriteICCReg(ICH_LR7_EL2, val);
+		break;
+	case 8:
+		WriteICCReg(ICH_LR8_EL2, val);
+		break;
+	case 9:
+		WriteICCReg(ICH_LR9_EL2, val);
+		break;
+	case 10:
+		WriteICCReg(ICH_LR10_EL2, val);
+		break;
+	case 11:
+		WriteICCReg(ICH_LR11_EL2, val);
+		break;
+	case 12:
+		WriteICCReg(ICH_LR12_EL2, val);
+		break;
+	case 13:
+		WriteICCReg(ICH_LR13_EL2, val);
+		break;
+	case 14:
+		WriteICCReg(ICH_LR14_EL2, val);
+		break;
+	case 15:
+		WriteICCReg(ICH_LR15_EL2, val);
+		break;
+	default:
+		Fault("attempt to set out of range GIC LR");
+	}
+}
+
 void GicVirtIC::Inject_IRq(uint32_t nr)
 {
-	if (nr < 32)
+	if (nr < _firstSPI)
 	{
 		// TBD: handle SGI and PPI via virtual redistributor
 	}
 	else
+	if (nr < _maxIRq)
 	{
 		if (vGicDist->IRq_Enabled(nr))
 		{
-			// Inject the IRq
-			uint64_t lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;	// State (Pending), Group (1), Priority (0x80)
-			WriteICCReg(ICH_LR0_EL2, lr);
+			uint8_t pos = FirstCleanBit<uint16_t>(lrMask);
+
+			if (pos < nrLRs)
+			{
+				SetBit(lrMask, pos);
+
+				uint64_t lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;	// State (Pending), Group (1), Priority (0x80)
+				Set_LR(pos, lr);
+			}
+			else
+			{
+				Fault("gic: no free LRs, but queueing is not yet implemented");
+			}
 		}
+		else
+		{
+			Info() << "warning: attempt to inject INT(" << nr << ") while it's disabled" << fmt::endl;
+		}
+	}
+	else
+	{
+		Info() << "warning: attempt to inject unsupported ESPI INT(" << nr << ")" << fmt::endl;
 	}
 }
 
-void GicVirtIC::MaintenanceIRqHandler(uint32_t id)
+void GicVirtIC::Process_ISR(void)
 {
-	// TBD: see comment to Inject_VM_IRq function
-	WriteICCReg(ICH_LR0_EL2, 0);
+	uint64_t eisr = ReadICCReg(ICH_EISR_EL2);
+
+	while (eisr > 0)
+	{
+		uint8_t nr = FirstSetBit<uint16_t>(eisr);
+
+		if (nr < nrLRs)
+		{
+			Set_LR(nr, 0);
+			ClearBit(lrMask, nr);
+		}
+
+		ClearBit(eisr, nr);
+	}
+}
+
+void GicVirtIC::MaintenanceIRqHandler(uint32_t nr)
+{
+	thisVIC->Process_ISR();
 }
 
 }; // namespace core

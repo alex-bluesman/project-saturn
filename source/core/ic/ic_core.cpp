@@ -12,6 +12,7 @@
 
 #include "ic_core.hpp"
 
+#include "gic/config.hpp"
 #include "gic/cpu_interface.hpp"
 #include "gic/distributor.hpp"
 #include "gic/redistributor.hpp"
@@ -24,10 +25,6 @@
 
 namespace saturn {
 namespace core {
-
-// According to the GICv3 Architecture Specification, the maximal SPI number could be 1020.
-// TBD: due to we do not support ESPIs and LPIs, let's limit table size to 1020.
-static const size_t _maxIRq = 1020;
 
 // TBD: think about better allocation for this data block
 static IRqHandler _IRq_Table[_maxIRq];

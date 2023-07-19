@@ -97,7 +97,24 @@ struct AArch64_Regs {
 #define ICC_SRE_EL2		s3_4_c12_c9_5
 
 #define ICH_HCR_EL2		s3_4_c12_c11_0
+#define ICH_EISR_EL2		s3_4_c12_c11_3
 #define ICH_VMCR_EL2		s3_4_c12_c11_7
+
 #define ICH_LR0_EL2		s3_4_c12_c12_0
+#define ICH_LR1_EL2		s3_4_c12_c12_1
+#define ICH_LR2_EL2		s3_4_c12_c12_2
+#define ICH_LR3_EL2		s3_4_c12_c12_3
+#define ICH_LR4_EL2		s3_4_c12_c12_4
+#define ICH_LR5_EL2		s3_4_c12_c12_5
+#define ICH_LR6_EL2		s3_4_c12_c12_6
+#define ICH_LR7_EL2		s3_4_c12_c12_7
+#define ICH_LR8_EL2		s3_4_c12_c13_0
+#define ICH_LR9_EL2		s3_4_c12_c13_1
+#define ICH_LR10_EL2		s3_4_c12_c13_2
+#define ICH_LR11_EL2		s3_4_c12_c13_3
+#define ICH_LR12_EL2		s3_4_c12_c13_4
+#define ICH_LR13_EL2		s3_4_c12_c13_5
+#define ICH_LR14_EL2		s3_4_c12_c13_6
+#define ICH_LR15_EL2		s3_4_c12_c13_7
 
 }; // namespace saturn
