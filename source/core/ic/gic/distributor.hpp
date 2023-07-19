@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "config.hpp"
+
 #include <mmap>
 
 namespace saturn {
@@ -31,22 +33,6 @@ enum Dist_Regs
 	IROUTER		= 0x6100,
 	PIDR2		= 0xffe8,
 };
-
-// According to the GIC manual:
-//
-// INTID       Interrupt Type
-// --------------------------
-//    0 - 15         SGI
-//   16 - 31         PPI
-//   32 - 1019       SPI
-// 1020 - 1023     Special
-// 1024 - 1055        -
-// 1056 - 1119       PPI
-// 1120 - 4095        -
-//
-// TBD: let's limit SPI number to QEMU AArch64 configuration - 256 lines
-
-static const size_t _gicd_nr_lines = 256;
 
 struct GicDistRegs
 {
