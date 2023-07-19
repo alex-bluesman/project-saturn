@@ -11,6 +11,7 @@ src := main.cpp				\
        ic/gic/distributor.cpp		\
        ic/gic/redistributor.cpp		\
        ic/gic/virt_distributor.cpp	\
+       ic/gic/virt_ic.cpp		\
        mm/mm_core.cpp			\
        mm/mmu.cpp			\
        mm/trap.cpp			\

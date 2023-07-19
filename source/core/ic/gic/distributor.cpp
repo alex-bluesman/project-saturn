@@ -10,6 +10,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "config.hpp"
 #include "distributor.hpp"
 
 #include <arm64/registers>
@@ -56,25 +57,25 @@ GicDistributor::GicDistributor()
 	//   SPIs: 32 - SPINumber
 
 	// First let's put SPIs active low
-	for (size_t i = 32; i < linesNumber; i += 16) // 2 bits per line, so 16 lines per register
+	for (size_t i = _firstSPI; i < linesNumber; i += 16) // 2 bits per line, so 16 lines per register
 	{
 		Regs->Write<uint32_t>(Dist_Regs::ICFGR + (i / 16) * 4, 0);
 	}
 
 	// Set default SPI priority to the middle of the possible range
-	for (size_t i = 32; i < linesNumber; i += 4)
+	for (size_t i = _firstSPI; i < linesNumber; i += 4)
 	{
 		Regs->Write<uint32_t>(Dist_Regs::IPRIORITYR + (i / 4) * 4, 0x80808080);
 	}
 
-	for (size_t i = 32; i < linesNumber; i += 32)
+	for (size_t i = _firstSPI; i < linesNumber; i += 32)
 	{
 		Regs->Write<uint32_t>(Dist_Regs::ICENABLER + (i / 32) * 4, 0xffffffff);
 		Regs->Write<uint32_t>(Dist_Regs::ICACTIVER + (i / 32) * 4, 0xffffffff);
 	}
 
 	// Set all SPIs as non-secure Group 1
-	for (size_t i = 32; i < linesNumber; i += 32)
+	for (size_t i = _firstSPI; i < linesNumber; i += 32)
 	{
 		Regs->Write<uint32_t>(Dist_Regs::IGROUPR + (i / 32) * 4, 0xffffffff);
 	}
@@ -92,7 +93,7 @@ GicDistributor::GicDistributor()
 	affinity &= ~(1 << 31);
 
 	// Route all the SPIs to current CPU
-	for (size_t i = 32; i < linesNumber; i++)
+	for (size_t i = _firstSPI; i < linesNumber; i++)
 	{
 		Regs->Write<uint32_t>(Dist_Regs::IROUTER + i * 8, affinity);
 	}
@@ -114,7 +115,7 @@ size_t GicDistributor::Get_Max_Lines()
 void GicDistributor::IRq_Enable(uint32_t id)
 {
 	// Only for SPIs, SGI and PPI managed by redistributor
-	if (id >= 32)
+	if (id >= _firstSPI)
 	{
 		// Set INT enable
 		Regs->Write<uint32_t>(Dist_Regs::ISENABLER + (id / 32) * 4, 1 << (id % 32));
@@ -124,7 +125,7 @@ void GicDistributor::IRq_Enable(uint32_t id)
 
 void GicDistributor::IRq_Disable(uint32_t id)
 {
-	if (id >= 32)
+	if (id >= _firstSPI)
 	{
 		// Clear INT enable
 		Regs->Write<uint32_t>(Dist_Regs::ICENABLER + (id / 32) * 4, 1 << (id % 32));

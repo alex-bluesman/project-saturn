@@ -10,6 +10,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "config.hpp"
 #include "redistributor.hpp"
 
 #include <arm64/registers>
@@ -45,12 +46,12 @@ GicRedistributor::GicRedistributor()
 	// TBD: should we introduce timeout?
 	while (Regs->Read<uint32_t>(Gic_Redist::WAKER) & (1 << 2));
 
-	for (size_t i = 0; i < 16; i += 4)
+	for (size_t i = _firstSGI; i < _nrSGIs; i += 4)
 	{
 		Regs->Write<uint32_t>(SGI_offset + Gic_Redist::IPRIORITYR + (i / 4) * 4, 0x40404040);
 	}
 
-	for (size_t i = 16; i < 32; i += 4)
+	for (size_t i = _firstPPI; i < _nrPPIs; i += 4)
 	{
 		Regs->Write<uint32_t>(SGI_offset + Gic_Redist::IPRIORITYR + (i / 4) * 4, 0x80808080);
 	}
@@ -74,8 +75,8 @@ GicRedistributor::GicRedistributor()
 
 void GicRedistributor::IRq_Enable(uint32_t id)
 {
-	// Only for SPIs, SGI and PPI managed by redistributor
-	if (id < 32)
+	// Only for SGI and PPI managed by redistributor
+	if (id < _firstSPI)
 	{
 		// Set INT enable
 		Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ISENABLER0 + (id / 32) * 4, 1 << (id % 32));
@@ -85,7 +86,7 @@ void GicRedistributor::IRq_Enable(uint32_t id)
 
 void GicRedistributor::IRq_Disable(uint32_t id)
 {
-	if (id < 32)
+	if (id < _firstSPI)
 	{
 		// Clear INT enable
 		Regs->Write<uint32_t>(SGI_offset + Gic_Redist::ICENABLER0 + (id / 32) * 4, 1 << (id % 32));
