@@ -15,6 +15,43 @@
 namespace saturn {
 namespace core {
 
+// TBD: should be global const comming from BSP
+static const size_t _nrINTs = 256;
+
+class VM_Configuration {
+public:
+	VM_Configuration()
+	{
+		for (int i = 0; i < (_nrINTs / 8); i++)
+		{
+			hwINTMask[i] = 0;
+		}
+	}
+
+public:
+	void Assign_Interrupt(size_t nr)
+	{
+		if (nr < _nrINTs)
+		{
+			hwINTMask[nr / 8] |= (1 << (nr % 8));
+		}
+	}
+
+	bool Hardware_Interrupt(size_t nr)
+	{
+		bool ret = false;
+
+		if (nr < _nrINTs)
+		{
+			ret = hwINTMask[nr / 8] &= (1 << (nr % 8));
+		}
+
+		return ret;
+	}
+public:
+	uint8_t	hwINTMask[_nrINTs / 8];
+};
+
 class VM_Manager : public IVirtualMachineManager
 {
 public:
@@ -30,7 +67,11 @@ public:
 	bool Guest_IRq(uint32_t nr);
 
 private:
-	vm_state	vmState;
+	vm_state		vmState;
+
+private:
+	// TBD: could not fit heap frame
+	VM_Configuration*	vmConfig;
 };
 
 }; // namespace core

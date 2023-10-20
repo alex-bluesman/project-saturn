@@ -10,8 +10,9 @@ src := main.cpp				\
        ic/gic/cpu_interface.cpp		\
        ic/gic/distributor.cpp		\
        ic/gic/redistributor.cpp		\
-       ic/gic/virt_distributor.cpp	\
-       ic/gic/virt_ic.cpp		\
+       ic/virt/virt_distributor.cpp	\
+       ic/virt/virt_redistributor.cpp	\
+       ic/virt/virt_ic.cpp		\
        mm/mm_core.cpp			\
        mm/mmu.cpp			\
        mm/trap.cpp			\
@@ -43,7 +44,7 @@ clean:
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/ic/*.o"
-	@-rm -f ic/gic/*.o ic/gic/*.d ic/*.o ic/*.d
+	@-rm -f ic/gic/*.o ic/gic/*.d ic/virt/*.o ic/virt/*.d ic/*.o ic/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/mm/*.o"
 	@-rm -f mm/*.o mm/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/vmm/*.o"

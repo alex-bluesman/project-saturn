@@ -60,6 +60,9 @@ void VM_Manager::Start_VM()
 	// The following registers to be checked:
 	// MPIDR_EL1, SCTLR_EL1
 	
+	// TBD: guest VM configuration
+	vmConfig = new VM_Configuration;
+
 	iMMU_VM().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
 	iMMU_VM().MemoryMap(0x08010000, 0x08040000, 0x00010000, MMapType::Device);
 	iVirtIC().Start_Virt_IC();
@@ -87,8 +90,7 @@ vm_state VM_Manager::Get_VM_State()
 
 bool VM_Manager::Guest_IRq(uint32_t nr)
 {
-	// TBD: use real configuration
-	return false;
+	return vmConfig->Hardware_Interrupt(nr);
 }
 
 }; // namespace core

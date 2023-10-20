@@ -17,7 +17,7 @@
 #include "gic/distributor.hpp"
 #include "gic/redistributor.hpp"
 
-#include "gic/virt_ic.hpp"
+#include "virt/virt_ic.hpp"
 
 #include <arm64/registers>
 #include <core/ivmm>
@@ -70,7 +70,7 @@ IC_Core::IC_Core()
 		IRq_Table[i] = Default_Handler;
 	}
 
-	GicVIC = new GicVirtIC(*GicDist);
+	GicVIC = new GicVirtIC(*GicDist, *GicRedist);
 	if (nullptr == GicVIC)
 	{
 		Fault("GIC virtual interface allocation failed");
@@ -111,8 +111,14 @@ void IC_Core::Handle_IRq()
 {
 	uint32_t nr = CpuIface->Read_Ack_IRq();
 
-	if (iVMM().Guest_IRq(nr) == false)
+	if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 	{
+		// VM is running and IRq assigned to the guest, so just route it
+		Inject_VM_IRq(nr);
+	}
+	else
+	{
+		// For all other cases handle IRq by hypervisor
 		if (nr < GicDist->Get_Max_Lines())
 		{
 			IRq_Table[nr](nr);
@@ -123,11 +129,6 @@ void IC_Core::Handle_IRq()
 		}
 
 		CpuIface->EOI(nr);
-	}
-	else
-	{
-		// IRq assigned to the guest, so just route it
-		Inject_VM_IRq(nr);
 	}
 }
 

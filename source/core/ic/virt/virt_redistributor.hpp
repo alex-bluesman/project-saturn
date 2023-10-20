@@ -12,21 +12,18 @@
 
 #pragma once
 
-#include "distributor.hpp"
+#include "../gic/redistributor.hpp"
 
 #include <mtrap>
 
 namespace saturn {
 namespace core {
 
-// Forward declaration:
-class GicDistributor;
-
-class VirtGicDistributor : public IVirtIO
+class VirtGicRedistributor : public IVirtIO
 {
 public:
-	VirtGicDistributor(GicDistributor&);
-	~VirtGicDistributor();
+	VirtGicRedistributor(GicRedistributor&);
+	~VirtGicRedistributor();
 
 public:
 	void Read(uint64_t addr, void* data, AccessSize size);
@@ -35,8 +32,8 @@ public:
 
 private:
 	MTrap* mTrap;
-	GicDistributor& gicDist;
-	GicDistRegs& vGicState;
+	GicRedistributor& gicRedist;
+	GicRedistRegs& vRedistState;
 };
 
 }; // namespace core
