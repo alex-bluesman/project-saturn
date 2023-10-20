@@ -19,21 +19,6 @@
 namespace saturn {
 namespace core {
 
-enum Dist_Regs
-{
-	CTRL		= 0x0000,
-	TYPER		= 0x0004,
-	IGROUPR		= 0x0080,
-	ISENABLER	= 0x0100,
-	ICENABLER	= 0x0180,
-	ISACTIVER	= 0x0300,
-	ICACTIVER	= 0x0380,
-	IPRIORITYR	= 0x0400,
-	ICFGR		= 0x0c00,
-	IROUTER		= 0x6100,
-	PIDR2		= 0xffe8,
-};
-
 struct GicDistRegs
 {
 	uint32_t ctrl;
@@ -51,6 +36,22 @@ struct GicDistRegs
 
 class GicDistributor
 {
+public:
+	enum Dist_Regs
+	{
+		CTRL		= 0x0000,
+		TYPER		= 0x0004,
+		IGROUPR		= 0x0080,
+		ISENABLER	= 0x0100,
+		ICENABLER	= 0x0180,
+		ISACTIVER	= 0x0300,
+		ICACTIVER	= 0x0380,
+		IPRIORITYR	= 0x0400,
+		ICFGR		= 0x0c00,
+		IROUTER		= 0x6100,
+		PIDR2		= 0xffe8,
+	};
+
 public:
 	GicDistributor();
 

@@ -12,48 +12,28 @@
 
 #pragma once
 
-#include <basetypes>
+#include "../gic/distributor.hpp"
+
+#include <mtrap>
 
 namespace saturn {
 namespace core {
 
-// Forward declaration
-class GicDistributor;
-class VirtGicDistributor;
-
-enum class VICState
-{
-	Stopped,
-	Started,
-	Failed
-};
-
-class GicVirtIC
+class VirtGicDistributor : public IVirtIO
 {
 public:
-	GicVirtIC(GicDistributor&);
+	VirtGicDistributor(GicDistributor&);
+	~VirtGicDistributor();
 
 public:
-	void Start(void);
-	void Stop(void);
-	void Inject_IRq(uint32_t nr);
-	void Process_ISR(void);
+	void Read(uint64_t addr, void* data, AccessSize size);
+	void Write(uint64_t addr, void* data, AccessSize size);
+	bool IRq_Enabled(uint32_t nr);
 
 private:
-	void Set_LR(uint8_t id, uint64_t val);
-
-private:
-	// Maintenance INT handling routine
-	static void MaintenanceIRqHandler(uint32_t);
-
-private:
-	GicDistributor& GicDist;
-	VirtGicDistributor* vGicDist;
-	VICState vState;
-
-private:
-	uint8_t nrLRs;
-	uint16_t lrMask;
+	MTrap* mTrap;
+	GicDistributor& gicDist;
+	GicDistRegs& vGicState;
 };
 
 }; // namespace core

@@ -11,6 +11,7 @@
 // specific language governing permissions and limitations under the License.
 
 #include "virt_distributor.hpp"
+#include "virt_redistributor.hpp"
 #include "virt_ic.hpp"
 
 #include <arm64/registers>
@@ -28,9 +29,11 @@ static const size_t _nrLRs = 16;
 // TBD: ugly way to have access from static function to class instance
 static GicVirtIC* thisVIC = nullptr;
 
-GicVirtIC::GicVirtIC(GicDistributor& dist)
+GicVirtIC::GicVirtIC(GicDistributor& dist, GicRedistributor& redist)
 	: GicDist(dist)
+	, GicRedist(redist)
 	, vGicDist(nullptr)
+	, vGicRedist(nullptr)
 	, vState(VICState::Stopped)
 	, nrLRs(_nrLRs)
 	, lrMask(0)
@@ -43,10 +46,12 @@ void GicVirtIC::Start(void)
 	if (VICState::Stopped == vState)
 	{
 		vGicDist = new VirtGicDistributor(GicDist);
-		if (nullptr == vGicDist)
+		vGicRedist = new VirtGicRedistributor(GicRedist);
+		
+		if ((nullptr == vGicDist) || (nullptr == vGicRedist))
 		{
 			vState = VICState::Failed;
-			Fault("GIC virtual distributor allocation failed");
+			Fault("GIC virtual [re]distributor allocation failed");
 		}
 		else
 		{

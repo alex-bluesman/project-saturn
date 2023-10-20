@@ -12,10 +12,11 @@
 
 #include "virt_distributor.hpp"
 
+#include <bitops>
 #include <bsp/platform>
 #include <core/iconsole>
-#include <core/iic>
 #include <core/ivirtic>
+#include <core/ivmm>
 
 namespace saturn {
 namespace core {
@@ -29,6 +30,8 @@ VirtGicDistributor::VirtGicDistributor(GicDistributor& dist)
 	mTrap = new MTrap(_gic_dist_addr, *this);
 
 	gicDist.Load_State(vGicState);
+
+	Info() << "vic: virtual distributor created" << fmt::endl;
 }
 
 VirtGicDistributor::~VirtGicDistributor()
@@ -38,21 +41,23 @@ VirtGicDistributor::~VirtGicDistributor()
 
 void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 {
+	using Regs = GicDistributor::Dist_Regs;
+
 	switch (reg)
 	{
-	case CTRL:
+	case Regs::CTRL:
 		{
 			uint32_t* val = static_cast<uint32_t*>(data);
 			*val = vGicState.ctrl;
 			break;
 		}
-	case TYPER:
+	case Regs::TYPER:
 		{
 			uint32_t* val = static_cast<uint32_t*>(data);
 			*val = vGicState.typer;
 			break;
 		}
-	case PIDR2:
+	case Regs::PIDR2:
 		{
 			uint32_t* val = static_cast<uint32_t*>(data);
 			*val = vGicState.pidr2;
@@ -61,9 +66,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 	// TBD: think later to optimize the following section
 	default:
 		// case IGROUPR:
-		if ((reg >= IGROUPR) && (reg < IGROUPR + sizeof(vGicState.igroupr)))
+		if ((reg >= Regs::IGROUPR) && (reg < Regs::IGROUPR + sizeof(vGicState.igroupr)))
 		{
-			size_t index = (reg - IGROUPR) / 4;
+			size_t index = (reg - Regs::IGROUPR) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			*val = vGicState.igroupr[index];
@@ -71,9 +76,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case ISENABLER:
-		if ((reg >= ISENABLER) && (reg < ISENABLER + sizeof(vGicState.isenabler)))
+		if ((reg >= Regs::ISENABLER) && (reg < Regs::ISENABLER + sizeof(vGicState.isenabler)))
 		{
-			size_t index = (reg - ISENABLER) / 4;
+			size_t index = (reg - Regs::ISENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			*val = vGicState.isenabler[index];
@@ -81,9 +86,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case ICENABLER:
-		if ((reg >= ICENABLER) && (reg < ICENABLER + sizeof(vGicState.icenabler)))
+		if ((reg >= Regs::ICENABLER) && (reg < Regs::ICENABLER + sizeof(vGicState.icenabler)))
 		{
-			size_t index = (reg - ICENABLER) / 4;
+			size_t index = (reg - Regs::ICENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			*val = vGicState.icenabler[index];
@@ -91,9 +96,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case ISACTIVER:
-		if ((reg >= ISACTIVER) && (reg < ISACTIVER + sizeof(vGicState.isactiver)))
+		if ((reg >= Regs::ISACTIVER) && (reg < Regs::ISACTIVER + sizeof(vGicState.isactiver)))
 		{
-			size_t index = (reg - ISACTIVER) / 4;
+			size_t index = (reg - Regs::ISACTIVER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			*val = vGicState.isactiver[index];
@@ -101,9 +106,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case ICACTIVER:
-		if ((reg >= ICACTIVER) && (reg < ICACTIVER + sizeof(vGicState.icactiver)))
+		if ((reg >= Regs::ICACTIVER) && (reg < Regs::ICACTIVER + sizeof(vGicState.icactiver)))
 		{
-			size_t index = (reg - ICACTIVER) / 4;
+			size_t index = (reg - Regs::ICACTIVER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			*val = vGicState.icactiver[index];
@@ -111,9 +116,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case IPRIORITYR:
-		if ((reg >= IPRIORITYR) && (reg < IPRIORITYR + sizeof(vGicState.ipriorityr)))
+		if ((reg >= Regs::IPRIORITYR) && (reg < Regs::IPRIORITYR + sizeof(vGicState.ipriorityr)))
 		{
-			size_t index = (reg - IPRIORITYR) / 4;
+			size_t index = (reg - Regs::IPRIORITYR) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			*val = vGicState.ipriorityr[index];
@@ -121,9 +126,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case IROUTER:
-		if ((reg >= IROUTER) && (reg < IROUTER + sizeof(vGicState.irouter)))
+		if ((reg >= Regs::IROUTER) && (reg < Regs::IROUTER + sizeof(vGicState.irouter)))
 		{
-			size_t index = (reg - IROUTER) / 8;
+			size_t index = (reg - Regs::IROUTER) / 8;
 			uint64_t* val = static_cast<uint64_t*>(data);
 
 			*val = vGicState.irouter[index];
@@ -138,9 +143,11 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 
 void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 {
+	using Regs = GicDistributor::Dist_Regs;
+
 	switch (reg)
 	{
-	case CTRL:
+	case Regs::CTRL:
 		{
 			uint32_t* val = static_cast<uint32_t*>(data);
 			vGicState.ctrl = *val;
@@ -149,9 +156,9 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 	// TBD: think later to optimize the following section
 	default:
 		// case IGROUPR:
-		if ((reg >= IGROUPR) && (reg < IGROUPR + sizeof(vGicState.igroupr)))
+		if ((reg >= Regs::IGROUPR) && (reg < Regs::IGROUPR + sizeof(vGicState.igroupr)))
 		{
-			size_t index = (reg - IGROUPR) / 4;
+			size_t index = (reg - Regs::IGROUPR) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			vGicState.igroupr[index] = *val;
@@ -159,29 +166,45 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case ISENABLER:
-		if ((reg >= ISENABLER) && (reg < ISENABLER + sizeof(vGicState.isenabler)))
+		if ((reg >= Regs::ISENABLER) && (reg < Regs::ISENABLER + sizeof(vGicState.isenabler)))
 		{
-			size_t index = (reg - ISENABLER) / 4;
+			size_t index = (reg - Regs::ISENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
+			size_t nr = index * 32 + FirstSetBit(*val);
+
+			Log() << "vgicd: set enable INT(" << nr << ")" << fmt::endl;
+
+			if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
+			{
+				gicDist.IRq_Enable(nr);
+			}
 
 			vGicState.isenabler[index] = *val;
 			break;
 		}
 		else
 		// case ICENABLER:
-		if ((reg >= ICENABLER) && (reg < ICENABLER + sizeof(vGicState.icenabler)))
+		if ((reg >= Regs::ICENABLER) && (reg < Regs::ICENABLER + sizeof(vGicState.icenabler)))
 		{
-			size_t index = (reg - ICENABLER) / 4;
+			size_t index = (reg - Regs::ICENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
+			size_t nr = index * 32 + FirstSetBit(*val);
+
+			Log() << "vgicd: clear enable INT(" << nr << ")" << fmt::endl;
+
+			if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
+			{
+				gicDist.IRq_Disable(nr);
+			}
 
 			vGicState.icenabler[index] = *val;
 			break;
 		}
 		else
 		// case ISACTIVER:
-		if ((reg >= ISACTIVER) && (reg < ISACTIVER + sizeof(vGicState.isactiver)))
+		if ((reg >= Regs::ISACTIVER) && (reg < Regs::ISACTIVER + sizeof(vGicState.isactiver)))
 		{
-			size_t index = (reg - ISACTIVER) / 4;
+			size_t index = (reg - Regs::ISACTIVER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			vGicState.isactiver[index] = *val;
@@ -189,9 +212,9 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case ICACTIVER:
-		if ((reg >= ICACTIVER) && (reg < ICACTIVER + sizeof(vGicState.icactiver)))
+		if ((reg >= Regs::ICACTIVER) && (reg < Regs::ICACTIVER + sizeof(vGicState.icactiver)))
 		{
-			size_t index = (reg - ICACTIVER) / 4;
+			size_t index = (reg - Regs::ICACTIVER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			vGicState.icactiver[index] = *val;
@@ -199,9 +222,9 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case IPRIORITYR:
-		if ((reg >= IPRIORITYR) && (reg < IPRIORITYR + sizeof(vGicState.ipriorityr)))
+		if ((reg >= Regs::IPRIORITYR) && (reg < Regs::IPRIORITYR + sizeof(vGicState.ipriorityr)))
 		{
-			size_t index = (reg - IPRIORITYR) / 4;
+			size_t index = (reg - Regs::IPRIORITYR) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
 			vGicState.ipriorityr[index] = *val;
@@ -209,9 +232,9 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		// case IROUTER:
-		if ((reg >= IROUTER) && (reg < IROUTER + sizeof(vGicState.irouter)))
+		if ((reg >= Regs::IROUTER) && (reg < Regs::IROUTER + sizeof(vGicState.irouter)))
 		{
-			size_t index = (reg - IROUTER) / 8;
+			size_t index = (reg - Regs::IROUTER) / 8;
 			uint64_t* val = static_cast<uint64_t*>(data);
 
 			vGicState.irouter[index] = *val;
@@ -227,9 +250,6 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 bool VirtGicDistributor::IRq_Enabled(uint32_t nr)
 {
 	uint32_t reg = vGicState.isenabler[(nr / 32)];
-
-	Log() << "irq: IRq_Enabled(" << nr << ") = isenabler[" << (nr / 32) << "], i.e 0x"
-	      << fmt::hex << fmt::fill << reg << fmt::endl;
 
 	return reg & (1 << (nr % 32));
 }
