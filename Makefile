@@ -43,7 +43,8 @@ run_qemu:
 		-cpu cortex-a57 						\
 		-smp 4								\
 		-machine type=virt						\
-		-m 512M								\
+		-m 1024M							\
 		-nographic							\
-		-kernel source/saturn						\
-		-device loader,file=tools/asteroid/asteroid,addr=0x41000000
+		-device loader,file=tools/asteroid/asteroid,addr=0x41000000	\
+		-device loader,file=source/saturn,addr=0x7fc00000		\
+		-device loader,addr=0x7fc00000,cpu-num=0
