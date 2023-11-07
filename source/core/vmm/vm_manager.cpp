@@ -27,14 +27,9 @@ extern "C" {
 namespace saturn {
 namespace core {
 
-// TBD: introduce configuration interface to avoid hardcoding
-namespace config {
-	static const uint64_t _guest_pa = 0x41000000;
-	static const uint64_t _guest_ipa = 0x40000000;
-}; // namespace config
-
 VM_Manager::VM_Manager()
 	: vmState(vm_state::stopped)
+	, vmConfig(nullptr)
 {
 	// Enable Stage-2 translation for EL1&0 and use AArch64 mode
 	uint64_t hcr = ReadArm64Reg(HCR_EL2);
@@ -42,33 +37,54 @@ VM_Manager::VM_Manager()
 	WriteArm64Reg(HCR_EL2, hcr);
 
 	Info() << "VM manager started" << fmt::endl;
+
+	// TBD: should be some external configuration
+	Load_Config(OS_Type::Default);
 }
 
 VM_Manager::~VM_Manager()
 {}
 
+void VM_Manager::Load_Config(OS_Type type)
+{
+	// Create new VM configuration
+	vmConfig = new VM_Configuration;
+	
+	if (type == OS_Type::Linux)
+	{
+		// TBD
+	}
+	else
+	{
+		Info() << "vmm: load default configuration" << fmt::endl;
+		vmConfig->VM_Add_Memory_Region({0x08010000, 0x08040000, 0x00010000, MMapType::Device});
+		vmConfig->VM_Add_Memory_Region({0x41000000, 0x41000000, BlockSize::L2_Block, MMapType::Normal});
+		vmConfig->VM_Set_Guest_OS(OS_Type::Default);
+		vmConfig->VM_Set_Entry(0x41000000);
+	}
+}
+
 void VM_Manager::Start_VM()
 {
-	struct AArch64_Regs guestContext;
+	if (vmConfig)
+	{
+		struct AArch64_Regs guestContext;
 
-	MSet<uint8_t>(&guestContext, sizeof(guestContext), 0);
+		MSet<uint8_t>(&guestContext, sizeof(guestContext), 0);
 
-	guestContext.cpsr_el2 = 0x3c5;
-	guestContext.pc_el2 = config::_guest_ipa;
-	guestContext.sp_el1 = config::_guest_ipa + BlockSize::L3_Page;	// Some temporary location in VM address space
+		guestContext.cpsr_el2 = 0x3c5;
+		guestContext.pc_el2 = vmConfig->osEntry;
+		guestContext.sp_el1 = vmConfig->osEntry;	// TBD: some temporary location in VM address space
 
-	// The following registers to be checked:
-	// MPIDR_EL1, SCTLR_EL1
-	
-	// TBD: guest VM configuration
-	vmConfig = new VM_Configuration;
+		// The following registers to be checked:
+		// MPIDR_EL1, SCTLR_EL1
 
-	iMMU_VM().MemoryMap(config::_guest_ipa, config::_guest_pa, BlockSize::L2_Block, MMapType::Normal);
-	iMMU_VM().MemoryMap(0x08010000, 0x08040000, 0x00010000, MMapType::Device);
-	iVirtIC().Start_Virt_IC();
+		iVirtIC().Start_Virt_IC();
+		vmConfig->VM_Map_All();
 
-	vmState = vm_state::running;
-	Switch_EL12(&guestContext);
+		vmState = vm_state::running;
+		Switch_EL12(&guestContext);
+	}
 }
 
 void VM_Manager::Stop_VM()
@@ -90,7 +106,7 @@ vm_state VM_Manager::Get_VM_State()
 
 bool VM_Manager::Guest_IRq(uint32_t nr)
 {
-	return vmConfig->Hardware_Interrupt(nr);
+	return vmConfig->VM_Own_Interrupt(nr);
 }
 
 }; // namespace core
