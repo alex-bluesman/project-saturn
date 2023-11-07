@@ -307,6 +307,11 @@ lpae_table_t* MemoryManagementUnit::Map_L2_PTable(uint64_t virt_addr)
 	return entry;
 }
 
+void* MemoryManagementUnit::MemoryMap(Memory_Region& region)
+{
+	return MemoryMap(region.PA, region.VA, region.Size, region.Type);
+}
+
 void* MemoryManagementUnit::MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type)
 {
 	uint64_t start = virt_addr & _page_base;
