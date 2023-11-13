@@ -23,6 +23,8 @@ struct GicDistRegs
 {
 	uint32_t ctrl;
 	uint32_t typer;
+	uint32_t iidr;
+	uint32_t typer2;
 	uint32_t igroupr[_gicd_nr_lines / 32];
 	uint32_t isenabler[_gicd_nr_lines / 32];
 	uint32_t icenabler[_gicd_nr_lines / 32];
@@ -41,6 +43,8 @@ public:
 	{
 		CTRL		= 0x0000,
 		TYPER		= 0x0004,
+		IIDR		= 0x0008,
+		TYPER2		= 0x000c,
 		IGROUPR		= 0x0080,
 		ISENABLER	= 0x0100,
 		ICENABLER	= 0x0180,
