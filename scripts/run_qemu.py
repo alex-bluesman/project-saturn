@@ -26,11 +26,12 @@ def start_qemu(topfolder, os, extraparams):
         # Asteroid kernel
         cmdline.extend(['-device', 'loader,file=' + topfolder + '/tools/asteroid/asteroid,addr=0x41000000'])
     elif os == 'linux':
-        print('error: linux guest is not supported yet\n')
-        sys.exit(1)
+        cmdline.extend(['-device', 'loader,file=' + topfolder + '/images/Image,addr=0x41000000'])
+        cmdline.extend(['-device', 'loader,file=' + topfolder + '/images/qemu.dtb,addr=0x43000000'])
 
     cmdline.extend([extraparams])
 
+    print(cmdline)
     p1 = subprocess.call('exec ' + ' '.join(cmdline), shell=True)
 
 if __name__ == "__main__":
