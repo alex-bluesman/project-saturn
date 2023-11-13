@@ -20,6 +20,7 @@ namespace core {
 struct GicRedistRegs
 {
 	uint32_t ctrl;
+	uint64_t typer;
 	uint32_t waker;
 	uint32_t igroupr0;
 	uint32_t isenabler0;
@@ -27,6 +28,7 @@ struct GicRedistRegs
 	uint32_t isactiver0;
 	uint32_t icactiver0;
 	uint32_t ipriorityr;
+	uint32_t pidr2;
 };
 
 class GicRedistributor
@@ -35,12 +37,14 @@ public:
 	enum Redist_Regs
 	{
 		CTRL		= 0x0000,
+		TYPER		= 0x0008,
 		WAKER		= 0x0014,
 		IGROUPR0	= 0x0080,
 		ISENABLER0	= 0x0100,
 		ICENABLER0	= 0x0180,
 		ICACTIVER0	= 0x0380,
 		IPRIORITYR	= 0x0400,
+		PIDR2		= 0xffe8,
 		SGI_offset	= 0x10000	// 64K SGI region offset
 	};
 
