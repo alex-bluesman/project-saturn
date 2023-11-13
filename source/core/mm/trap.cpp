@@ -10,6 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "trap.hpp"
+
 #include <arm64/registers>
 #include <core/iconsole>
 #include <mtrap>
@@ -20,39 +22,9 @@ namespace core {
 static const uint32_t _ec_abort_el1 = 0x24;			// Data Abort exception from lower Exception Level
 static list_head_t Memory_Trap_List;				// List to handle trap nodes
 
-// ======== TBD: Testing purpose only! =========
-class Dummy : public IVirtIO
-{
-public:
-	Dummy()
-	{
-		mt = new MTrap({0x000, 0x100}, *this);
-	};
-public:
-	void Read(uint64_t addr, void* data, AccessSize size)
-	{
-		uint64_t *ptr = static_cast<uint64_t *>(data);
-		*ptr = 0x12;
-	};
-
-	void Write(uint64_t addr, void* data, AccessSize size)
-	{
-		Info() << "Write data size " << (uint64_t)size << fmt::endl;
-	};
-private:
-	MTrap*	mt;
-};
-
-Dummy *_dummy = nullptr;
-
-// =============================================
-
 void Memory_Trap_Init(void)
 {
 	List_Init(&Memory_Trap_List);
-
-	// TBD
-	_dummy = new Dummy;
 }
 
 void Register_Trap_Region(MTrap& mt)
@@ -145,14 +117,15 @@ bool Do_Memory_Trap(struct AArch64_Regs* Regs)
 			uint8_t srt = (iss >> 16) & 0x1f;
 			uint64_t far = ReadArm64Reg(FAR_EL2);
 			uint64_t* reg = &Regs->x0;
+			uint64_t pa = va_to_pa_el1(far);
 
 			reg += srt;
 
-			MTrap* mt = Find_Trap_Node(far, sas + 1);
+			MTrap* mt = Find_Trap_Node(pa, sas + 1);
 
 			if (mt != nullptr)
 			{
-				uint64_t offset = far - mt->GetBase();
+				uint64_t offset = pa - mt->GetBase();
 
 				if (wnr == 0)
 				{
