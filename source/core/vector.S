@@ -131,7 +131,8 @@ saturn_irq:
 	mov	x0, sp
 	bl	IRq_Handler
 
-	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
+// TBD: enabling nested interrupts could crash the stack
+//	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	Restore_Hyp_Frame
 	eret
 
@@ -151,7 +152,8 @@ guest_sync:
 	mov	x0, sp
 	bl	Guest_Abort
 
-	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
+// TBD: enabling nested interrupts could crash the stack
+//	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	Restore_Sys_Frame
 	Restore_Hyp_Frame
 	eret
@@ -164,7 +166,8 @@ guest_irq:
 	mov	x0, sp
 	bl	IRq_Handler
 
-	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
+// TBD: enabling nested interrupts could crash the stack
+//	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	Restore_Sys_Frame
 	Restore_Hyp_Frame
 	eret
