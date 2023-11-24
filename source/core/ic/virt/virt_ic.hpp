@@ -18,6 +18,7 @@ namespace saturn {
 namespace core {
 
 // Forward declaration
+class CpuInterface;
 class GicDistributor;
 class VirtGicDistributor;
 class GicRedistributor;
@@ -33,7 +34,7 @@ enum class VICState
 class GicVirtIC
 {
 public:
-	GicVirtIC(GicDistributor&, GicRedistributor&);
+	GicVirtIC(CpuInterface&, GicDistributor&, GicRedistributor&);
 
 public:
 	void Start(void);
@@ -49,6 +50,8 @@ private:
 	static void MaintenanceIRqHandler(uint32_t);
 
 private:
+	CpuInterface& CpuIface;
+
 	GicDistributor& GicDist;
 	VirtGicDistributor* vGicDist;
 
@@ -59,7 +62,6 @@ private:
 
 private:
 	uint8_t nrLRs;
-	uint16_t lrMask;
 };
 
 }; // namespace core

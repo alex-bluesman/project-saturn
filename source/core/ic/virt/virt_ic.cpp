@@ -10,6 +10,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "../gic/cpu_interface.hpp"
 #include "virt_distributor.hpp"
 #include "virt_redistributor.hpp"
 #include "virt_ic.hpp"
@@ -17,28 +18,29 @@
 #include <arm64/registers>
 #include <bitops>
 #include <core/iic>
+#include <core/ivmm>
 #include <fault>
 
 namespace saturn {
 namespace core {
 
-// Arm strongly recomments that maintenance interrupts are configured to use INTID 25.
+// Arm strongly recommends that maintenance interrupts are configured to use INTID 25.
 static const uint32_t _maintenance_int = 25;
-// Number of LR registers available for current VM
-static const size_t _nrLRs = 16;
 // TBD: ugly way to have access from static function to class instance
 static GicVirtIC* thisVIC = nullptr;
 
-GicVirtIC::GicVirtIC(GicDistributor& dist, GicRedistributor& redist)
-	: GicDist(dist)
+GicVirtIC::GicVirtIC(CpuInterface& cpu, GicDistributor& dist, GicRedistributor& redist)
+	: CpuIface(cpu)
+	, GicDist(dist)
 	, GicRedist(redist)
 	, vGicDist(nullptr)
 	, vGicRedist(nullptr)
 	, vState(VICState::Stopped)
-	, nrLRs(_nrLRs)
-	, lrMask(0)
 {
 	thisVIC = this;
+	nrLRs = (ReadICCReg(ICH_VTR_EL2) & 0xf) + 1;
+
+	Log() << "vic: found " << nrLRs << " LR registers" << fmt::endl;
 }
 
 void GicVirtIC::Start(void)
@@ -138,25 +140,32 @@ void GicVirtIC::Set_LR(uint8_t id, uint64_t val)
 		Fault("attempt to set out of range GIC LR");
 	}
 }
-
 void GicVirtIC::Inject_IRq(uint32_t nr)
 {
-	if (nr < _firstSPI)
-	{
-		// TBD: handle SGI and PPI via virtual redistributor
-	}
-	else
 	if (nr < _maxIRq)
 	{
-		if (vGicDist->IRq_Enabled(nr))
+		if (
+		    ((nr < _firstSPI) && vGicRedist->IRq_Enabled(nr)) ||		// nr == 0..31, what means it's SGI or PPI, so ask redistributor
+		    ((nr >= _firstSPI) && vGicDist->IRq_Enabled(nr))			// nr == 32.., what means it's SPI, so ask distributor
+		   )
 		{
-			uint8_t pos = FirstCleanBit<uint16_t>(lrMask);
+			uint64_t lrMask = ReadICCReg(ICH_ELRSR_EL2) & 0xf;
+			uint8_t pos = FirstSetBit<uint16_t>(lrMask);
 
 			if (pos < nrLRs)
 			{
-				SetBit(lrMask, pos);
+				uint64_t lr;
 
-				uint64_t lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;	// State (Pending), Group (1), Priority (0x80)
+				if (nr != 33) //TBD!!!
+				{
+					// TBD: hardware INT
+					lr = (1UL << 62) | (1UL << 61) | (1UL << 60) | (0x80UL << 48) | ((uint64_t)nr << 32) | nr;	// State (Pending), Group (1), Priority (0x80)
+				}
+				else
+				{
+					// TBD: software INT
+					lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;		// State (Pending), Group (1), Priority (0x80)
+				}
 				Set_LR(pos, lr);
 			}
 			else
@@ -186,7 +195,6 @@ void GicVirtIC::Process_ISR(void)
 		if (nr < nrLRs)
 		{
 			Set_LR(nr, 0);
-			ClearBit(lrMask, nr);
 		}
 
 		ClearBit(eisr, nr);
