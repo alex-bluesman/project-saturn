@@ -70,7 +70,7 @@ IC_Core::IC_Core()
 		IRq_Table[i] = Default_Handler;
 	}
 
-	GicVIC = new GicVirtIC(*GicDist, *GicRedist);
+	GicVIC = new GicVirtIC(*CpuIface, *GicDist, *GicRedist);
 	if (nullptr == GicVIC)
 	{
 		Fault("GIC virtual interface allocation failed");
@@ -111,6 +111,8 @@ void IC_Core::Handle_IRq()
 {
 	uint32_t nr = CpuIface->Read_Ack_IRq();
 
+	CpuIface->Drop_Priority(nr);
+
 	if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 	{
 		// VM is running and IRq assigned to the guest, so just route it
@@ -128,7 +130,7 @@ void IC_Core::Handle_IRq()
 			Error() << "error: received INT with ID (" << nr << ") out of supported range" << fmt::endl;
 		}
 
-		CpuIface->EOI(nr);
+		CpuIface->Deactivate(nr);
 	}
 }
 
