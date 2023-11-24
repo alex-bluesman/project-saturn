@@ -100,6 +100,11 @@ public:
 		return ret;
 	}
 
+	inline bool	Empty()
+	{
+		return (Fill == 0);
+	}
+
 private:
 	T*	Buffer;
 	bool	Extern;
