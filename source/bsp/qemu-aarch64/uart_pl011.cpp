@@ -116,5 +116,17 @@ void UartPl011::UartIRqHandler(uint32_t id)
 	Self->HandleIRq();
 }
 
+void UartPl011::Load_State(Pl011Regs &regs)
+{
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		regs.periphid[i] = Regs->Read<uint32_t>(Pl011_Regs::PERIPHID0 + (i * 4));
+		regs.pcellid[i] = Regs->Read<uint32_t>(Pl011_Regs::PCELLID0 + (i * 4));
+	}
+
+	regs.cr = Regs->Read<uint32_t>(Pl011_Regs::CR);
+	regs.imsc = Regs->Read<uint32_t>(Pl011_Regs::IMSC);
+}
+
 }; // namespace device
 }; // namespace saturn
