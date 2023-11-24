@@ -76,7 +76,7 @@ void UartPl011::Tx(uint8_t *buff, size_t len)
 	while (len--)
 	{
 		// Wait for UART to be ready
-		while (!(Regs->Read<uint32_t>(Pl011_Regs::FR) && Reg_FR::Busy));
+		while (Regs->Read<uint32_t>(Pl011_Regs::FR) & Reg_FR::Busy);
 
 		Regs->Write<uint8_t>(Pl011_Regs::TDR, *buff++);
 	}
