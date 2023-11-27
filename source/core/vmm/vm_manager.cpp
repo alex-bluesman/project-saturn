@@ -39,7 +39,8 @@ VM_Manager::VM_Manager()
 	Info() << "VM manager started" << fmt::endl;
 
 	// TBD: should be some external configuration
-	Load_Config(OS_Type::Default);
+	Load_Config(OS_Type::Linux);
+	//Load_Config(OS_Type::Default);
 }
 
 VM_Manager::~VM_Manager()
@@ -50,17 +51,39 @@ void VM_Manager::Load_Config(OS_Type type)
 	// Create new VM configuration
 	vmConfig = new VM_Configuration;
 	
+	vmConfig->VM_Set_Guest_OS(type);
 	if (type == OS_Type::Linux)
 	{
-		// TBD
+		Info() << "vmm: load linux configuration" << fmt::endl;
+		//vmConfig->VM_Add_Memory_Region({0x08040000, 0x08010000, 0x00010000, MMapType::Device});			// GIC vCPU interface
+		vmConfig->VM_Add_Memory_Region({0x08080000, 0x08080000, 0x00020000, MMapType::Device});			// GIC ITS
+		vmConfig->VM_Add_Memory_Region({0x09010000, 0x09010000, 0x00001000, MMapType::Device});			// PL031 RTC
+		vmConfig->VM_Add_Memory_Region({0x09030000, 0x09030000, 0x00001000, MMapType::Device});			// PL061 GPIO controller
+		vmConfig->VM_Add_Memory_Region({0x0a000000, 0x0a000000, 0x00004000, MMapType::Device});			// Vi
+
+		vmConfig->VM_Add_Memory_Region({0x40000000, 0x40000000, 0x20000000, MMapType::Normal});			// Normal RAM memory
+		vmConfig->VM_Set_Entry(0x41000000);
+
+		vmConfig->VM_Assign_Interrupt(0);	// SGI
+		vmConfig->VM_Assign_Interrupt(1);	// SGI
+		vmConfig->VM_Assign_Interrupt(2);	// SGI
+		vmConfig->VM_Assign_Interrupt(3);	// SGI
+		vmConfig->VM_Assign_Interrupt(4);	// SGI
+		vmConfig->VM_Assign_Interrupt(5);	// SGI
+		vmConfig->VM_Assign_Interrupt(6);	// SGI
+
+		vmConfig->VM_Assign_Interrupt(23);	// AMBA clock
+		vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
+		vmConfig->VM_Assign_Interrupt(34);	// VirtIO
 	}
 	else
 	{
 		Info() << "vmm: load default configuration" << fmt::endl;
-		vmConfig->VM_Add_Memory_Region({0x08010000, 0x08040000, 0x00010000, MMapType::Device});
+		vmConfig->VM_Add_Memory_Region({0x08010000, 0x08040000, 0x00010000, MMapType::Device});			// GIC vCPU interface
 		vmConfig->VM_Add_Memory_Region({0x41000000, 0x41000000, BlockSize::L2_Block, MMapType::Normal});
-		vmConfig->VM_Set_Guest_OS(OS_Type::Default);
 		vmConfig->VM_Set_Entry(0x41000000);
+
+		vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
 	}
 }
 
@@ -81,6 +104,13 @@ void VM_Manager::Start_VM()
 
 		iVirtIC().Start_Virt_IC();
 		vmConfig->VM_Map_All();
+
+		if (OS_Type::Linux == vmConfig->osType)
+		{
+			guestContext.x0 = 0x43000000;
+		}
+
+		Info() << fmt::endl << "vmm: start VM" << fmt::endl;
 
 		vmState = vm_state::running;
 		Switch_EL12(&guestContext);
