@@ -21,13 +21,14 @@ namespace core {
 using namespace device;
 
 static const size_t _rx_size = 16;
-static const size_t _buffer_size = 1024;
+static const size_t _tx_size = 1024;
 
 class Console : public IConsole
 {
 public:
 	Console();
 
+// Output interface
 public:
 	Console& operator<<(fmt format);
 	Console& operator<<(llevel level);
@@ -42,10 +43,15 @@ public:
 
 	Console& operator<<(size_t num);
 
+// Input interface
+public:
+	char GetChar(iomode mode);
+
+// UART driver interface
 public:
 	void RegisterUart(IUartDevice&);
-	bool UartRX(char sym);
-	char GetChar(iomode mode);
+	bool RxChar(char sym);
+	bool RxFifoEmpty();
 
 public:
 	void SetLevel(llevel);
@@ -67,8 +73,9 @@ private:
 	llevel currentMsgLevel;
 	llevel consoleLevel;
 
+	// RX/TX buffering
 	RingBuffer<char, _rx_size> *rxBuffer;
-	RingBuffer<uint8_t, _buffer_size> *consoleBuffer;
+	RingBuffer<char, _tx_size> *txBuffer;
 };
 
 }; // namespace core

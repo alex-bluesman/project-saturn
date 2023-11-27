@@ -95,7 +95,7 @@ void UartPl011::HandleIRq(void)
 
 		uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
 
-		iConsole().UartRX(static_cast<char>(data));
+		iConsole().RxChar(static_cast<char>(data));
 
 		if (iVMM().Get_VM_State() == vm_state::running)
 		{
