@@ -52,7 +52,7 @@ bool VM_Configuration::VM_Own_Interrupt(size_t nr)
 
 	if (nr < _nrINTs)
 	{
-		ret = hwINTMask[nr / 8] &= (1 << (nr % 8));
+		ret = hwINTMask[nr / 8] & (1 << (nr % 8));
 	}
 
 	return ret;
