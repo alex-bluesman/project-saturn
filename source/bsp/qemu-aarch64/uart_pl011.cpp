@@ -92,10 +92,14 @@ void UartPl011::HandleIRq(void)
 	if (status & Pl011_INT::RX)
 	{
 		status &= ~Pl011_INT::RX;
+		uint16_t fr = Regs->Read<uint16_t>(Pl011_Regs::FR);
 
-		uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
+		while (!(fr & Reg_FR::RXEmpty)) {
+			uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
+			iConsole().RxChar(static_cast<char>(data));
 
-		iConsole().RxChar(static_cast<char>(data));
+			fr = Regs->Read<uint16_t>(Pl011_Regs::FR);
+		}
 
 		if (iVMM().Get_VM_State() == vm_state::running)
 		{

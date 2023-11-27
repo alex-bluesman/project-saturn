@@ -49,7 +49,8 @@ enum Reg_CR {
 };
 
 enum Reg_FR {
-	Busy	= 1 << 3	// UART busy bit
+	Busy	= 1 << 3,	// UART busy bit
+	RXEmpty = 1 << 4	// RX FIFO empty bit
 };
 
 enum Pl011_INT {
