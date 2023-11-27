@@ -33,6 +33,7 @@ public:
 private:
 	MTrap* mTrap;
 	UartPl011& hwUart;
+	struct Pl011Regs& regState;
 };
 
 }; // namespace device
