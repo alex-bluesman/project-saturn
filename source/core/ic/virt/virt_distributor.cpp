@@ -43,6 +43,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 {
 	using Regs = GicDistributor::Dist_Regs;
 
+	// DBG:
+	//Log() << "vgicd: read from register offset 0x" << fmt::hex << reg << fmt::endl;
+
 	switch (reg)
 	{
 	case Regs::CTRL:
@@ -55,6 +58,18 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		{
 			uint32_t* val = static_cast<uint32_t*>(data);
 			*val = vGicState.typer;
+			break;
+		}
+	case Regs::IIDR:
+		{
+			uint32_t* val = static_cast<uint32_t*>(data);
+			*val = vGicState.iidr;
+			break;
+		}
+	case Regs::TYPER2:
+		{
+			uint32_t* val = static_cast<uint32_t*>(data);
+			*val = vGicState.typer2;
 			break;
 		}
 	case Regs::PIDR2:
@@ -91,7 +106,7 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 			size_t index = (reg - Regs::ICENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
 
-			*val = vGicState.icenabler[index];
+			*val = vGicState.isenabler[index];
 			break;
 		}
 		else
@@ -125,6 +140,16 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 			break;
 		}
 		else
+		// case ICFGR:
+		if ((reg >= Regs::ICFGR) && (reg < Regs::ICFGR + sizeof(vGicState.icfgr)))
+		{
+			size_t index = (reg - Regs::ICFGR) / 4;
+			uint32_t* val = static_cast<uint32_t*>(data);
+
+			*val = vGicState.icfgr[index];
+			break;
+		}
+		else
 		// case IROUTER:
 		if ((reg >= Regs::IROUTER) && (reg < Regs::IROUTER + sizeof(vGicState.irouter)))
 		{
@@ -136,7 +161,8 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		{
-			Info() << "vgicd: unsupported read from register offset 0x" << fmt::hex << fmt::fill << reg << fmt::endl; 
+			// DBG:
+			//Log() << "vgicd: unsupported read from register offset 0x" << fmt::hex << fmt::fill << reg << fmt::endl;
 		}
 	}
 }
@@ -144,6 +170,9 @@ void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)
 void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 {
 	using Regs = GicDistributor::Dist_Regs;
+
+	// DBG:
+	//Log() << "vgicd: write value 0x" << fmt::hex << *static_cast<uint32_t*>(data) << " to register offset 0x" << reg << fmt::endl;
 
 	switch (reg)
 	{
@@ -170,16 +199,18 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		{
 			size_t index = (reg - Regs::ISENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
+			// TBD: multiple bits could be set
 			size_t nr = index * 32 + FirstSetBit(*val);
 
-			Log() << "vgicd: set enable INT(" << nr << ")" << fmt::endl;
+			// DBG:
+			//Log() << "vgicd: set enable INT(" << nr << ")" << fmt::endl;
 
 			if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 			{
 				gicDist.IRq_Enable(nr);
 			}
 
-			vGicState.isenabler[index] = *val;
+			vGicState.isenabler[index] |= *val;
 			break;
 		}
 		else
@@ -188,16 +219,18 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		{
 			size_t index = (reg - Regs::ICENABLER) / 4;
 			uint32_t* val = static_cast<uint32_t*>(data);
+			// TBD: multiple bits could be set
 			size_t nr = index * 32 + FirstSetBit(*val);
 
-			Log() << "vgicd: clear enable INT(" << nr << ")" << fmt::endl;
+			// DBG:
+			//Log() << "vgicd: clear enable INT(" << nr << ")" << fmt::endl;
 
 			if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 			{
 				gicDist.IRq_Disable(nr);
 			}
 
-			vGicState.icenabler[index] = *val;
+			vGicState.isenabler[index] &= ~(*val);
 			break;
 		}
 		else
@@ -231,6 +264,16 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 			break;
 		}
 		else
+		// case ICFGR:
+		if ((reg >= Regs::ICFGR) && (reg < Regs::ICFGR + sizeof(vGicState.icfgr)))
+		{
+			size_t index = (reg - Regs::ICFGR) / 4;
+			uint32_t* val = static_cast<uint32_t*>(data);
+
+			vGicState.icfgr[index] = *val;
+			break;
+		}
+		else
 		// case IROUTER:
 		if ((reg >= Regs::IROUTER) && (reg < Regs::IROUTER + sizeof(vGicState.irouter)))
 		{
@@ -242,7 +285,8 @@ void VirtGicDistributor::Write(uint64_t reg, void* data, AccessSize size)
 		}
 		else
 		{
-			Info() << "vgicd: unsupported write to register offset 0x" << fmt::hex << fmt::fill << reg << fmt::endl; 
+			// DBG:
+			//Log() << "vgicd: unsupported write to register offset 0x" << fmt::hex << fmt::fill << reg << fmt::endl; 
 		}
 	}
 }

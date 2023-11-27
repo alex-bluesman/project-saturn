@@ -12,10 +12,13 @@
 
 #include "virt_redistributor.hpp"
 
+#include <bitops>
 #include <bsp/platform>
 #include <core/iconsole>
 #include <core/iic>
 #include <core/ivirtic>
+#include <core/ivmm>
+#include <core/ivmm>
 
 namespace saturn {
 namespace core {
@@ -42,19 +45,33 @@ void VirtGicRedistributor::Read(uint64_t reg, void* data, AccessSize size)
 {
 	using Regs = GicRedistributor::Redist_Regs;
 
-	if (reg >= Regs::SGI_offset)
-	{
-		// SGI and PPI frame (64KB offset according to GICv3 spec)
-		reg -= Regs::SGI_offset;
+	// DBG:
+	//Log() << "vredist: read from register offset 0x" << fmt::hex << reg << fmt::endl;
 
-		switch (reg)
+	switch (reg)
+	{
+	case Regs::CTRL:
 		{
-		case Regs::CTRL:
-			{
-			}
-		default:
+			uint32_t* val = static_cast<uint32_t*>(data);
+			*val = vRedistState.ctrl;
 			break;
 		}
+	case Regs::TYPER:
+		{
+			uint64_t* val = static_cast<uint64_t*>(data);
+			*val = vRedistState.typer | (1 << 4);
+			break;
+		}
+	case Regs::PIDR2:
+		{
+			uint32_t* val = static_cast<uint32_t*>(data);
+			*val = vRedistState.pidr2;
+			break;
+		}
+	default:
+		// DBG:
+		//Log() << "vredist: unsupported read from register offset 0x" << fmt::hex << reg << fmt::endl;
+		break;
 	}
 }
 
@@ -62,12 +79,43 @@ void VirtGicRedistributor::Write(uint64_t reg, void* data, AccessSize size)
 {
 	using Regs = GicRedistributor::Redist_Regs;
 
+	// DBG:
+	//Log() << "vredist: write value 0x" << fmt::hex << *static_cast<uint32_t*>(data) << " to register offset 0x" << reg << fmt::endl;
+
 	switch (reg)
 	{
 	case Regs::CTRL:
 		{
 		}
 	default:
+		if (reg >= Regs::SGI_offset)
+		{
+			// SGI and PPI frame (64KB offset according to GICv3 spec)
+			reg -= Regs::SGI_offset;
+
+			switch(reg)
+			{
+			case Regs::ISENABLER0:
+				{
+					uint32_t* val = static_cast<uint32_t*>(data);
+					// TBD: multiple bits could be set
+					size_t nr = FirstSetBit(*val);
+
+					vRedistState.isenabler0 |= *val;
+
+					if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
+					{
+						gicRedist.IRq_Enable(nr);
+					}
+					break;
+				}
+			default:
+				// DBG:
+				//Log() << "vredist: unsupported write to register offset 0x" << fmt::hex << reg << fmt::endl; 
+				break;
+			}
+		}
+
 		break;
 	}
 }
