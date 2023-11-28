@@ -24,9 +24,42 @@ namespace asteroid {
 // External API:
 extern void Exceptions_Init();
 
+#define TICK_HZ			1			// Desired tick resolution
+#define TIMER_HZ		64500000		// Physical counter resolution
+#define TIMER_PERIOD_MS		(TIMER_HZ / TICK_HZ)	// Scheduling period
+
+static uint64_t _timer_counter;
+
+static void Timer_IRq_Handler(uint32_t id)
+{
+	_timer_counter++;
+	Info() << "timer: tick " << _timer_counter << fmt::endl;
+
+	uint64_t cval = ReadArm64Reg(CNTV_CVAL_EL0);
+	cval += TIMER_PERIOD_MS;
+	WriteArm64Reg(CNTV_CVAL_EL0, cval);
+}
+
+static void Timer_App(void)
+{
+	_timer_counter = 0;
+
+	// Disable timer
+	WriteArm64Reg(CNTV_CTL_EL0, 0);
+
+	iIC().Register_IRq_Handler(27, &Timer_IRq_Handler);
+
+	uint64_t cval = ReadArm64Reg(CNTVCT_EL0);
+	WriteArm64Reg(CNTV_CVAL_EL0, cval);
+
+	WriteArm64Reg(CNTV_CTL_EL0, 1);
+}
+
 static void Demo_Application(void)
 {
 	Info() << "* start demo application *" << fmt::endl;
+
+	Timer_App();
 
 	for (;;);
 }
