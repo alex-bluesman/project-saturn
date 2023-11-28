@@ -39,8 +39,8 @@ VM_Manager::VM_Manager()
 	Info() << "VM manager started" << fmt::endl;
 
 	// TBD: should be some external configuration
-	Load_Config(OS_Type::Linux);
-	//Load_Config(OS_Type::Default);
+	//Load_Config(OS_Type::Linux);
+	Load_Config(OS_Type::Default);
 }
 
 VM_Manager::~VM_Manager()
@@ -51,11 +51,12 @@ void VM_Manager::Load_Config(OS_Type type)
 	// Create new VM configuration
 	vmConfig = new VM_Configuration;
 	
+	// TBD: must be set outside to avoid hardcodding!
+
 	vmConfig->VM_Set_Guest_OS(type);
 	if (type == OS_Type::Linux)
 	{
 		Info() << "vmm: load linux configuration" << fmt::endl;
-		//vmConfig->VM_Add_Memory_Region({0x08040000, 0x08010000, 0x00010000, MMapType::Device});			// GIC vCPU interface
 		vmConfig->VM_Add_Memory_Region({0x08080000, 0x08080000, 0x00020000, MMapType::Device});			// GIC ITS
 		vmConfig->VM_Add_Memory_Region({0x09010000, 0x09010000, 0x00001000, MMapType::Device});			// PL031 RTC
 		vmConfig->VM_Add_Memory_Region({0x09030000, 0x09030000, 0x00001000, MMapType::Device});			// PL061 GPIO controller
