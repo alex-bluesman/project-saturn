@@ -10,53 +10,21 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "vm_config.hpp"
+
 #include <core/ivmm>
 
 namespace saturn {
 namespace core {
-
-// TBD: should be global const comming from BSP
-static const size_t _nrINTs = 256;
-
-class VM_Configuration {
-public:
-	VM_Configuration()
-	{
-		for (int i = 0; i < (_nrINTs / 8); i++)
-		{
-			hwINTMask[i] = 0;
-		}
-	}
-
-public:
-	void Assign_Interrupt(size_t nr)
-	{
-		if (nr < _nrINTs)
-		{
-			hwINTMask[nr / 8] |= (1 << (nr % 8));
-		}
-	}
-
-	bool Hardware_Interrupt(size_t nr)
-	{
-		bool ret = false;
-
-		if (nr < _nrINTs)
-		{
-			ret = hwINTMask[nr / 8] &= (1 << (nr % 8));
-		}
-
-		return ret;
-	}
-public:
-	uint8_t	hwINTMask[_nrINTs / 8];
-};
 
 class VM_Manager : public IVirtualMachineManager
 {
 public:
 	VM_Manager();
 	~VM_Manager();
+
+public:
+	void Load_Config(OS_Type type);	// TBD: add external config
 
 public:
 	void Start_VM();

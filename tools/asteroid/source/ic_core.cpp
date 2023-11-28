@@ -24,6 +24,7 @@ static const size_t _maxIRq = 1020;
 static const uint32_t _maintenance_int = 25;
 
 static const uint64_t _gic_dist_addr = 0x08000000;
+static const uint64_t _gic_redist_addr = 0x080a0000;
 
 // TBD: think about better allocation for this data block
 static IRqHandler _IRq_Table[_maxIRq];
@@ -136,6 +137,11 @@ void IC_Core::Register_IRq_Handler(uint32_t id, IRqHandler handler)
 	{
 		IRq_Table[id] = handler;
 
+		if (id < 32)
+		{
+			Write<uint32_t>(_gic_redist_addr + 0x10000 + Dist_Regs::ISENABLER, 1 << (id % 32));
+		}
+		else
 		if (id >= 32)
 		{
 			// Set INT enable

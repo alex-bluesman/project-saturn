@@ -125,14 +125,15 @@ saturn_sync:
 	b	Sync_Abort
 
 saturn_irq:
-	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
 	Store_Hyp_Frame
+	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
 
 	mov	x0, sp
 	bl	IRq_Handler
 
+// TBD: enabling nested interrupts could crash the stack
+//	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	Restore_Hyp_Frame
-	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	eret
 
 saturn_fiq:
@@ -146,25 +147,29 @@ saturn_error:
 guest_sync:
 	Store_Hyp_Frame
 	Store_Sys_Frame
+	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
 
 	mov	x0, sp
 	bl	Guest_Abort
 
+// TBD: enabling nested interrupts could crash the stack
+//	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	Restore_Sys_Frame
 	Restore_Hyp_Frame
 	eret
 
 guest_irq:
-	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
 	Store_Hyp_Frame
 	Store_Sys_Frame
+	msr	DAIFSet, #2	// Mask {I} to avoid nested interrupts
 
 	mov	x0, sp
 	bl	IRq_Handler
 
+// TBD: enabling nested interrupts could crash the stack
+//	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	Restore_Sys_Frame
 	Restore_Hyp_Frame
-	msr	DAIFClr, #2	// Unmask {I} to enable interrupts back
 	eret
 
 guest_error:

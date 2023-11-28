@@ -10,58 +10,53 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#pragma once
-
 #include <basetypes>
+#include <core/immu>
 
 namespace saturn {
 namespace core {
 
-// Forward declaration
-class CpuInterface;
-class GicDistributor;
-class VirtGicDistributor;
-class GicRedistributor;
-class VirtGicRedistributor;
+// TBD: should be global const comming from BSP
+static const size_t _nrINTs = 256;
+static const size_t _nrMMaps = 16;
 
-enum class VICState
+// Data types used for configuration:
+enum class OS_Type
 {
-	Stopped,
-	Started,
-	Failed
+	Default,
+	Linux
 };
 
-class GicVirtIC
-{
+class VM_Configuration {
 public:
-	GicVirtIC(CpuInterface&, GicDistributor&, GicRedistributor&);
+	VM_Configuration();
+	~VM_Configuration();
+
+// VM interrupts management:
+public:
+	void VM_Assign_Interrupt(size_t nr);
+	bool VM_Own_Interrupt(size_t nr);
+
+// VM memory management:
+public:
+	void VM_Add_Memory_Region(Memory_Region region);
+	void VM_Map_All(void);
+	void VM_Unmap_All(void);
+
+// VM guest OS management:
+public:
+	void VM_Set_Guest_OS(OS_Type type);
+	void VM_Set_Entry(uint64_t addr);
+
+private:
+	uint8_t	(&hwINTMask)[];
+
+	Memory_Region (&memRegions)[];
+	size_t nrRegions;
 
 public:
-	void Start(void);
-	void Stop(void);
-	void Inject_IRq(uint32_t nr);
-	void Process_ISR(void);
-
-private:
-	void Set_LR(uint8_t id, uint64_t val);
-
-private:
-	// Maintenance INT handling routine
-	static void MaintenanceIRqHandler(uint32_t);
-
-private:
-	CpuInterface& CpuIface;
-
-	GicDistributor& GicDist;
-	VirtGicDistributor* vGicDist;
-
-	GicRedistributor& GicRedist;
-	VirtGicRedistributor* vGicRedist;
-
-	VICState vState;
-
-private:
-	uint8_t nrLRs;
+	OS_Type osType;
+	uint64_t osEntry;
 };
 
 }; // namespace core

@@ -32,18 +32,3 @@ clean:
 	@make --no-print-directory -C tools/asteroid $@
 	@echo
 	@echo "Done"
-
-.PHONY: run_qemu
-run_qemu:
-	@echo "Start Saturn kernel:"
-	@echo "--------------------"
-	@$(QEMU_AARCH64)							\
-		-machine virt,gic_version=3					\
-		-machine virtualization=true					\
-		-cpu cortex-a57 						\
-		-smp 4								\
-		-machine type=virt						\
-		-m 512M								\
-		-nographic							\
-		-kernel source/saturn						\
-		-device loader,file=tools/asteroid/asteroid,addr=0x41000000

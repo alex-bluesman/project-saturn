@@ -100,13 +100,14 @@ void GicRedistributor::RW_Complete(void)
 void GicRedistributor::Save_State(void)
 {
 	bootState.ctrl        = Regs->Read<uint32_t>(Redist_Regs::CTRL);
+	bootState.typer       = Regs->Read<uint64_t>(Redist_Regs::TYPER);
 	bootState.waker       = Regs->Read<uint32_t>(Redist_Regs::WAKER);
 	bootState.igroupr0    = Regs->Read<uint32_t>(Redist_Regs::IGROUPR0);
 	bootState.isenabler0  = Regs->Read<uint32_t>(Redist_Regs::ISENABLER0);
 	bootState.icenabler0  = Regs->Read<uint32_t>(Redist_Regs::ICENABLER0);
 	bootState.icactiver0  = Regs->Read<uint32_t>(Redist_Regs::ICACTIVER0);
-	bootState.ipriorityr = Regs->Read<uint32_t>(Redist_Regs::IPRIORITYR);
-
+	bootState.ipriorityr  = Regs->Read<uint32_t>(Redist_Regs::IPRIORITYR);
+	bootState.pidr2       = Regs->Read<uint32_t>(Redist_Regs::PIDR2);
 }
 
 void GicRedistributor::Load_State(GicRedistRegs& regs)

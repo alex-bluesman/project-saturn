@@ -27,8 +27,9 @@ public:
 class IUartConsole
 {
 public:
-	virtual bool UartRX(char sym) = 0;
 	virtual void RegisterUart(IUartDevice&) = 0;
+	virtual bool RxChar(char sym) = 0;
+	virtual bool RxFifoEmpty() = 0;
 };
 
 }; // namespace device

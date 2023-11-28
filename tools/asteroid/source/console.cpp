@@ -32,10 +32,9 @@ Console::Console()
 	, currentMsgLevel(llevel::info)
 	, consoleLevel(llevel::info)
 {
-	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
-
 	consoleBuffer = new RingBuffer<uint8_t, _buffer_size>(rb::full_overwrite, _consoleBuffer);
 	rxBuffer = new RingBuffer<char, _rx_size>(rb::full_ignore);
+	*this << fmt::endl << "<console enabled>" << fmt::endl << fmt::endl;
 }
 
 void Console::RegisterUart(IUartDevice& u)
@@ -52,7 +51,7 @@ void Console::RegisterUart(IUartDevice& u)
 	isActive = true;
 }
 
-bool Console::UartRX(char sym)
+bool Console::RxChar(char sym)
 {
 	return rxBuffer->In(sym);
 }

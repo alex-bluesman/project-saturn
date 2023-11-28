@@ -59,7 +59,7 @@ static void Main(void)
 	MMU_Init();
 
 	// Set default log level
-	Saturn_Console->SetLevel(llevel::log);
+	Saturn_Console->SetLevel(llevel::info);
 
 	Exceptions_Init();
 

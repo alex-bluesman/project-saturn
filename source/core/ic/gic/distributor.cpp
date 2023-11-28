@@ -143,6 +143,8 @@ void GicDistributor::Save_State(void)
 {
 	bootState.ctrl = Regs->Read<uint32_t>(Dist_Regs::CTRL);
 	bootState.typer = Regs->Read<uint32_t>(Dist_Regs::TYPER);
+	bootState.iidr = Regs->Read<uint32_t>(Dist_Regs::IIDR);
+	bootState.typer2 = Regs->Read<uint32_t>(Dist_Regs::TYPER2);
 
 	for (size_t i = 0; i < linesNumber / 32; i++)
 	{

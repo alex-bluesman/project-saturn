@@ -11,6 +11,7 @@
 // specific language governing permissions and limitations under the License.
 
 #include "ic/ic_core.hpp"
+#include "mm/trap.hpp"
 
 #include <arm64/registers>
 #include <core/iconsole>
@@ -23,9 +24,6 @@ namespace core {
 
 // Static pointer to the saved context. It will simplify access to context from different parts of Saturn
 static AArch64_Regs* Current_Context = nullptr;
-
-// External API:
-bool Do_Memory_Trap(struct AArch64_Regs*);
 
 void Exceptions_Init()
 {
@@ -86,8 +84,9 @@ static void Print_Hyp_Frame(struct AArch64_Regs* Regs)
 
 	uint64_t esr = ReadArm64Reg(ESR_EL2);
 	uint64_t far = ReadArm64Reg(FAR_EL2);
+	uint64_t pa = va_to_pa_el1(far);
 	Info() << fmt::fill << fmt::hex
-	      <<  "  esr  = 0x" << esr << "  far = 0x" << far
+	      <<  "  esr  = 0x" << esr << "  far = 0x" << far << "  pa = 0x" << pa
 	      << fmt::endl;
 }
 

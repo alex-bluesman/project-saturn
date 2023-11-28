@@ -6,7 +6,7 @@ PHDRS
 }
 SECTIONS
 {
-	. = 0x40080000;
+	. = 0x7fc00000;
 
 	_start = .;
 
@@ -16,7 +16,7 @@ SECTIONS
 	} : text = 0x3030
 
 	/* TBD: map data segment
-	 * . = 0x40280000;
+	 * . = 0x7fe00000;
 	 */
 
 	.data :
@@ -30,7 +30,6 @@ SECTIONS
 	{
 		*(.heap)
 	}
-
 
 	/* Align BSS start by page border to speed up flush */
 	. = ALIGN(1 << 12);

@@ -31,8 +31,17 @@ enum BlockSize
 	L1_Block = 1024 * 1024 * 1024	// 1GB block
 };
 
+struct Memory_Region
+{
+	uint64_t PA;
+	uint64_t VA;
+	size_t Size;
+	MMapType Type;
+};
+
 class IMemoryManagementUnit {
 public:
+	virtual void *MemoryMap(Memory_Region& region) = 0;
 	virtual void *MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type) = 0;
 	virtual void MemoryUnmap(uint64_t base_addr, size_t size) = 0;
 };

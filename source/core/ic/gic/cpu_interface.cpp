@@ -46,10 +46,14 @@ uint32_t CpuInterface::Read_Ack_IRq()
 	return (reg & 0xffffff); // INTID [23:0]
 }
 
-void CpuInterface::EOI(uint32_t id)
+void CpuInterface::Drop_Priority(uint32_t id)
 {
 	// Decrease the priority for interrupt
 	WriteICCReg(ICC_EOIR1_EL1, id);
+}
+
+void CpuInterface::Deactivate(uint32_t id)
+{
 	// Deactivate the interrupt
 	WriteICCReg(ICC_DIR_EL1, id);
 }

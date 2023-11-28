@@ -16,6 +16,7 @@ src := main.cpp				\
        mm/mm_core.cpp			\
        mm/mmu.cpp			\
        mm/trap.cpp			\
+       vmm/vm_config.cpp		\
        vmm/vm_manager.cpp
 
 objs := $(src:.cpp=.o)
