@@ -12,29 +12,29 @@
 
 #pragma once
 
+#include "../gic/redistributor.hpp"
+
 #include <mtrap>
 
 namespace saturn {
-namespace device {
+namespace core {
 
-// Forward declaration:
-class UartPl011;
-
-class VirtUartPl011 : public IVirtIO
+class VirtGicRedistributor : public IVirtIO
 {
 public:
-	VirtUartPl011(UartPl011&);
-	~VirtUartPl011();
+	VirtGicRedistributor(GicRedistributor&);
+	~VirtGicRedistributor();
 
 public:
 	void Read(uint64_t addr, void* data, AccessSize size);
 	void Write(uint64_t addr, void* data, AccessSize size);
+	bool IRq_Enabled(uint32_t nr);
 
 private:
 	MTrap* mTrap;
-	UartPl011& hwUart;
-	struct Pl011Regs& regState;
+	GicRedistributor& gicRedist;
+	GicRedistRegs& vRedistState;
 };
 
-}; // namespace device
+}; // namespace core
 }; // namespace saturn

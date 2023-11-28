@@ -12,61 +12,56 @@
 
 #pragma once
 
-#include <mmap>
+#include <basetypes>
 
 namespace saturn {
 namespace core {
 
-struct GicRedistRegs
+// Forward declaration
+class CpuInterface;
+class GicDistributor;
+class VirtGicDistributor;
+class GicRedistributor;
+class VirtGicRedistributor;
+
+enum class VICState
 {
-	uint32_t ctrl;
-	uint64_t typer;
-	uint32_t waker;
-	uint32_t igroupr0;
-	uint32_t isenabler0;
-	uint32_t icenabler0;
-	uint32_t isactiver0;
-	uint32_t icactiver0;
-	uint32_t ipriorityr;
-	uint32_t pidr2;
+	Stopped,
+	Started,
+	Failed
 };
 
-class GicRedistributor
+class GicVirtIC
 {
 public:
-	enum Redist_Regs
-	{
-		CTRL		= 0x0000,
-		TYPER		= 0x0008,
-		WAKER		= 0x0014,
-		IGROUPR0	= 0x0080,
-		ISENABLER0	= 0x0100,
-		ICENABLER0	= 0x0180,
-		ICACTIVER0	= 0x0380,
-		IPRIORITYR	= 0x0400,
-		PIDR2		= 0xffe8,
-		SGI_offset	= 0x10000	// 64K SGI region offset
-	};
+	GicVirtIC(CpuInterface&, GicDistributor&, GicRedistributor&);
 
 public:
-	GicRedistributor();
-
-public:
-	void IRq_Enable(uint32_t id);
-	void IRq_Disable(uint32_t id);
-
-public:
-	void Load_State(GicRedistRegs&);
+	void Start(void);
+	void Stop(void);
+	void Inject_IRq(uint32_t nr);
+	void Process_ISR(void);
 
 private:
-	void RW_Complete(void);
+	void Set_LR(uint8_t id, uint64_t val);
 
 private:
-	void Save_State(void);
+	// Maintenance INT handling routine
+	static void MaintenanceIRqHandler(uint32_t);
 
 private:
-	MMap* Regs;
-	GicRedistRegs& bootState;
+	CpuInterface& CpuIface;
+
+	GicDistributor& GicDist;
+	VirtGicDistributor* vGicDist;
+
+	GicRedistributor& GicRedist;
+	VirtGicRedistributor* vGicRedist;
+
+	VICState vState;
+
+private:
+	uint8_t nrLRs;
 };
 
 }; // namespace core

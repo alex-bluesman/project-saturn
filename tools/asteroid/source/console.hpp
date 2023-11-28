@@ -44,8 +44,9 @@ public:
 
 public:
 	void RegisterUart(IUartDevice&);
-	bool UartRX(char sym);
+	bool RxChar(char sym);
 	char GetChar(iomode mode);
+	bool RxFifoEmpty() { return true; };
 
 public:
 	void SetLevel(llevel);

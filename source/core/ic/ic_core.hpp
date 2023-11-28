@@ -22,7 +22,7 @@ namespace core {
 class CpuInterface;
 class GicDistributor;
 class GicRedistributor;
-class VirtGicDistributor;
+class GicVirtIC;
 
 class IC_Core : public IIC, public IVirtIC
 {
@@ -44,15 +44,11 @@ public:
 	void Inject_VM_IRq(uint32_t);
 
 private:
-	// Maintenance INT handling routine
-	static void MaintenanceIRqHandler(uint32_t);
-
-private:
 	CpuInterface* CpuIface;
 	GicDistributor* GicDist;
 	GicRedistributor* GicRedist;
 
-	VirtGicDistributor* vGicDist;
+	GicVirtIC* GicVIC;
 
 	IRqHandler (&IRq_Table)[];
 

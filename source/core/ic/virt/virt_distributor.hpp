@@ -12,15 +12,12 @@
 
 #pragma once
 
-#include "distributor.hpp"
+#include "../gic/distributor.hpp"
 
 #include <mtrap>
 
 namespace saturn {
 namespace core {
-
-// Forward declaration:
-class GicDistributor;
 
 class VirtGicDistributor : public IVirtIO
 {

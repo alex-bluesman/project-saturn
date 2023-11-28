@@ -12,29 +12,44 @@
 
 #pragma once
 
-#include <mtrap>
+#include <basetypes>
 
 namespace saturn {
-namespace device {
 
-// Forward declaration:
-class UartPl011;
+#define SetBit(value, pos)	value |= (1 << pos)
+#define ClearBit(value, pos)	value &= ~(1 << pos)
 
-class VirtUartPl011 : public IVirtIO
+template<typename T>
+size_t FirstSetBit(T value)
 {
-public:
-	VirtUartPl011(UartPl011&);
-	~VirtUartPl011();
+	size_t nr;
 
-public:
-	void Read(uint64_t addr, void* data, AccessSize size);
-	void Write(uint64_t addr, void* data, AccessSize size);
+	for (nr = 0; nr < sizeof(T) * 8; nr++)
+	{
+		if (value & (1 << nr))
+		{
+			break;
+		}
+	}
 
-private:
-	MTrap* mTrap;
-	UartPl011& hwUart;
-	struct Pl011Regs& regState;
-};
+	return nr;
+}	
 
-}; // namespace device
+template<typename T>
+size_t FirstCleanBit(T value)
+{
+	size_t nr;
+
+	for (nr = 0; nr < sizeof(T) * 8; nr++)
+	{
+		if ((value & (1 << nr)) == 0)
+		{
+			break;
+		}
+	}
+
+	return nr;
+}	
+
+
 }; // namespace saturn

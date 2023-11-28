@@ -12,11 +12,12 @@
 
 #include "ic_core.hpp"
 
+#include "gic/config.hpp"
 #include "gic/cpu_interface.hpp"
 #include "gic/distributor.hpp"
 #include "gic/redistributor.hpp"
 
-#include "gic/virt_distributor.hpp"
+#include "virt/virt_ic.hpp"
 
 #include <arm64/registers>
 #include <core/ivmm>
@@ -24,12 +25,6 @@
 
 namespace saturn {
 namespace core {
-
-// According to the GICv3 Architecture Specification, the maximal SPI number could be 1020.
-// TBD: due to we do not support ESPIs and LPIs, let's limit table size to 1020.
-static const size_t _maxIRq = 1020;
-// Arm strongly recomments that maintenance interrupts are configured to use INTID 25.
-static const uint32_t _maintenance_int = 25;
 
 // TBD: think about better allocation for this data block
 static IRqHandler _IRq_Table[_maxIRq];
@@ -74,6 +69,12 @@ IC_Core::IC_Core()
 	{
 		IRq_Table[i] = Default_Handler;
 	}
+
+	GicVIC = new GicVirtIC(*CpuIface, *GicDist, *GicRedist);
+	if (nullptr == GicVIC)
+	{
+		Fault("GIC virtual interface allocation failed");
+	}
 }
 
 void IC_Core::Local_IRq_Disable()
@@ -110,8 +111,16 @@ void IC_Core::Handle_IRq()
 {
 	uint32_t nr = CpuIface->Read_Ack_IRq();
 
-	if (iVMM().Guest_IRq(nr) == false)
+	CpuIface->Drop_Priority(nr);
+
+	if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 	{
+		// VM is running and IRq assigned to the guest, so just route it
+		Inject_VM_IRq(nr);
+	}
+	else
+	{
+		// For all other cases handle IRq by hypervisor
 		if (nr < GicDist->Get_Max_Lines())
 		{
 			IRq_Table[nr](nr);
@@ -121,12 +130,7 @@ void IC_Core::Handle_IRq()
 			Error() << "error: received INT with ID (" << nr << ") out of supported range" << fmt::endl;
 		}
 
-		CpuIface->EOI(nr);
-	}
-	else
-	{
-		// IRq assigned to the guest, so just route it
-		Inject_VM_IRq(nr);
+		CpuIface->Deactivate(nr);
 	}
 }
 
@@ -158,50 +162,24 @@ void IC_Core::Default_Handler(uint32_t id)
 
 void IC_Core::Start_Virt_IC()
 {
-	// TBD: sanity checks and use return code
-	vGicDist = new VirtGicDistributor(*GicDist);
-
-	iIC().Register_IRq_Handler(_maintenance_int, &MaintenanceIRqHandler);
-
-	uint64_t hcr = (1 << 0);			// En bit
-	WriteICCReg(ICH_HCR_EL2, hcr);
-	
-	WriteICCReg(ICH_VMCR_EL2, (1 << 9) | (1 << 1));	// VEOIM (EOI drop only), VENG1 (Group 1 INTs)
+	GicVIC->Start();
 }
 
 void IC_Core::Stop_Virt_IC()
 {
-	delete vGicDist;
-	vGicDist = nullptr;
+	GicVIC->Stop();
 }
 
 void IC_Core::Inject_VM_IRq(uint32_t nr)
 {
-	// TBD: there are several things to be implemented:
-	//	1. Properly manage used LR registers
-	//	2. Distinguish software and hardware interrupts
 	if (iVMM().Get_VM_State() == vm_state::running)
 	{
-		if (nr < 32)
-		{
-			// TBD: handle SGI and PPI via virtual redistributor
-		}
-		else
-		{
-			if (vGicDist->IRq_Enabled(nr))
-			{
-				// Inject the IRq
-				uint64_t lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;	// State (Pending), Group (1), Priority (0x80)
-				WriteICCReg(ICH_LR0_EL2, lr);
-			}
-		}
+		GicVIC->Inject_IRq(nr);
 	}
-}
-
-void IC_Core::MaintenanceIRqHandler(uint32_t id)
-{
-	// TBD: see comment to Inject_VM_IRq function
-	WriteICCReg(ICH_LR0_EL2, 0);
+	else
+	{	
+		Error() << "warning: attempt to inject INT to non-running VM" << fmt::endl;
+	}
 }
 
 }; // namespace core

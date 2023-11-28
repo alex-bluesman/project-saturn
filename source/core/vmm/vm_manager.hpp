@@ -10,6 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "vm_config.hpp"
+
 #include <core/ivmm>
 
 namespace saturn {
@@ -22,6 +24,9 @@ public:
 	~VM_Manager();
 
 public:
+	void Load_Config(OS_Type type);	// TBD: add external config
+
+public:
 	void Start_VM();
 	void Stop_VM();
 	vm_state Get_VM_State();
@@ -30,7 +35,11 @@ public:
 	bool Guest_IRq(uint32_t nr);
 
 private:
-	vm_state	vmState;
+	vm_state		vmState;
+
+private:
+	// TBD: could not fit heap frame
+	VM_Configuration*	vmConfig;
 };
 
 }; // namespace core

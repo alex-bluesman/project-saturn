@@ -76,7 +76,7 @@ void UartPl011::Tx(uint8_t *buff, size_t len)
 	while (len--)
 	{
 		// Wait for UART to be ready
-		while (!(Regs->Read<uint32_t>(Pl011_Regs::FR) && Reg_FR::Busy));
+		while (Regs->Read<uint32_t>(Pl011_Regs::FR) & Reg_FR::Busy);
 
 		Regs->Write<uint8_t>(Pl011_Regs::TDR, *buff++);
 	}
@@ -92,10 +92,14 @@ void UartPl011::HandleIRq(void)
 	if (status & Pl011_INT::RX)
 	{
 		status &= ~Pl011_INT::RX;
+		uint16_t fr = Regs->Read<uint16_t>(Pl011_Regs::FR);
 
-		uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
+		while (!(fr & Reg_FR::RXEmpty)) {
+			uint8_t data = Regs->Read<uint16_t>(Pl011_Regs::TDR) & 0xff;
+			iConsole().RxChar(static_cast<char>(data));
 
-		iConsole().UartRX(static_cast<char>(data));
+			fr = Regs->Read<uint16_t>(Pl011_Regs::FR);
+		}
 
 		if (iVMM().Get_VM_State() == vm_state::running)
 		{
@@ -114,6 +118,18 @@ void UartPl011::HandleIRq(void)
 void UartPl011::UartIRqHandler(uint32_t id)
 {
 	Self->HandleIRq();
+}
+
+void UartPl011::Load_State(Pl011Regs &regs)
+{
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		regs.periphid[i] = Regs->Read<uint32_t>(Pl011_Regs::PERIPHID0 + (i * 4));
+		regs.pcellid[i] = Regs->Read<uint32_t>(Pl011_Regs::PCELLID0 + (i * 4));
+	}
+
+	regs.cr = Regs->Read<uint32_t>(Pl011_Regs::CR);
+	regs.imsc = Regs->Read<uint32_t>(Pl011_Regs::IMSC);
 }
 
 }; // namespace device

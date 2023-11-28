@@ -24,7 +24,8 @@ public:
 
 public:
 	uint32_t Read_Ack_IRq();
-	void EOI(uint32_t);
+	void Drop_Priority(uint32_t);
+	void Deactivate(uint32_t);
 };
 
 }; // namespace core

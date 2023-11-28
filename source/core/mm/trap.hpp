@@ -12,29 +12,33 @@
 
 #pragma once
 
-#include <mtrap>
+#include "mmu.hpp"
+
+#include <arm64/registers>
+#include <basetypes>
 
 namespace saturn {
-namespace device {
+namespace core {
 
-// Forward declaration:
-class UartPl011;
+// External API:
+bool Do_Memory_Trap(struct AArch64_Regs* Regs);
 
-class VirtUartPl011 : public IVirtIO
+static inline uint64_t va_to_pa_el1(uint64_t va)
 {
-public:
-	VirtUartPl011(UartPl011&);
-	~VirtUartPl011();
+	uint64_t par;
+	uint64_t guest_par = ReadArm64Reg(PAR_EL1);
 
-public:
-	void Read(uint64_t addr, void* data, AccessSize size);
-	void Write(uint64_t addr, void* data, AccessSize size);
+	asm volatile ("at s1e1r, %0;" : : "r" (va));
+	asm volatile("isb" : : : "memory");
+	par = ReadArm64Reg(PAR_EL1);
 
-private:
-	MTrap* mTrap;
-	UartPl011& hwUart;
-	struct Pl011Regs& regState;
-};
+	WriteArm64Reg(PAR_EL1, guest_par);
 
-}; // namespace device
+	par &= _page_base;
+	par &= (1UL << 52) - 1;
+	par += (va & _page_mask);
+	return par;
+}
+
+}; // namespace core
 }; // namespace saturn
