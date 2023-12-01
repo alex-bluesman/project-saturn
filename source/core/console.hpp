@@ -23,6 +23,12 @@ using namespace device;
 static const size_t _rx_size = 16;
 static const size_t _tx_size = 1024;
 
+enum systemKeys
+{
+	cmdMode = 0x09,		// 'CTRL + i' enter command mode
+	cmdBeep = 0x62		// 'b': make a beep for testing purposes
+};
+
 class Console : public IConsole
 {
 public:
@@ -76,6 +82,8 @@ private:
 	// RX/TX buffering
 	RingBuffer<char, _rx_size> *rxBuffer;
 	RingBuffer<char, _tx_size> *txBuffer;
+
+	bool cmdMode;
 };
 
 }; // namespace core
