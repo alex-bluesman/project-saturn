@@ -103,7 +103,7 @@ void UartPl011::HandleIRq(void)
 
 		if (iVMM().Get_VM_State() == vm_state::running)
 		{
-			iVirtIC().Inject_VM_IRq(_pl011_int);
+			iVirtIC().Inject_VM_IRq(_pl011_int, vINTtype::Software);
 		}
 	}
 
