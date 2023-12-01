@@ -17,12 +17,18 @@
 namespace saturn {
 namespace core {
 
+enum class vINTtype
+{
+	Hardware,	// Interrupt has corresponding hardware line
+	Software	// Entirely virtual software interrupt
+};
+
 class IVirtIC
 {
 public:
 	virtual void Start_Virt_IC() = 0;
 	virtual void Stop_Virt_IC() = 0;
-	virtual void Inject_VM_IRq(uint32_t) = 0;
+	virtual void Inject_VM_IRq(uint32_t, vINTtype) = 0;
 };
 
 // Access to interrupt controller

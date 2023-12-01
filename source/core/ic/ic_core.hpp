@@ -41,7 +41,7 @@ public:
 public:
 	void Start_Virt_IC();
 	void Stop_Virt_IC();
-	void Inject_VM_IRq(uint32_t);
+	void Inject_VM_IRq(uint32_t, vINTtype);
 
 private:
 	CpuInterface* CpuIface;

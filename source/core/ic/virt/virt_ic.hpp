@@ -13,6 +13,7 @@
 #pragma once
 
 #include <basetypes>
+#include <core/ivirtic>
 
 namespace saturn {
 namespace core {
@@ -39,7 +40,7 @@ public:
 public:
 	void Start(void);
 	void Stop(void);
-	void Inject_IRq(uint32_t nr);
+	void Inject_IRq(uint32_t nr, vINTtype type);
 	void Process_ISR(void);
 
 private:

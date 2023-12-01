@@ -116,7 +116,7 @@ void IC_Core::Handle_IRq()
 	if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 	{
 		// VM is running and IRq assigned to the guest, so just route it
-		Inject_VM_IRq(nr);
+		Inject_VM_IRq(nr, vINTtype::Hardware);
 	}
 	else
 	{
@@ -170,11 +170,11 @@ void IC_Core::Stop_Virt_IC()
 	GicVIC->Stop();
 }
 
-void IC_Core::Inject_VM_IRq(uint32_t nr)
+void IC_Core::Inject_VM_IRq(uint32_t nr, vINTtype type)
 {
 	if (iVMM().Get_VM_State() == vm_state::running)
 	{
-		GicVIC->Inject_IRq(nr);
+		GicVIC->Inject_IRq(nr, type);
 	}
 	else
 	{	
