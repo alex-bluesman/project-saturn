@@ -15,6 +15,7 @@
 
 // TBD: rework it
 #include <fault>
+#include <mops>
 
 namespace saturn {
 namespace core {
@@ -148,12 +149,12 @@ lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, uint64_t ph
 			switch (type)
 			{
 			case MMapType::Device:
-				entry->attr = 4;
+				entry->attr = 1;
 				entry->sh = 2;
 				break;
 			case MMapType::Normal:
 				entry->attr = 7;
-				entry->sh = 3;
+				entry->sh = 2;
 				break;
 			default:
 				break;
@@ -209,12 +210,12 @@ lpae_page_t* MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, uint64_t phys
 				switch (type)
 				{
 				case MMapType::Device:
-					page->attr = 4;
+					page->attr = 1;
 					page->sh = 2;
 					break;
 				case MMapType::Normal:
 					page->attr = 7;
-					page->sh = 3;
+					page->sh = 2;
 					break;
 				default:
 					break;
@@ -363,13 +364,13 @@ void* MemoryManagementUnit::MemoryMap(uint64_t virt_addr, uint64_t phys_addr, si
 	}
 	while (start < end);
 
-	// TBD: update TLB and data caches here
-//	asm volatile("\
-//			dsb	ishst;	\
-//			tlbi	alle2;	\
-//			dsb	ish;	\
-//			isb;		\
-//	             " : : : "memory");
+	// TBD: flush whole TLB
+	asm volatile("\
+			dsb	ishst;		\
+			tlbi	vmalle1;	\
+			dsb	ish;		\
+			isb;			\
+	             " : : : "memory");
 
 	if (nullptr == ret)
 	{
@@ -380,9 +381,97 @@ void* MemoryManagementUnit::MemoryMap(uint64_t virt_addr, uint64_t phys_addr, si
 	return ret;
 }
 
-void MemoryManagementUnit::MemoryUnmap(uint64_t base_addr, size_t size)
+void MemoryManagementUnit::MemoryUnmap(Memory_Region& region)
 {
-	// TBD: implement free
+	return MemoryUnmap(region.VA, region.Size);
+}
+
+void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
+{
+	uint64_t start = virt_addr & _page_base;
+	uint64_t end = (virt_addr + size) & _page_base;
+	lpae_table_t* entry = nullptr;
+
+	do
+	{
+		size_t l1 = (start >> _l1_addr_shift) & _ptable_size_mask;
+		entry = reinterpret_cast<lpae_table_t *>(&PTable1[l1]);
+
+		// L1 block
+		if ((entry->valid == 1) && (entry->type == LPAE_Type::Block))
+		{
+			void* ptr = reinterpret_cast<void*>(entry);
+			MSet<uint64_t>(ptr, 1, 0);
+
+			Log() << "mm: PTable1[" << l1 << "] -> free 1GB block for address 0x"
+			      << fmt::hex << fmt::fill << start << fmt::endl;
+
+			start += BlockSize::L1_Block;
+		}
+		else
+		// L1 page table
+		if ((entry->valid == 1) && (entry->type == LPAE_Type::Table))
+		{
+			size_t l2 = (start >> _l2_addr_shift) & _ptable_size_mask;
+			entry = reinterpret_cast<lpae_table_t *>(&PTable2[l1][l2]);
+
+			// L2 block
+			if ((entry->valid == 1) && (entry->type == LPAE_Type::Block))
+			{
+				void* ptr = reinterpret_cast<void*>(entry);
+				MSet<uint64_t>(ptr, 1, 0);
+
+				Log() << "mm:   PTable2[][" << l2 << "] -> free 2MB block for address 0x"
+				      << fmt::hex << fmt::fill << start << fmt::endl;
+
+				start += BlockSize::L2_Block;
+			}
+			else
+			// L2 page table
+			if ((entry->valid == 1) && (entry->type == LPAE_Type::Table))
+			{
+				// L3 page table
+				uint64_t pt_addr = static_cast<uint64_t>(entry->addr << 12U);
+				lpae_table_t* pt = reinterpret_cast<lpae_table_t *>(pt_addr);
+
+				size_t l3 = (start >> _l3_addr_shift) & _ptable_size_mask;
+				lpae_page_t* page = (lpae_page_t *)&pt[l3];
+
+				// L3 page
+				if (page->valid == 1)
+				{
+					void* ptr = reinterpret_cast<void*>(page);
+					MSet<uint64_t>(ptr, 1, 0);
+
+					Log() << "mm:     PTable3[][" << l3 << "] -> free 4KB page for address 0x"
+					      << fmt::hex << fmt::fill << start << fmt::endl;
+
+					start += BlockSize::L3_Page;
+				}
+				else
+				{
+					Fault("attempt to free non-mapped level 3, please check your configuration");
+				}
+			}
+			else
+			{
+				Fault("attempt to free non-mapped level 2, please check your configuration");
+			}
+		}
+		else
+		{
+			Fault("attempt to free non-mapped level 1, please check your configuration");
+		}
+	}
+	while (start < end);
+
+	// TBD: flush whole TLB
+	asm volatile("\
+			dsb	nshst;		\
+			tlbi	vmalle1;	\
+			dsb	nsh;		\
+			isb;			\
+	             " : : : "memory");
 }
 
 }; // namespace core
