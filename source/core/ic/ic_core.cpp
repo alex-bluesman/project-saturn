@@ -95,9 +95,39 @@ void IC_Core::Local_IRq_Enable()
 		     );
 }
 
+void IC_Core::IRq_Enable(uint32_t nr)
+{
+	if (nr < _gicd_nr_lines)
+	{
+		if (nr < _firstSPI)
+		{
+			GicRedist->IRq_Enable(nr);
+		}
+		else
+		{
+			GicDist->IRq_Enable(nr);
+		}
+	}
+}
+
+void IC_Core::IRq_Disable(uint32_t nr)
+{
+	if (nr < _gicd_nr_lines)
+	{
+		if (nr < _firstSPI)
+		{
+			GicRedist->IRq_Disable(nr);
+		}
+		else
+		{
+			GicDist->IRq_Disable(nr);
+		}
+	}
+}
+
 void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
 {
-	if (id < 16)
+	if (id < _firstPPI)
 	{
 		GicDist->Send_SGI(targetList, id);
 	}
