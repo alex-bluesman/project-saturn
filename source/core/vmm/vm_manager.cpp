@@ -14,17 +14,23 @@
 
 #include <arm64/registers>
 #include <core/iconsole>
+#include <core/iic>
 #include <core/ivirtic>
 #include <core/immu>
 #include <mops>
-
-extern saturn::uint64_t* boot_stack;
 
 extern "C" {
 	extern void Switch_EL12(struct saturn::AArch64_Regs*);
 }
 
+extern saturn::uint64_t el2_stack_reset;
+
 namespace saturn {
+
+namespace apps {
+	void Applications_Start();
+};
+
 namespace core {
 
 VM_Manager::VM_Manager()
@@ -39,8 +45,8 @@ VM_Manager::VM_Manager()
 	Info() << "VM manager started" << fmt::endl;
 
 	// TBD: should be some external configuration
-	//Load_Config(OS_Type::Linux);
-	Load_Config(OS_Type::Default);
+	Load_Config(OS_Type::Linux);
+	//Load_Config(OS_Type::Default);
 }
 
 VM_Manager::~VM_Manager()
@@ -76,6 +82,10 @@ void VM_Manager::Load_Config(OS_Type type)
 		vmConfig->VM_Assign_Interrupt(23);	// AMBA clock
 		vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
 		vmConfig->VM_Assign_Interrupt(34);	// VirtIO
+
+		vmConfig->VM_Add_Image(0x7e000000, 0x41000000, 0x0149c000);	// Kernel
+		vmConfig->VM_Add_Image(0x7f500000, 0x43000000, 0x00002000);	// Device tree
+		vmConfig->VM_Add_Image(0x7f510000, 0x50000000, 0x00567000);	// Root filesystem
 	}
 	else
 	{
@@ -90,7 +100,7 @@ void VM_Manager::Load_Config(OS_Type type)
 
 void VM_Manager::Start_VM()
 {
-	if (vmConfig)
+	if (vmConfig && (vm_state::stopped == vmState))
 	{
 		struct AArch64_Regs guestContext;
 
@@ -100,16 +110,16 @@ void VM_Manager::Start_VM()
 		guestContext.pc_el2 = vmConfig->osEntry;
 		guestContext.sp_el1 = vmConfig->osEntry;	// TBD: some temporary location in VM address space
 
-		// The following registers to be checked:
-		// MPIDR_EL1, SCTLR_EL1
-
 		iVirtIC().Start_Virt_IC();
-		vmConfig->VM_Map_All();
+		vmConfig->VM_Allocate_Resources();
 
 		if (OS_Type::Linux == vmConfig->osType)
 		{
 			guestContext.x0 = 0x43000000;
 		}
+
+		// TBD: reset all EL1 registers:
+		WriteArm64Reg(sctlr_el1, 0xc50838);	// Default value collected after cold reset
 
 		Info() << fmt::endl << "vmm: start VM" << fmt::endl;
 
@@ -120,14 +130,32 @@ void VM_Manager::Start_VM()
 
 void VM_Manager::Stop_VM()
 {
-	iVirtIC().Stop_Virt_IC();
+	if (vmConfig && (vm_state::running == vmState))
+	{
+		vmState = vm_state::request_shutdown;
 
-	struct AArch64_Regs saturnContext;
+		Raw() << fmt::endl;
+		Info() << "vmm: request shutdown" << fmt::endl;
+	}
+	else
+	if (vmConfig && (vm_state::request_shutdown == vmState))
+	{
+		vmConfig->VM_Free_Resources();
+		iVirtIC().Stop_Virt_IC();
 
-	// TBD: fill properly context to return to Saturn
-	
-	vmState = vm_state::stopped;
-	Switch_EL12(&saturnContext);
+		vmState = vm_state::stopped;
+		Info() << "vmm: VM stopped" << fmt::endl;
+
+		// Reset stack to safe boot state
+		asm volatile("mov sp, %0" :: "r" (el2_stack_reset));
+		iIC().Local_IRq_Enable();
+
+		apps::Applications_Start();
+	}
+	else
+	{
+		Info() << "vmm: request to shutdown non-running VM" << fmt::endl;
+	}
 }
 
 vm_state VM_Manager::Get_VM_State()
