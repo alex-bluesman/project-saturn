@@ -26,7 +26,8 @@ static const size_t _tx_size = 1024;
 enum systemKeys
 {
 	cmdMode = 0x09,		// 'CTRL + i' enter command mode
-	cmdBeep = 0x62		// 'b': make a beep for testing purposes
+	cmdBeep = 0x62,		// 'b': make a beep for testing purposes
+	cmdShutdown = 0x73	// 's': shutdown running VM
 };
 
 class Console : public IConsole
