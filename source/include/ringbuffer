@@ -71,7 +71,7 @@ public:
 			{
 				Buffer[Head] = element;
 				Head = (Head + 1) % Size;
-				Tail++;
+				Tail = (Tail + 1) % Size;
 			}
 			else
 			{
