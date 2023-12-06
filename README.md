@@ -57,6 +57,13 @@ For Linux target:
 $ python3 scripts/run_qemu.py -g linux
 ```
 
+### User Interface
+
+Also Saturn provides interface for users to manage VMs. To enter command mode just use `CTRL + i` key combination, and then press command key:
+
+1. `s` - shutdown VM and switch to Saturn console
+2. `b` - print `(beep)` message in console to indicate that hypervisor is alive
+
 ### License
 
 Licensed under the MIT License (the "License"); you may not use this file except
