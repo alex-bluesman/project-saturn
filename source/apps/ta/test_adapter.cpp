@@ -167,7 +167,8 @@ static bool MMU_Smoke_Test(void)
 		Info() << "ta: " << __func__ << ": FAILED" << fmt::endl;
 	}
 
-	// TBD: unmap regions
+	core::iMMU().MemoryUnmap(va1, BlockSize::L2_Block);
+	core::iMMU().MemoryUnmap(va2, BlockSize::L3_Page);
 
 	return ret;
 }

@@ -55,6 +55,7 @@ public:
 public:
 	inline void* MemoryMap(Memory_Region& region);
 	void* MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type);
+	inline void MemoryUnmap(Memory_Region& region);
 	void MemoryUnmap(uint64_t base_addr, size_t size);
 
 private:

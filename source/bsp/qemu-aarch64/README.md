@@ -14,7 +14,11 @@ use some pre-defined configuration for testing and development purposes:
             |                |
  0x40000000 +----------------+ 
             |                |
-                    ...            Guest OS memory: 1020MB
+                    ...            Guest OS memory: 992MB
+            |                |
+ 0x7e000000 +----------------+
+            |                |
+            |   OS storage   |     Storage for Linux/Asteroid binaries: 28MB
             |                |
  0x7fc00000 +----------------+
             |                |

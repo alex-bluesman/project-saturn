@@ -29,8 +29,6 @@ void Applications_Start(void)
 	CommandLine* CmdLine = new CommandLine();
 
 	CmdLine->Start_Loop();
-
-//	TA_Start();
 }
 
 }; // namespace apps

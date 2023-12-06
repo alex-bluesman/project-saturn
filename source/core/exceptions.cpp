@@ -16,6 +16,7 @@
 #include <arm64/registers>
 #include <core/iconsole>
 #include <core/iic>
+#include <core/ivmm>
 
 extern saturn::uint64_t saturn_vector;
 
@@ -148,6 +149,12 @@ void IRq_Handler(struct AArch64_Regs* Regs)
 	core::Current_Context = Regs;
 
 	core::iIC().Handle_IRq();
+
+	// Check if there is signal to stop VM
+	if (core::iVMM().Get_VM_State() == core::vm_state::request_shutdown)
+	{
+		core::iVMM().Stop_VM();
+	}
 }
 
 void Guest_Abort(struct AArch64_Regs* Regs)

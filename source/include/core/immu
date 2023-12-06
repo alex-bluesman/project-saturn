@@ -43,6 +43,7 @@ class IMemoryManagementUnit {
 public:
 	virtual void *MemoryMap(Memory_Region& region) = 0;
 	virtual void *MemoryMap(uint64_t virt_addr, uint64_t phys_addr, size_t size, MMapType type) = 0;
+	virtual void MemoryUnmap(Memory_Region& region) = 0;
 	virtual void MemoryUnmap(uint64_t base_addr, size_t size) = 0;
 };
 

@@ -28,6 +28,10 @@ public:
 public:
 	void Local_IRq_Disable();
 	void Local_IRq_Enable();
+	void IRq_Enable(uint32_t);
+	void IRq_Disable(uint32_t);
+
+public:
 	void Send_SGI(uint32_t targetList, uint8_t id);
 	void Handle_IRq();
 	void Register_IRq_Handler(uint32_t, IRqHandler);
