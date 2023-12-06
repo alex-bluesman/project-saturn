@@ -24,7 +24,7 @@ def start_qemu(topfolder, os, extraparams):
 
     if os == 'asteroid':
         # Asteroid kernel
-        cmdline.extend(['-device', 'loader,file=' + topfolder + '/tools/asteroid/asteroid,addr=0x41000000'])
+        cmdline.extend(['-device', 'loader,file=' + topfolder + '/tools/asteroid/asteroid,addr=0x7e000000'])
     elif os == 'linux':
         cmdline.extend(['-device', 'loader,file=' + topfolder + '/images/Image,addr=0x7e000000'])
         cmdline.extend(['-device', 'loader,file=' + topfolder + '/images/qemuarm64.dtb,addr=0x7f500000'])

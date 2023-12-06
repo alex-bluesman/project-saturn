@@ -45,8 +45,8 @@ VM_Manager::VM_Manager()
 	Info() << "VM manager started" << fmt::endl;
 
 	// TBD: should be some external configuration
-	Load_Config(OS_Type::Linux);
-	//Load_Config(OS_Type::Default);
+	//Load_Config(OS_Type::Linux);
+	Load_Config(OS_Type::Default);
 }
 
 VM_Manager::~VM_Manager()
@@ -90,11 +90,12 @@ void VM_Manager::Load_Config(OS_Type type)
 	else
 	{
 		Info() << "vmm: load default configuration" << fmt::endl;
-		vmConfig->VM_Add_Memory_Region({0x08010000, 0x08040000, 0x00010000, MMapType::Device});			// GIC vCPU interface
 		vmConfig->VM_Add_Memory_Region({0x41000000, 0x41000000, BlockSize::L2_Block, MMapType::Normal});
 		vmConfig->VM_Set_Entry(0x41000000);
 
 		vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
+
+		vmConfig->VM_Add_Image(0x7e000000, 0x41000000, 0x00007000);	// Asteroid kernel
 	}
 }
 
