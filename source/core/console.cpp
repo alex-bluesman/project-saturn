@@ -12,6 +12,8 @@
 
 #include "console.hpp"
 
+#include <core/ivmm>
+
 namespace saturn {
 namespace core {
 
@@ -31,6 +33,7 @@ Console::Console()
 	, uart(nullptr)
 	, currentMsgLevel(llevel::info)
 	, consoleLevel(llevel::info)
+	, cmdMode(false)
 {
 	txBuffer = new RingBuffer<char, _tx_size>(rb::full_overwrite, _txBuffer);
 	rxBuffer = new RingBuffer<char, _rx_size>(rb::full_ignore);
@@ -54,7 +57,42 @@ void Console::RegisterUart(IUartDevice& u)
 
 bool Console::RxChar(char sym)
 {
-	return rxBuffer->In(sym);
+	bool ret = true;
+
+	if (cmdMode)
+	{
+		switch (sym)
+		{
+			case systemKeys::cmdBeep:
+				Raw() << fmt::endl << "(beep)" << fmt::endl;
+				break;
+			case systemKeys::cmdShutdown:
+				// We can't stop VM because we are inside UART interrupt handler
+				// so the first call Stop_VM() will notify Saturn, and it will stop
+				// VM in the right place (see traps handler)
+				iVMM().Stop_VM();
+				break;
+			default:
+				rxBuffer->In(systemKeys::cmdMode);
+				ret = rxBuffer->In(sym);
+				break;
+		}
+
+		cmdMode = false;
+	}
+	else
+	{
+		if (systemKeys::cmdMode == sym)
+		{
+			cmdMode = true;
+		}
+		else
+		{
+			ret = rxBuffer->In(sym);
+		}
+	}
+
+	return ret;
 }
 
 bool Console::RxFifoEmpty()

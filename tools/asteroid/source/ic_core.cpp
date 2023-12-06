@@ -159,4 +159,14 @@ void IC_Core::Default_Handler(uint32_t id)
 	Error() << "warning: received INT with ID (" << id << ") without registered handler" << fmt::endl;
 }
 
+void IC_Core::IRq_Enable(uint32_t)
+{
+	//TBD
+}
+
+void IC_Core::IRq_Disable(uint32_t)
+{
+	//TBD
+}
+
 }; // namespace asteroid

@@ -13,6 +13,7 @@
 #include "vm_config.hpp"
 
 #include <core/iconsole>
+#include <core/iic>
 #include <mops>
 
 namespace saturn {
@@ -21,11 +22,14 @@ namespace core {
 // Let's use data segment for configuration to avoid additional load on heap
 static uint8_t _hwINTMask[_nrINTs / 8 + 1];
 static Memory_Region _memRegions[_nrMMaps];
+static OS_Storage_Entry _osImages[_nrImages];
 
 VM_Configuration::VM_Configuration()
 	: hwINTMask(_hwINTMask)
 	, memRegions(_memRegions)
 	, nrRegions(0)
+	, osImages(_osImages)
+	, nrImages(0)
 	, osType(OS_Type::Default)
 	, osEntry(0)
 {
@@ -71,17 +75,62 @@ void VM_Configuration::VM_Add_Memory_Region(Memory_Region region)
 	}
 }
 
-void VM_Configuration::VM_Map_All(void)
+void VM_Configuration::VM_Add_Image(uint64_t source, uint64_t target, size_t size)
 {
+	if (nrImages < _nrImages)
+	{
+		osImages[nrImages].sourcePA = source;
+		osImages[nrImages].targetPA = target;
+		osImages[nrImages].size = size;
+
+		nrImages++;
+	}
+}
+
+void VM_Configuration::VM_Allocate_Resources(void)
+{
+	// Map IPA memory
 	for (size_t i = 0; i < nrRegions; i++)
 	{
 		iMMU_VM().MemoryMap(memRegions[i]);
 	}
+
+	// Load OS images
+	for (size_t i = 0; i < nrImages; i++)
+	{
+		OS_Storage_Entry& entry = osImages[i];
+		Memory_Region sourceRegion = {entry.sourcePA, entry.sourcePA, entry.size, MMapType::Normal};
+		Memory_Region targetRegion = {entry.targetPA, entry.targetPA, entry.size, MMapType::Normal};
+
+		iMMU().MemoryMap(sourceRegion);
+		iMMU().MemoryMap(targetRegion);
+
+		Info() << "vmm: copy OS binary from storage to 0x" << fmt::fill << fmt::hex << entry.targetPA << ": ";
+
+		MCopy<uint8_t>((void *)entry.sourcePA, (void *)entry.targetPA, entry.size);
+
+		Raw() << "OK" << fmt::endl;
+
+		iMMU().MemoryUnmap(targetRegion);
+		iMMU().MemoryUnmap(sourceRegion);
+	}
 }
 
-void VM_Configuration::VM_Unmap_All(void)
+void VM_Configuration::VM_Free_Resources(void)
 {
-	// TBD
+	// Free memory mapping
+	for (size_t i = 0; i < nrRegions; i++)
+	{
+		iMMU_VM().MemoryUnmap(memRegions[i]);
+	}
+
+	for (size_t i = 0; i < _nrINTs; i++)
+	{
+		if (VM_Own_Interrupt(i))
+		{
+			iIC().IRq_Disable(i);
+		}
+	}
 }
 
 void VM_Configuration::VM_Set_Guest_OS(OS_Type type)

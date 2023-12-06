@@ -140,7 +140,8 @@ void GicVirtIC::Set_LR(uint8_t id, uint64_t val)
 		Fault("attempt to set out of range GIC LR");
 	}
 }
-void GicVirtIC::Inject_IRq(uint32_t nr)
+
+void GicVirtIC::Inject_IRq(uint32_t nr, vINTtype type)
 {
 	if (nr < _maxIRq)
 	{
@@ -156,14 +157,12 @@ void GicVirtIC::Inject_IRq(uint32_t nr)
 			{
 				uint64_t lr;
 
-				if (nr != 33) //TBD!!!
+				if (vINTtype::Hardware == type)
 				{
-					// TBD: hardware INT
 					lr = (1UL << 62) | (1UL << 61) | (1UL << 60) | (0x80UL << 48) | ((uint64_t)nr << 32) | nr;	// State (Pending), Group (1), Priority (0x80)
 				}
-				else
+				else // vINTtype::Software == type
 				{
-					// TBD: software INT
 					lr = (1UL << 62) | (0UL << 61) | (1UL << 60) | (0x80UL << 48) | (1UL << 41) | nr;		// State (Pending), Group (1), Priority (0x80)
 				}
 				Set_LR(pos, lr);

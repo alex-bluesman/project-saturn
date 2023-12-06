@@ -95,9 +95,39 @@ void IC_Core::Local_IRq_Enable()
 		     );
 }
 
+void IC_Core::IRq_Enable(uint32_t nr)
+{
+	if (nr < _gicd_nr_lines)
+	{
+		if (nr < _firstSPI)
+		{
+			GicRedist->IRq_Enable(nr);
+		}
+		else
+		{
+			GicDist->IRq_Enable(nr);
+		}
+	}
+}
+
+void IC_Core::IRq_Disable(uint32_t nr)
+{
+	if (nr < _gicd_nr_lines)
+	{
+		if (nr < _firstSPI)
+		{
+			GicRedist->IRq_Disable(nr);
+		}
+		else
+		{
+			GicDist->IRq_Disable(nr);
+		}
+	}
+}
+
 void IC_Core::Send_SGI(uint32_t targetList, uint8_t id)
 {
-	if (id < 16)
+	if (id < _firstPPI)
 	{
 		GicDist->Send_SGI(targetList, id);
 	}
@@ -116,7 +146,7 @@ void IC_Core::Handle_IRq()
 	if ((iVMM().Get_VM_State() == vm_state::running) && (iVMM().Guest_IRq(nr)))
 	{
 		// VM is running and IRq assigned to the guest, so just route it
-		Inject_VM_IRq(nr);
+		Inject_VM_IRq(nr, vINTtype::Hardware);
 	}
 	else
 	{
@@ -170,11 +200,11 @@ void IC_Core::Stop_Virt_IC()
 	GicVIC->Stop();
 }
 
-void IC_Core::Inject_VM_IRq(uint32_t nr)
+void IC_Core::Inject_VM_IRq(uint32_t nr, vINTtype type)
 {
 	if (iVMM().Get_VM_State() == vm_state::running)
 	{
-		GicVIC->Inject_IRq(nr);
+		GicVIC->Inject_IRq(nr, type);
 	}
 	else
 	{	
