@@ -25,6 +25,17 @@ enum class vm_state
 	error
 };
 
+// Forward declaration:
+struct Memory_Region;
+
+class IVirtualMachineConfig
+{
+public:
+	virtual void VM_Assign_Interrupt(size_t) = 0;
+	virtual void VM_Assign_Memory_Region(Memory_Region) = 0;
+	virtual void VM_Set_Entry_Address(uint64_t) = 0;
+};
+
 class IVirtualMachineManager
 {
 public:

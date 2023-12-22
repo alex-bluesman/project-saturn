@@ -10,37 +10,24 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "vm_config.hpp"
-
-#include <core/ivmm>
+#include <basetypes>
 
 namespace saturn {
-namespace core {
+namespace bsp {
 
-class VM_Manager : public IVirtualMachineManager
+// Data types used for configuration:
+enum class OS_Type
 {
-public:
-	VM_Manager();
-	~VM_Manager();
-
-private:
-	void Load_Config(void);
-
-public:
-	void Start_VM();
-	void Stop_VM();
-	vm_state Get_VM_State();
-
-public:
-	bool Guest_IRq(uint32_t nr);
-
-private:
-	vm_state		vmState;
-
-private:
-	// TBD: could not fit heap frame
-	VM_Configuration*	vmConfig;
+	Default,
+	Linux
 };
 
-}; // namespace core
+struct OS_Storage_Entry
+{
+	uint64_t sourcePA;
+	uint64_t targetPA;
+	size_t size;
+};
+
+}; // bsp
 }; // namespace saturn

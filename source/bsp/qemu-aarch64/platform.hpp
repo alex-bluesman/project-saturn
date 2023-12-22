@@ -10,37 +10,45 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "vm_config.hpp"
+#pragma once
 
-#include <core/ivmm>
+#include "uart_pl011.hpp"
+#include "virt_uart_pl011.hpp"
+
+#include <bsp/ibsp>
+#include <bsp/os_storage>
 
 namespace saturn {
-namespace core {
+namespace bsp {
 
-class VM_Manager : public IVirtualMachineManager
+class QemuArm64Platform : public IBoardSupportPackage
 {
 public:
-	VM_Manager();
-	~VM_Manager();
-
-private:
-	void Load_Config(void);
+	QemuArm64Platform();
 
 public:
-	void Start_VM();
-	void Stop_VM();
-	vm_state Get_VM_State();
-
-public:
-	bool Guest_IRq(uint32_t nr);
+	void Load_VM_Configuration(core::IVirtualMachineConfig&);
+	void Start_Virtual_Devices(void);
+	void Stop_Virtual_Devices(void);
+	void Prepare_OS(struct AArch64_Regs&);
 
 private:
-	vm_state		vmState;
+	void Add_Image(uint64_t source, uint64_t target, size_t size);
 
 private:
-	// TBD: could not fit heap frame
-	VM_Configuration*	vmConfig;
+	OS_Type osType;
+
+	// OS storage configuration
+	size_t nrImages;
+	OS_Storage_Entry (&osImages)[];
+
+private:
+	device::UartPl011* Uart;
+	device::VirtUartPl011* VirtUart;
 };
 
-}; // namespace core
+// Access to console
+IBoardSupportPackage& iBSP(void);
+
+}; // namespace bsp
 }; // namespace saturn
