@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "uart_pl011.hpp"
-#include "virt_uart_pl011.hpp"
+#include "devices/uart_pl011.hpp"
+#include "devices/virt_uart_pl011.hpp"
 
 #include <bsp/ibsp>
 #include <bsp/os_storage>

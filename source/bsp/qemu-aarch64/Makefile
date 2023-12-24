@@ -1,9 +1,9 @@
 include $(TOP_DIR)/config.mk
 
-src := platform.cpp		\
-       early_uart_pl011.S	\
-       uart_pl011.cpp		\
-       virt_uart_pl011.cpp
+src := platform.cpp			\
+       devices/early_uart_pl011.S	\
+       devices/uart_pl011.cpp		\
+       devices/virt_uart_pl011.cpp
 
 objs := $(src:.cpp=.o)
 objs := $(objs:.S=.o)
@@ -28,6 +28,8 @@ built_in.o: $(objs)
 
 .PHONY: clean
 clean:
+	@echo "[CLEAN]		$(CURRENT_DIR)/devices/*.o"
+	@-rm -f devices/*.o devices/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
 
