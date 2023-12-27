@@ -12,38 +12,26 @@
 
 #pragma once
 
-#include "devices/uart_pl011.hpp"
-#include "devices/virt_uart_pl011.hpp"
-#include "tools/storage.hpp"
-
-#include <bsp/ibsp>
 #include <bsp/os_storage>
 
 namespace saturn {
 namespace bsp {
 
-class QemuArm64Platform : public IBoardSupportPackage
+class OS_Storage
 {
 public:
-	QemuArm64Platform();
+	OS_Storage();
+	~OS_Storage();
 
 public:
-	void Load_VM_Configuration(core::IVirtualMachineConfig&);
-	void Start_Virtual_Devices(void);
-	void Stop_Virtual_Devices(void);
-	void Prepare_OS(struct AArch64_Regs&);
+	void Add_Image(uint64_t source, uint64_t target, size_t size);
+	void Load_Images(void);
 
 private:
-	OS_Type osType;
-	OS_Storage* osStorage;
-
-private:
-	device::UartPl011* Uart;
-	device::VirtUartPl011* VirtUart;
+	// OS storage configuration
+	size_t nrImages;
+	OS_Storage_Entry (&osImages)[];
 };
-
-// Access to console
-IBoardSupportPackage& iBSP(void);
 
 }; // namespace bsp
 }; // namespace saturn
