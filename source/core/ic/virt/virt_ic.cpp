@@ -80,6 +80,9 @@ void GicVirtIC::Stop()
 		delete vGicDist;
 		vGicDist = nullptr;
 
+		delete vGicRedist;
+		vGicRedist = nullptr;
+
 		vState = VICState::Stopped;
 	}
 }
