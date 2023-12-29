@@ -10,23 +10,70 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "uart_pl011.hpp"
-#include "virt_uart_pl011.hpp"
+#include "platform.hpp"
 
 #include <core/iconsole>
+#include <core/ivmm>
+#include <mops>
+
+#include "generated/saturn_config.hpp"
 
 namespace saturn {
-namespace device {
+namespace bsp {
 
-static device::UartPl011* Uart = nullptr;
-static device::VirtUartPl011* VirtUart = nullptr;
+using namespace core;
+
+// QEMU AArch64 BSP instance
+static QemuArm64Platform* QemuArm64_BSP = nullptr;
+
+IBoardSupportPackage& iBSP(void)
+{
+	return *QemuArm64_BSP;
+}
 
 void BSP_Init(void)
 {
-	Uart = new device::UartPl011();
-	core::iConsole().RegisterUart(*Uart);
+	QemuArm64_BSP = new QemuArm64Platform;
+}
 
-	VirtUart = new device::VirtUartPl011(*Uart);
+QemuArm64Platform::QemuArm64Platform()
+	: Uart(nullptr)
+	, VirtUart(nullptr)
+{
+	Uart = new device::UartPl011();
+	iConsole().RegisterUart(*Uart);
+
+	osStorage = new OS_Storage;
+}
+
+void QemuArm64Platform::Load_VM_Configuration(core::IVirtualMachineConfig& vmConfig)
+{
+	// Load generated configuration
+	generated::VM_Configuration(vmConfig);
+	generated::OS_Storage_Configuration(*osStorage);
+}
+
+void QemuArm64Platform::Prepare_OS(struct AArch64_Regs& guestContext)
+{
+	if (osStorage->Get_OS_Type() == OS_Type::Linux)
+	{
+		guestContext.x0 = 0x43000000;		// Device tree address
+	}
+
+	osStorage->Load_Images();
+}
+
+void QemuArm64Platform::Start_Virtual_Devices(void)
+{
+	if (nullptr == VirtUart)
+	{
+		VirtUart = new device::VirtUartPl011(*Uart);
+	}
+}
+
+void QemuArm64Platform::Stop_Virtual_Devices(void)
+{
+	// TBD: shutdown Uart
 }
 
 }; // namespace device

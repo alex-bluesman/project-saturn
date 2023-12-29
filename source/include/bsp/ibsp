@@ -10,37 +10,25 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "vm_config.hpp"
+#pragma once
 
+#include <arm64/registers>
 #include <core/ivmm>
 
 namespace saturn {
-namespace core {
+namespace bsp {
 
-class VM_Manager : public IVirtualMachineManager
+class IBoardSupportPackage
 {
 public:
-	VM_Manager();
-	~VM_Manager();
-
-private:
-	void Load_Config(void);
-
-public:
-	void Start_VM();
-	void Stop_VM();
-	vm_state Get_VM_State();
-
-public:
-	bool Guest_IRq(uint32_t nr);
-
-private:
-	vm_state		vmState;
-
-private:
-	// TBD: could not fit heap frame
-	VM_Configuration*	vmConfig;
+	virtual void Load_VM_Configuration(core::IVirtualMachineConfig&) = 0;
+	virtual void Start_Virtual_Devices(void) = 0;
+	virtual void Stop_Virtual_Devices(void) = 0;
+	virtual void Prepare_OS(struct AArch64_Regs&) = 0;
 };
 
-}; // namespace core
+// Access to console
+IBoardSupportPackage& iBSP(void);
+
+}; // namespace bsp
 }; // namespace saturn
