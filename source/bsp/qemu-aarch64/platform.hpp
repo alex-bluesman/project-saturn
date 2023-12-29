@@ -34,7 +34,6 @@ public:
 	void Prepare_OS(struct AArch64_Regs&);
 
 private:
-	OS_Type osType;
 	OS_Storage* osStorage;
 
 private:

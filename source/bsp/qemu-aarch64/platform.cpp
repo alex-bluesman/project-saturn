@@ -16,6 +16,8 @@
 #include <core/ivmm>
 #include <mops>
 
+#include "generated/saturn_config.hpp"
+
 namespace saturn {
 namespace bsp {
 
@@ -46,46 +48,14 @@ QemuArm64Platform::QemuArm64Platform()
 
 void QemuArm64Platform::Load_VM_Configuration(core::IVirtualMachineConfig& vmConfig)
 {
-	vmConfig.VM_Assign_Memory_Region({0x08080000, 0x08080000, 0x00020000, core::MMapType::Device});	// GIC ITS
-	vmConfig.VM_Assign_Memory_Region({0x09010000, 0x09010000, 0x00001000, core::MMapType::Device});	// PL031 RTC
-	vmConfig.VM_Assign_Memory_Region({0x09030000, 0x09030000, 0x00001000, core::MMapType::Device});	// PL061 GPIO controller
-	vmConfig.VM_Assign_Memory_Region({0x0a000000, 0x0a000000, 0x00004000, core::MMapType::Device});	// Vi
-
-	vmConfig.VM_Assign_Memory_Region({0x40000000, 0x40000000, 0x20000000, core::MMapType::Normal});	// Normal RAM memory
-
-	vmConfig.VM_Assign_Interrupt(0);	// SGI
-	vmConfig.VM_Assign_Interrupt(1);	// SGI
-	vmConfig.VM_Assign_Interrupt(2);	// SGI
-	vmConfig.VM_Assign_Interrupt(3);	// SGI
-	vmConfig.VM_Assign_Interrupt(4);	// SGI
-	vmConfig.VM_Assign_Interrupt(5);	// SGI
-	vmConfig.VM_Assign_Interrupt(6);	// SGI
-
-	vmConfig.VM_Assign_Interrupt(23);	// AMBA clock
-	vmConfig.VM_Assign_Interrupt(27);	// Virtual generic timer
-	vmConfig.VM_Assign_Interrupt(34);	// VirtIO
-
-	osType = OS_Type::Linux;
-	vmConfig.VM_Set_Entry_Address(0x41000000);
-
-	osStorage->Add_Image(0x7e000000, 0x41000000, 0x0149c000);		// Kernel
-	osStorage->Add_Image(0x7f500000, 0x43000000, 0x00002000);		// Device tree
-	osStorage->Add_Image(0x7f510000, 0x50000000, 0x00567000);		// Root filesystem
-
-#if 0
-	// Asteroid
-	vmConfig->VM_Add_Memory_Region({0x41000000, 0x41000000, BlockSize::L2_Block, MMapType::Normal});
-	vmConfig->VM_Set_Entry(0x41000000);
-
-	vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
-
-	vmConfig->VM_Add_Image(0x7e000000, 0x41000000, 0x00007000);	// Asteroid kernel
-#endif	
+	// Load generated configuration
+	generated::VM_Configuration(vmConfig);
+	generated::OS_Storage_Configuration(*osStorage);
 }
 
 void QemuArm64Platform::Prepare_OS(struct AArch64_Regs& guestContext)
 {
-	if (OS_Type::Linux == osType)
+	if (osStorage->Get_OS_Type() == OS_Type::Linux)
 	{
 		guestContext.x0 = 0x43000000;		// Device tree address
 	}

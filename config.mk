@@ -19,6 +19,8 @@ STRIP   = $(CROSS_COMPILE)strip
 OBJCOPY = $(CROSS_COMPILE)objcopy
 OBJDUMP = $(CROSS_COMPILE)objdump
 
+PYTHON  = python3
+
 MKIMAGE = mkimage
 
 QEMU_AARCH64 = qemu-system-aarch64

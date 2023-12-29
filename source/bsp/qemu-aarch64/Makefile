@@ -11,9 +11,16 @@ objs := $(objs:.S=.o)
 deps := $(objs:.o=.d)
 
 CURRENT_DIR = "bsp"
+DEFCONFIG ?= "linux"
+
+.PHONY: generate
+generate:
+	@echo "[GEN]		config for $(DEFCONFIG)"
+	@mkdir -p generated
+	@$(PYTHON) $(TOP_DIR)/scripts/build_config.py -i configs/$(DEFCONFIG).json -o generated/saturn_config.hpp
 
 .PHONY: build
-build: built_in.o
+build: generate built_in.o
 
 built_in.o: $(objs)
 	@echo "[LD]		$(CURRENT_DIR)/$@"
@@ -33,7 +40,9 @@ clean:
 	@-rm -f devices/*.o devices/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/tools/*.o"
 	@-rm -f tools/*.o tools/*.d
+	@-rm -f tools/*.o tools/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
+	@-rm -rf generated
 
 -include .depend
