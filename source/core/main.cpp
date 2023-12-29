@@ -26,8 +26,14 @@ saturn::uint64_t el2_stack_reset = 0;
 
 namespace saturn {
 
+// Entry point to application layer
 namespace apps {
 	void Applications_Start();
+};
+
+// Entry point to BSP layer
+namespace bsp {
+	void BSP_Init();
 };
 
 namespace core {
@@ -75,7 +81,7 @@ static void Main(void)
 	Info() << fmt::endl << "<core initialization complete>" << fmt::endl;
 
 	// Setup platform BSP
-	device::BSP_Init();
+	bsp::BSP_Init();
 
 	// Finally we are ready to receive interrupts
 	iIC().Local_IRq_Enable();

@@ -13,6 +13,7 @@
 #include "vm_manager.hpp"
 
 #include <arm64/registers>
+#include <bsp/ibsp>
 #include <core/iconsole>
 #include <core/iic>
 #include <core/ivirtic>
@@ -44,59 +45,22 @@ VM_Manager::VM_Manager()
 
 	Info() << "VM manager started" << fmt::endl;
 
-	// TBD: should be some external configuration
-	//Load_Config(OS_Type::Linux);
-	Load_Config(OS_Type::Default);
+	// Fill the configuration for Saturn virtual machines
+	Load_Config();
 }
 
 VM_Manager::~VM_Manager()
 {}
 
-void VM_Manager::Load_Config(OS_Type type)
+void VM_Manager::Load_Config(void)
 {
 	// Create new VM configuration
 	vmConfig = new VM_Configuration;
 	
-	// TBD: must be set outside to avoid hardcodding!
+	Info() << "vmm: load VM configuration" << fmt::endl;
 
-	vmConfig->VM_Set_Guest_OS(type);
-	if (type == OS_Type::Linux)
-	{
-		Info() << "vmm: load linux configuration" << fmt::endl;
-		vmConfig->VM_Add_Memory_Region({0x08080000, 0x08080000, 0x00020000, MMapType::Device});			// GIC ITS
-		vmConfig->VM_Add_Memory_Region({0x09010000, 0x09010000, 0x00001000, MMapType::Device});			// PL031 RTC
-		vmConfig->VM_Add_Memory_Region({0x09030000, 0x09030000, 0x00001000, MMapType::Device});			// PL061 GPIO controller
-		vmConfig->VM_Add_Memory_Region({0x0a000000, 0x0a000000, 0x00004000, MMapType::Device});			// Vi
-
-		vmConfig->VM_Add_Memory_Region({0x40000000, 0x40000000, 0x20000000, MMapType::Normal});			// Normal RAM memory
-		vmConfig->VM_Set_Entry(0x41000000);
-
-		vmConfig->VM_Assign_Interrupt(0);	// SGI
-		vmConfig->VM_Assign_Interrupt(1);	// SGI
-		vmConfig->VM_Assign_Interrupt(2);	// SGI
-		vmConfig->VM_Assign_Interrupt(3);	// SGI
-		vmConfig->VM_Assign_Interrupt(4);	// SGI
-		vmConfig->VM_Assign_Interrupt(5);	// SGI
-		vmConfig->VM_Assign_Interrupt(6);	// SGI
-
-		vmConfig->VM_Assign_Interrupt(23);	// AMBA clock
-		vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
-		vmConfig->VM_Assign_Interrupt(34);	// VirtIO
-
-		vmConfig->VM_Add_Image(0x7e000000, 0x41000000, 0x0149c000);	// Kernel
-		vmConfig->VM_Add_Image(0x7f500000, 0x43000000, 0x00002000);	// Device tree
-		vmConfig->VM_Add_Image(0x7f510000, 0x50000000, 0x00567000);	// Root filesystem
-	}
-	else
-	{
-		Info() << "vmm: load default configuration" << fmt::endl;
-		vmConfig->VM_Add_Memory_Region({0x41000000, 0x41000000, BlockSize::L2_Block, MMapType::Normal});
-		vmConfig->VM_Set_Entry(0x41000000);
-
-		vmConfig->VM_Assign_Interrupt(27);	// Virtual generic timer
-
-		vmConfig->VM_Add_Image(0x7e000000, 0x41000000, 0x00007000);	// Asteroid kernel
-	}
+	// Load the configuration from BSP
+	bsp::iBSP().Load_VM_Configuration(*vmConfig);
 }
 
 void VM_Manager::Start_VM()
@@ -108,16 +72,16 @@ void VM_Manager::Start_VM()
 		MSet<uint8_t>(&guestContext, sizeof(guestContext), 0);
 
 		guestContext.cpsr_el2 = 0x3c5;
-		guestContext.pc_el2 = vmConfig->osEntry;
-		guestContext.sp_el1 = vmConfig->osEntry;	// TBD: some temporary location in VM address space
+		guestContext.pc_el2 = vmConfig->VM_Get_Entry_Address();
+		guestContext.sp_el1 = vmConfig->VM_Get_Entry_Address();	// Some temporary location in VM address space
+
+		bsp::iBSP().Prepare_OS(guestContext);
 
 		iVirtIC().Start_Virt_IC();
 		vmConfig->VM_Allocate_Resources();
 
-		if (OS_Type::Linux == vmConfig->osType)
-		{
-			guestContext.x0 = 0x43000000;
-		}
+		// Start virtual devices
+		bsp::iBSP().Start_Virtual_Devices();
 
 		// TBD: reset all EL1 registers:
 		WriteArm64Reg(sctlr_el1, 0xc50838);	// Default value collected after cold reset
@@ -141,6 +105,9 @@ void VM_Manager::Stop_VM()
 	else
 	if (vmConfig && (vm_state::request_shutdown == vmState))
 	{
+		// Stop virtual devices
+		bsp::iBSP().Start_Virtual_Devices();
+
 		vmConfig->VM_Free_Resources();
 		iVirtIC().Stop_Virt_IC();
 

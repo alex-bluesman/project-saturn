@@ -10,37 +10,31 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
-#include "vm_config.hpp"
+#pragma once
 
-#include <core/ivmm>
+#include <bsp/os_storage>
 
 namespace saturn {
-namespace core {
+namespace bsp {
 
-class VM_Manager : public IVirtualMachineManager
+class OS_Storage
 {
 public:
-	VM_Manager();
-	~VM_Manager();
-
-private:
-	void Load_Config(void);
+	OS_Storage();
+	~OS_Storage();
 
 public:
-	void Start_VM();
-	void Stop_VM();
-	vm_state Get_VM_State();
-
-public:
-	bool Guest_IRq(uint32_t nr);
+	void Add_Image(uint64_t source, uint64_t target, size_t size);
+	void Load_Images(void);
+	void Set_OS_Type(OS_Type type);
+	OS_Type Get_OS_Type(void);
 
 private:
-	vm_state		vmState;
-
-private:
-	// TBD: could not fit heap frame
-	VM_Configuration*	vmConfig;
+	// OS storage configuration
+	size_t nrImages;
+	OS_Storage_Entry (&osImages)[];
+	OS_Type osType;
 };
 
-}; // namespace core
+}; // namespace bsp
 }; // namespace saturn

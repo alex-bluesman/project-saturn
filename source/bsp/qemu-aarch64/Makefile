@@ -1,18 +1,26 @@
 include $(TOP_DIR)/config.mk
 
-src := platform.cpp		\
-       early_uart_pl011.S	\
-       uart_pl011.cpp		\
-       virt_uart_pl011.cpp
+src := platform.cpp			\
+       devices/early_uart_pl011.S	\
+       devices/uart_pl011.cpp		\
+       devices/virt_uart_pl011.cpp	\
+       tools/storage.cpp
 
 objs := $(src:.cpp=.o)
 objs := $(objs:.S=.o)
 deps := $(objs:.o=.d)
 
 CURRENT_DIR = "bsp"
+DEFCONFIG ?= "linux"
+
+.PHONY: generate
+generate:
+	@echo "[GEN]		config for $(DEFCONFIG)"
+	@mkdir -p generated
+	@$(PYTHON) $(TOP_DIR)/scripts/build_config.py -i configs/$(DEFCONFIG).json -o generated/saturn_config.hpp
 
 .PHONY: build
-build: built_in.o
+build: generate built_in.o
 
 built_in.o: $(objs)
 	@echo "[LD]		$(CURRENT_DIR)/$@"
@@ -28,7 +36,13 @@ built_in.o: $(objs)
 
 .PHONY: clean
 clean:
+	@echo "[CLEAN]		$(CURRENT_DIR)/devices/*.o"
+	@-rm -f devices/*.o devices/*.d
+	@echo "[CLEAN]		$(CURRENT_DIR)/tools/*.o"
+	@-rm -f tools/*.o tools/*.d
+	@-rm -f tools/*.o tools/*.d
 	@echo "[CLEAN]		$(CURRENT_DIR)/*.o"
 	@-rm -f *.o *.d
+	@-rm -rf generated
 
 -include .depend

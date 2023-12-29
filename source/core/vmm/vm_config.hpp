@@ -12,52 +12,29 @@
 
 #include <basetypes>
 #include <core/immu>
+#include <core/ivmm>
 
 namespace saturn {
 namespace core {
 
-// TBD: should be global const comming from BSP
-static const size_t _nrINTs = 256;
-static const size_t _nrMMaps = 16;
-static const size_t _nrImages = 3;
-
-// Data types used for configuration:
-enum class OS_Type
-{
-	Default,
-	Linux
-};
-
-struct OS_Storage_Entry
-{
-	uint64_t sourcePA;
-	uint64_t targetPA;
-	size_t size;
-};
-
-class VM_Configuration {
+class VM_Configuration : public IVirtualMachineConfig {
 public:
 	VM_Configuration();
 	~VM_Configuration();
 
-// VM interrupts management:
+// Configuration interface:
 public:
 	void VM_Assign_Interrupt(size_t nr);
-	bool VM_Own_Interrupt(size_t nr);
+	void VM_Assign_Memory_Region(Memory_Region region);
+	void VM_Set_Entry_Address(uint64_t addr);
 
-// VM memory management:
+
+// VM resources management:
 public:
-	void VM_Add_Memory_Region(Memory_Region region);
 	void VM_Allocate_Resources(void);
 	void VM_Free_Resources(void);
-
-// VM images management:
-	void VM_Add_Image(uint64_t source, uint64_t target, size_t size);
-
-// VM guest OS management:
-public:
-	void VM_Set_Guest_OS(OS_Type type);
-	void VM_Set_Entry(uint64_t addr);
+	bool VM_Own_Interrupt(size_t nr);
+	uint64_t VM_Get_Entry_Address(void);
 
 private:
 	// INT configuration
@@ -67,12 +44,7 @@ private:
 	Memory_Region (&memRegions)[];
 	size_t nrRegions;
 
-	// OS storage configuration
-	size_t nrImages;
-	OS_Storage_Entry (&osImages)[];
-
-public:
-	OS_Type osType;
+	// Entry address for guest operating system
 	uint64_t osEntry;
 };
 

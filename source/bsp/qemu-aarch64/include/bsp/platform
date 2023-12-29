@@ -26,7 +26,5 @@ namespace device {
 
 #define _uart_addr		{ 0x09000000, 0x00001000 }
 
-void BSP_Init();
-
 }; // namespace device
 }; // namespace saturn

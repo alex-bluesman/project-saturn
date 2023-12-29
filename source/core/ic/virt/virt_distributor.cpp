@@ -37,6 +37,8 @@ VirtGicDistributor::VirtGicDistributor(GicDistributor& dist)
 VirtGicDistributor::~VirtGicDistributor()
 {
 	// TBD: flush pending interrupts
+
+	delete mTrap;
 }
 
 void VirtGicDistributor::Read(uint64_t reg, void* data, AccessSize size)

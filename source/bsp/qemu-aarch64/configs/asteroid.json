@@ -1,0 +1,19 @@
+{
+	"version": "1.0",
+	"partitions": [
+		{
+			"id": 1,
+			"memory": [
+				{"pa": "0x41000000", "va": "0x41000000", "size": "0x00200000", "type": "normal", "_comment" : "SDRAM"}
+			],
+			"interrupts": [
+				{"nr": 27, "_comment" : "Virtual Generic Timer"}
+			],
+			"system": "asteroid",
+			"entry": "0x41000000",
+			"images": [
+				{"store" : "0x7e000000", "boot" : "0x41000000", "size" : "0x00007000", "_comment" : "Kernel"}
+			]
+		}
+	]
+}

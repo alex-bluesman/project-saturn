@@ -19,20 +19,21 @@
 namespace saturn {
 namespace core {
 
+// TBD: should be global const comming from BSP
+static const size_t _nrINTs = 256;
+static const size_t _nrMMaps = 16;
+
 // Let's use data segment for configuration to avoid additional load on heap
 static uint8_t _hwINTMask[_nrINTs / 8 + 1];
 static Memory_Region _memRegions[_nrMMaps];
-static OS_Storage_Entry _osImages[_nrImages];
 
 VM_Configuration::VM_Configuration()
 	: hwINTMask(_hwINTMask)
 	, memRegions(_memRegions)
 	, nrRegions(0)
-	, osImages(_osImages)
-	, nrImages(0)
-	, osType(OS_Type::Default)
 	, osEntry(0)
 {
+	// Clean up assigned interrupts mask
 	for (int i = 0; i < (_nrINTs / 8); i++)
 	{
 		hwINTMask[i] = 0;
@@ -62,7 +63,7 @@ bool VM_Configuration::VM_Own_Interrupt(size_t nr)
 	return ret;
 }
 
-void VM_Configuration::VM_Add_Memory_Region(Memory_Region region)
+void VM_Configuration::VM_Assign_Memory_Region(Memory_Region region)
 {
 	if (nrRegions < _nrMMaps)
 	{
@@ -75,18 +76,6 @@ void VM_Configuration::VM_Add_Memory_Region(Memory_Region region)
 	}
 }
 
-void VM_Configuration::VM_Add_Image(uint64_t source, uint64_t target, size_t size)
-{
-	if (nrImages < _nrImages)
-	{
-		osImages[nrImages].sourcePA = source;
-		osImages[nrImages].targetPA = target;
-		osImages[nrImages].size = size;
-
-		nrImages++;
-	}
-}
-
 void VM_Configuration::VM_Allocate_Resources(void)
 {
 	// Map IPA memory
@@ -94,36 +83,17 @@ void VM_Configuration::VM_Allocate_Resources(void)
 	{
 		iMMU_VM().MemoryMap(memRegions[i]);
 	}
-
-	// Load OS images
-	for (size_t i = 0; i < nrImages; i++)
-	{
-		OS_Storage_Entry& entry = osImages[i];
-		Memory_Region sourceRegion = {entry.sourcePA, entry.sourcePA, entry.size, MMapType::Normal};
-		Memory_Region targetRegion = {entry.targetPA, entry.targetPA, entry.size, MMapType::Normal};
-
-		iMMU().MemoryMap(sourceRegion);
-		iMMU().MemoryMap(targetRegion);
-
-		Info() << "vmm: copy OS binary from storage to 0x" << fmt::fill << fmt::hex << entry.targetPA << ": ";
-
-		MCopy<uint8_t>((void *)entry.sourcePA, (void *)entry.targetPA, entry.size);
-
-		Raw() << "OK" << fmt::endl;
-
-		iMMU().MemoryUnmap(targetRegion);
-		iMMU().MemoryUnmap(sourceRegion);
-	}
 }
 
 void VM_Configuration::VM_Free_Resources(void)
 {
-	// Free memory mapping
+	// Free IPA memory
 	for (size_t i = 0; i < nrRegions; i++)
 	{
 		iMMU_VM().MemoryUnmap(memRegions[i]);
 	}
 
+	// Disable assigned physical interrupts
 	for (size_t i = 0; i < _nrINTs; i++)
 	{
 		if (VM_Own_Interrupt(i))
@@ -133,14 +103,14 @@ void VM_Configuration::VM_Free_Resources(void)
 	}
 }
 
-void VM_Configuration::VM_Set_Guest_OS(OS_Type type)
-{
-	osType = type;
-}
-
-void VM_Configuration::VM_Set_Entry(uint64_t addr)
+void VM_Configuration::VM_Set_Entry_Address(uint64_t addr)
 {
 	osEntry = addr;
+}
+
+uint64_t VM_Configuration::VM_Get_Entry_Address(void)
+{
+	return osEntry;
 }
 
 }; // namespace core
