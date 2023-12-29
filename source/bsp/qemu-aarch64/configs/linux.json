@@ -1,0 +1,34 @@
+{
+	"version": "1.0",
+	"partitions": [
+		{
+			"id": 1,
+			"memory": [
+				{"pa": "0x08080000", "va": "0x08080000", "size": "0x00020000", "type": "device", "_comment" : "GIC ITS"},
+				{"pa": "0x09010000", "va": "0x09010000", "size": "0x00001000", "type": "device", "_comment" : "PL031 RTC"},
+				{"pa": "0x09030000", "va": "0x09030000", "size": "0x00001000", "type": "device", "_comment" : "PL061 GPIO"},
+				{"pa": "0x0a000000", "va": "0x0a000000", "size": "0x00004000", "type": "device", "_comment" : "Virt IO"},
+				{"pa": "0x40000000", "va": "0x40000000", "size": "0x20000000", "type": "normal", "_comment" : "SDRAM"}
+			],
+			"interrupts": [
+				{"nr":  0, "_comment" : "SGI 0"},
+				{"nr":  1, "_comment" : "SGI 1"},
+				{"nr":  2, "_comment" : "SGI 2"},
+				{"nr":  3, "_comment" : "SGI 3"},
+				{"nr":  4, "_comment" : "SGI 4"},
+				{"nr":  5, "_comment" : "SGI 5"},
+				{"nr":  6, "_comment" : "SGI 6"},
+				{"nr": 23, "_comment" : "AMBA Clock"},
+				{"nr": 27, "_comment" : "Virtual Generic Timer"},
+				{"nr": 34, "_comment" : "Virt IO"}
+			],
+			"system": "linux",
+			"entry": "0x41000000",
+			"images": [
+				{"store" : "0x7e000000", "boot" : "0x41000000", "size" : "0x0149c000", "_comment" : "Kernel"},
+				{"store" : "0x7f500000", "boot" : "0x43000000", "size" : "0x00002000", "_comment" : "Device Tree"},
+				{"store" : "0x7f510000", "boot" : "0x50000000", "size" : "0x00567000", "_comment" : "Root Filesystem"}
+			]
+		}
+	]
+}
