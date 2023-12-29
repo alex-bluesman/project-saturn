@@ -37,9 +37,11 @@ Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
 To build Saturn for QEMU machine the following commads could be used:
 
 ```
- $ export CROSS_COMPILE=$(TOOLCHAIN_ROOT)/bin/aarch64-unknown-linux-gnu-
+ $ export CROSS_COMPILE=$(WORKDIR)/bin/aarch64-unknown-linux-gnu-
  $ make
 ```
+
+The default Saturn configuration assumess running Linux as guest operating system. To run Asteroid please add parameter `DEFCONFIG=asteroid` to make.
 
 NOTE: Please replace $(WORKDIR) by the correct path to toolchain.
 
@@ -49,7 +51,7 @@ To run Saturn in QEMU the following command could be used:
 
 For Asteroid target:
 ```
-$ python3 scripts/run_qemu.py
+$ python3 scripts/run_qemu.py -g asteroid
 ```
 
 For Linux target:
