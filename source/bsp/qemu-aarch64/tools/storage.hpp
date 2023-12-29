@@ -26,11 +26,14 @@ public:
 public:
 	void Add_Image(uint64_t source, uint64_t target, size_t size);
 	void Load_Images(void);
+	void Set_OS_Type(OS_Type type);
+	OS_Type Get_OS_Type(void);
 
 private:
 	// OS storage configuration
 	size_t nrImages;
 	OS_Storage_Entry (&osImages)[];
+	OS_Type osType;
 };
 
 }; // namespace bsp

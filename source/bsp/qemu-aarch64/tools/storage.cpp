@@ -66,5 +66,15 @@ void OS_Storage::Load_Images()
 	}
 }
 
+void OS_Storage::Set_OS_Type(OS_Type type)
+{
+	osType = type;
+}
+
+OS_Type OS_Storage::Get_OS_Type(void)
+{
+	return osType;
+}
+
 }; // namespace bsp
 }; // namespace saturn
