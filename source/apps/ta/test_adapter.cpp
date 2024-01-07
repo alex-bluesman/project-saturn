@@ -16,6 +16,8 @@
 #include <core/iic>
 #include <core/immu>
 
+#include <lib/list>
+
 #include <io>
 #include <ringbuffer>
 
@@ -173,6 +175,87 @@ static bool MMU_Smoke_Test(void)
 	return ret;
 }
 
+static void LIST_Smoke_Test(void)
+{
+	//iHeap().State();
+
+	Log() << "ta: " << __func__ << fmt::endl;
+	lib::List<int> list;
+
+	Log() << "/fill list with values" << fmt::endl;
+	list.push_back(1);
+	list.push_back(2);
+	list.push_back(3);
+
+	Log() << "/iterate list:" << fmt::endl;
+	for (lib::List<int>::Iterator it = list.begin(); it != list.end(); ++it)
+	{
+		Log() << "  /val: " << *it << fmt::endl;
+	}
+
+	Log() << "/pop back single element:" << fmt::endl;
+	list.pop_back();
+
+	Log() << "/iterate list:" << fmt::endl;
+	for (lib::List<int>::Iterator it = list.begin(); it != list.end(); ++it)
+	{
+		Log() << "  /val: " << *it << fmt::endl;
+	}
+
+	Log() << "/push back single element:" << fmt::endl;
+	list.push_back(8);
+
+	Log() << "/iterate list:" << fmt::endl;
+	for (lib::List<int>::Iterator it = list.begin(); it != list.end(); ++it)
+	{
+		Log() << "  /val: " << *it << fmt::endl;
+	}
+
+	list.pop_back();
+	list.pop_back();
+	list.pop_back();
+
+	Log() << "/iterate empty list:" << fmt::endl;
+	for (lib::List<int>::Iterator it = list.begin(); it != list.end(); ++it)
+	{
+		Log() << "  /val: " << *it << fmt::endl;
+	}
+
+	Log() << "/push back single element:" << fmt::endl;
+	list.push_back(9);
+
+	Log() << "/iterate list:" << fmt::endl;
+	for (lib::List<int>::Iterator it = list.begin(); it != list.end(); ++it)
+	{
+		Log() << "  /val: " << *it << fmt::endl;
+	}
+
+	list.pop_back();
+
+	Log() << "/fill list with values" << fmt::endl;
+	list.push_back(10);
+	list.push_back(11);
+	list.push_back(12);
+
+	{
+		lib::List<int>::Iterator it = list.begin();
+		++it;
+		it = list.erase(it);
+		it = list.erase(it);
+		it = list.erase(list.begin());
+	}
+
+	Log() << "/iterate list:" << fmt::endl;
+	for (lib::List<int>::Iterator it = list.begin(); it != list.end(); ++it)
+	{
+		Log() << "  /val: " << *it << fmt::endl;
+	}
+
+	list.push_back(10);
+	list.push_back(10);
+	list.push_back(10);
+}
+
 void TA_Start(void)
 {
 	Log() << "app: testing adapter" << fmt::endl;
@@ -182,6 +265,7 @@ void TA_Start(void)
 	HEAP_Smoke_Test();
 	RINGBUFFER_Smoke_Test();
 	MMU_Smoke_Test();
+	LIST_Smoke_Test();
 }
 
 }; // namespace apps
