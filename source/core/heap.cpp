@@ -131,22 +131,22 @@ void* Heap::Alloc(size_t size)
 
 void Heap::Free(void *base)
 {
-	if (base <= &Data16[_heap_size])
+	if (base < &Data16[_heap_size])
 	{
 		Heap_Free_Block<Data_Block<16>>(&List16_Available, &List16_Allocated, base);
 	}
 	else
-	if (base <= &Data32[_heap_size])
+	if (base < &Data32[_heap_size])
 	{
 		Heap_Free_Block<Data_Block<32>>(&List32_Available, &List32_Allocated, base);
 	}
 	else
-	if (base <= &Data48[_heap_size])
+	if (base < &Data48[_heap_size])
 	{
 		Heap_Free_Block<Data_Block<48>>(&List48_Available, &List48_Allocated, base);
 	}
 	else
-	if (base <= &Data64[_heap_size])
+	if (base < &Data64[_heap_size])
 	{
 		Heap_Free_Block<Data_Block<64>>(&List64_Available, &List64_Allocated, base);
 	}
