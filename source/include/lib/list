@@ -1,0 +1,234 @@
+// Copyright (C) 2023 Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
+//
+// Licensed under the MIT License (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+// http://opensource.org/licenses/MIT
+//
+// Unless required by applicable law or agreed to in writing, software distributed 
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// specific language governing permissions and limitations under the License.
+
+#pragma once
+
+namespace saturn {
+namespace lib {
+
+// List class declaration
+
+template <typename T>
+class List
+{
+public:
+	class Element {
+	public:
+		Element(Element* _prev, T _data);
+
+	public:
+		Element*	next;
+		Element*	prev;
+		T		data;
+	};
+
+public:
+	class Iterator
+	{
+	public:
+		Iterator(Element* _e);
+
+	public:
+		Iterator	operator=(const Iterator& it);
+		void		operator++(void);
+		T		operator*(void);
+		bool		operator!=(const Iterator& it);
+		bool		operator==(const Iterator& it);
+
+	public:
+		Element* raw(void);
+
+	private:
+		Element* e;
+	};
+
+public:
+	List();
+	~List();
+
+public:
+	void push_back(T data);
+	void pop_back(void);
+
+public:
+	Iterator begin(void);
+	Iterator end(void);
+
+public:
+	Iterator erase(Iterator pos);
+
+private:
+	Element* first;
+	Element* last;
+};
+
+// List::Element class definition
+
+template <typename T>
+List<T>::Element::Element(Element* _prev, T _data)
+	: next(nullptr)
+	, prev(_prev)
+	, data(_data)
+{};
+
+// List::Iterator class definition
+
+template <typename T>
+List<T>::Iterator::Iterator(Element* _e)
+	: e(_e)
+{}
+
+template <typename T>
+typename List<T>::Iterator List<T>::Iterator::operator=(const Iterator& it)
+{
+	e = it.e;
+	return Iterator(e);
+}
+
+template <typename T>
+void List<T>::Iterator::operator++()
+{
+	e = e->next;
+}
+
+template <typename T>
+T List<T>::Iterator::operator*()
+{
+	return e->data;
+}
+
+template <typename T>
+bool List<T>::Iterator::operator!=(const Iterator& it)
+{
+	return e != it.e;
+}
+
+template <typename T>
+bool List<T>::Iterator::operator==(const Iterator& it)
+{
+	return e == it.e;
+}
+
+template <typename T>
+typename List<T>::Element* List<T>::Iterator::raw()
+{
+	return e;
+}
+
+// List class definition
+
+template <typename T>
+List<T>::List()
+	: first(nullptr)
+	, last(nullptr)
+{}
+
+template <typename T>
+List<T>::~List()
+{
+	while (nullptr != last)
+	{
+		pop_back();
+	}
+}
+
+template <typename T>
+void List<T>::push_back(T data)
+{
+	Element* e = new Element(last, data);
+
+	if (nullptr == first)
+	{
+		first = e;
+	}
+
+	if (last)
+	{
+		last->next = e;
+	}
+
+	last = e;
+};
+
+template <typename T>
+void List<T>::pop_back(void)
+{
+	if (last)
+	{
+		Element* prev = last->prev;
+
+		if (prev)
+		{
+			prev->next = last->next;
+		}
+		else
+		{
+			first = nullptr;
+		}
+
+		delete last;
+		last = prev;
+	}
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::begin(void)
+	{
+		return Iterator(first);
+	}
+
+template <typename T>
+typename List<T>::Iterator List<T>::end(void)
+{
+	return Iterator(nullptr);
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::erase(Iterator pos)
+{
+	Element* e = pos.raw();
+
+	if (e)
+	{
+		Element* prev = e->prev;
+		Element* next = e->next;
+
+		delete e;
+
+		if (nullptr == prev)
+		{
+			// Remove first element
+			first = next;
+		}
+		else
+		{
+			prev->next = next;
+		}
+
+		if (nullptr == next)
+		{
+			// Remove last element
+			last = prev;
+		}
+		else
+		{
+			next->prev = prev;
+		}
+
+		e = next;
+	}
+
+	return Iterator(e);
+}
+
+}; // namespace lib
+}; // namespace saturn
