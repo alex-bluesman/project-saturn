@@ -31,8 +31,12 @@ private:
 private:
 	void Do_Help(void);
 	void Do_Bad_Command(void);
-	void Do_Test_Adapter(const char*);
 	void Do_Vm(const char*);
+
+#ifdef ENABLE_TESTING
+private:
+	void Do_Test_Adapter(const char*);
+#endif // ENABLE_TESTING
 };
 
 }; // namespace apps

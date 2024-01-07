@@ -1,6 +1,6 @@
 MACHINE := qemu-aarch64
 
-SATURN_CONFIG := -DSTACK_SIZE=1024
+SATURN_CONFIG := -DSTACK_SIZE=1024 #-DENABLE_TESTING
 
 INCLUDES := -I$(TOP_DIR)/source/include			\
 	    -I$(TOP_DIR)/source/bsp/$(MACHINE)/include

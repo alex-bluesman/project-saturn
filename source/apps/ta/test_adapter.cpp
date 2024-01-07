@@ -10,6 +10,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#ifdef ENABLE_TESTING
+
 #include <core/iconsole>
 #include <core/icpu>
 #include <core/iheap>
@@ -25,6 +27,7 @@ namespace saturn {
 namespace apps {
 
 using namespace core;
+
 
 // INT test data
 static const uint32_t _testINT = 10;
@@ -270,3 +273,16 @@ void TA_Start(void)
 
 }; // namespace apps
 }; // namespace saturn
+
+#else
+
+namespace saturn {
+namespace apps {
+
+void TA_Start(void)
+{}
+
+}; // namespace apps
+}; // namespace saturn
+
+#endif // ENABLE_TESTING
