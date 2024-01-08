@@ -23,6 +23,7 @@ class List
 public:
 	class Element {
 	public:
+		Element();
 		Element(Element* _prev, T _data);
 
 	public:
@@ -56,6 +57,9 @@ public:
 	~List();
 
 public:
+	void assign(Iterator _first, Iterator _last);
+
+public:
 	void push_back(T data);
 	void pop_back(void);
 
@@ -78,6 +82,12 @@ List<T>::Element::Element(Element* _prev, T _data)
 	: next(nullptr)
 	, prev(_prev)
 	, data(_data)
+{};
+
+template <typename T>
+List<T>::Element::Element()
+	: next(nullptr)
+	, prev(nullptr)
 {};
 
 // List::Iterator class definition
@@ -139,6 +149,16 @@ List<T>::~List()
 	{
 		pop_back();
 	}
+}
+
+template <typename T>
+void List<T>::assign(Iterator _first, Iterator _last)
+{
+	first = _first.raw();
+	first->prev = nullptr;
+
+	last = _last.raw();
+	last->next = nullptr;
 }
 
 template <typename T>
