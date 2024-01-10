@@ -15,6 +15,12 @@
 namespace saturn {
 namespace lib {
 
+enum class Allocator_Type
+{
+	none,
+	heap
+};
+
 // List class declaration
 
 template <typename T>
@@ -41,7 +47,7 @@ public:
 	public:
 		Iterator	operator=(const Iterator& it);
 		void		operator++(void);
-		T		operator*(void);
+		T&		operator*(void);
 		bool		operator!=(const Iterator& it);
 		bool		operator==(const Iterator& it);
 
@@ -53,7 +59,7 @@ public:
 	};
 
 public:
-	List();
+	List(Allocator_Type alloc = Allocator_Type::heap);
 	~List();
 
 public:
@@ -61,7 +67,13 @@ public:
 
 public:
 	void push_back(T data);
+	void push_back(Element* e);
 	void pop_back(void);
+
+public:
+	void push_front(T data);
+	void push_front(Element* e);
+	void pop_front(void);
 
 public:
 	Iterator begin(void);
@@ -73,6 +85,9 @@ public:
 private:
 	Element* first;
 	Element* last;
+
+private:
+	Allocator_Type allocator_type;
 };
 
 // List::Element class definition
@@ -111,7 +126,7 @@ void List<T>::Iterator::operator++()
 }
 
 template <typename T>
-T List<T>::Iterator::operator*()
+T& List<T>::Iterator::operator*()
 {
 	return e->data;
 }
@@ -137,9 +152,10 @@ typename List<T>::Element* List<T>::Iterator::raw()
 // List class definition
 
 template <typename T>
-List<T>::List()
+List<T>::List(Allocator_Type alloc)
 	: first(nullptr)
 	, last(nullptr)
+	, allocator_type(alloc)
 {}
 
 template <typename T>
@@ -164,8 +180,16 @@ void List<T>::assign(Iterator _first, Iterator _last)
 template <typename T>
 void List<T>::push_back(T data)
 {
-	Element* e = new Element(last, data);
+	if (Allocator_Type::heap == allocator_type)
+	{
+		Element* e = new Element(last, data);
+		push_back(e);
+	}
+};
 
+template <typename T>
+void List<T>::push_back(Element* e)
+{
 	if (nullptr == first)
 	{
 		first = e;
@@ -176,8 +200,9 @@ void List<T>::push_back(T data)
 		last->next = e;
 	}
 
+	e->next = nullptr;
 	last = e;
-};
+}
 
 template <typename T>
 void List<T>::pop_back(void)
@@ -195,16 +220,82 @@ void List<T>::pop_back(void)
 			first = nullptr;
 		}
 
-		delete last;
+		if (Allocator_Type::heap == allocator_type)
+		{
+			delete last;
+		}
+		else
+		{
+			last->next = nullptr;
+			last->prev = nullptr;
+		}
+
 		last = prev;
 	}
 }
 
 template <typename T>
-typename List<T>::Iterator List<T>::begin(void)
+void List<T>::push_front(T data)
+{
+	if (Allocator_Type::heap == allocator_type)
 	{
-		return Iterator(first);
+		Element* e = new Element(nullptr, data);
+		push_front(e);
 	}
+};
+
+template <typename T>
+void List<T>::push_front(Element* e)
+{
+	if (nullptr == last)
+	{
+		last = e;
+	}
+
+	if (first)
+	{
+		first->prev = e;
+	}
+
+	e->next = first;
+	first = e;
+}
+
+template <typename T>
+void List<T>::pop_front(void)
+{
+	if (first)
+	{
+		Element* next = first->next;
+
+		if (next)
+		{
+			next->prev = first->prev;
+		}
+		else
+		{
+			last = nullptr;
+		}
+
+		if (Allocator_Type::heap == allocator_type)
+		{
+			delete first;
+		}
+		else
+		{
+			first->next = nullptr;
+			first->prev = nullptr;
+		}
+
+		first = next;
+	}
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::begin(void)
+{
+	return Iterator(first);
+}
 
 template <typename T>
 typename List<T>::Iterator List<T>::end(void)
@@ -222,7 +313,15 @@ typename List<T>::Iterator List<T>::erase(Iterator pos)
 		Element* prev = e->prev;
 		Element* next = e->next;
 
-		delete e;
+		if (Allocator_Type::heap == allocator_type)
+		{
+			delete e;
+		}
+		else
+		{
+			e->next = nullptr;
+			e->prev = nullptr;
+		}
 
 		if (nullptr == prev)
 		{
