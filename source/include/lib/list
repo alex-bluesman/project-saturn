@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <basetypes>
+
 namespace saturn {
 namespace lib {
 
@@ -64,6 +66,7 @@ public:
 
 public:
 	void assign(Iterator _first, Iterator _last);
+	size_t size(void);
 
 public:
 	void push_back(T data);
@@ -80,7 +83,9 @@ public:
 	Iterator end(void);
 
 public:
+	Iterator find(T value);
 	Iterator erase(Iterator pos);
+	void remove(T value);
 
 private:
 	Element* first;
@@ -88,6 +93,7 @@ private:
 
 private:
 	Allocator_Type allocator_type;
+	size_t sz;
 };
 
 // List::Element class definition
@@ -156,6 +162,7 @@ List<T>::List(Allocator_Type alloc)
 	: first(nullptr)
 	, last(nullptr)
 	, allocator_type(alloc)
+	, sz(0)
 {}
 
 template <typename T>
@@ -175,6 +182,17 @@ void List<T>::assign(Iterator _first, Iterator _last)
 
 	last = _last.raw();
 	last->next = nullptr;
+
+	for (Element* e = first; e != nullptr; e = e->next)
+	{
+		sz++;
+	}
+}
+
+template <typename T>
+size_t List<T>::size()
+{
+	return sz;
 }
 
 template <typename T>
@@ -193,15 +211,18 @@ void List<T>::push_back(Element* e)
 	if (nullptr == first)
 	{
 		first = e;
+		e->prev = nullptr;
 	}
 
 	if (last)
 	{
 		last->next = e;
+		e->prev = last;
 	}
 
 	e->next = nullptr;
 	last = e;
+	sz++;
 }
 
 template <typename T>
@@ -231,6 +252,7 @@ void List<T>::pop_back(void)
 		}
 
 		last = prev;
+		sz--;
 	}
 }
 
@@ -259,6 +281,7 @@ void List<T>::push_front(Element* e)
 
 	e->next = first;
 	first = e;
+	sz++;
 }
 
 template <typename T>
@@ -288,6 +311,7 @@ void List<T>::pop_front(void)
 		}
 
 		first = next;
+		sz--;
 	}
 }
 
@@ -301,6 +325,22 @@ template <typename T>
 typename List<T>::Iterator List<T>::end(void)
 {
 	return Iterator(nullptr);
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::find(T val)
+{
+	Element* e;
+
+	for (e = first; e != nullptr; e = e->next)
+	{
+		if (e->data == val)
+		{
+			break;
+		}
+	}
+
+	return e;
 }
 
 template <typename T>
@@ -344,9 +384,17 @@ typename List<T>::Iterator List<T>::erase(Iterator pos)
 		}
 
 		e = next;
+		sz--;
 	}
 
 	return Iterator(e);
+}
+
+template <typename T>
+void List<T>::remove(T val)
+{
+	Iterator it = find(val);
+	erase(it);
 }
 
 }; // namespace lib
