@@ -14,7 +14,6 @@
 
 #include <core/immu>
 #include <io>
-#include <list>
 
 namespace saturn {
 
@@ -65,7 +64,13 @@ public:
 	};
 
 public:
-	bool InRange(uint64_t addr, uint64_t size)
+	bool operator==(const MTrap& mt)
+	{
+		return this == &mt;
+	}
+
+public:
+	inline bool InRange(uint64_t addr, uint64_t size)
 	{
 		bool ret = false;
 		if ((addr >= Base) && ((addr + size) <= (Base + Size)))
@@ -76,14 +81,13 @@ public:
 		return ret;
 	}
 
-	uint64_t GetBase()
+	inline uint64_t GetBase(void)
 	{
 		return Base;
 	}
 
 public:
 	IVirtIO&	VDrv;
-	list_head_t	List;
 
 private:
 	uint64_t	Base;

@@ -14,60 +14,44 @@
 
 #include <arm64/registers>
 #include <core/iconsole>
+#include <lib/list>
 #include <mtrap>
 
 namespace saturn {
 namespace core {
 
 static const uint32_t _ec_abort_el1 = 0x24;			// Data Abort exception from lower Exception Level
-static list_head_t Memory_Trap_List;				// List to handle trap nodes
+static lib::List<MTrap&> *mtraps_list = nullptr;
 
 void Memory_Trap_Init(void)
 {
-	List_Init(&Memory_Trap_List);
+	mtraps_list = new lib::List<MTrap&>;
 }
 
 void Register_Trap_Region(MTrap& mt)
 {
 	// TBD: check if trap region to be added overlaps with
 	//      already existing one
-	List_Add(&mt.List, &Memory_Trap_List);
+	mtraps_list->push_back(mt);
 }
 
 void Remove_Trap_Region(MTrap& mt)
 {
-	list_head_t *head = &Memory_Trap_List;
-	list_head_t *entry = head->next;
-
-	while (entry != head)
-	{
-		MTrap* node = List_Entry(entry, MTrap, List);
-		if (node == &mt)
-		{
-			List_Del(entry);
-			break;
-		}
-
-		entry = entry->next;
-	}
+	mtraps_list->remove(mt);
 }
 
 static MTrap* Find_Trap_Node(uint64_t addr, uint64_t size)
 {
 	MTrap* node = nullptr;
-	list_head_t *head = &Memory_Trap_List;
-	list_head_t *entry = head->next;
-	
-	while (entry != head)
+
+	for (auto it = mtraps_list->begin(); it != mtraps_list->end(); ++it)
 	{
-		MTrap* mt = List_Entry(entry, MTrap, List);
-		if (mt->InRange(addr, size))
+		MTrap& mt = *it;
+		if (mt.InRange(addr, size))
 		{
-			node = mt;
+			node = &mt;
 			break;
 		}
-
-		entry = entry->next;
 	}
 
 	return node;

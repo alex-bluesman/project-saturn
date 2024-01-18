@@ -116,11 +116,13 @@ bool CommandLine::Parse_Command(char* cmdInput)
 		Do_Help();
 	}
 	else
+#ifdef ENABLE_TESTING
 	if (Str_Cmp(cmdName, "test"))
 	{
 		Do_Test_Adapter(cmdArgs);
 	}
 	else
+#endif // ENABLE_TESTING
 	if (Str_Cmp(cmdName, "vm"))
 	{
 		Do_Vm(cmdArgs);
@@ -166,7 +168,9 @@ void CommandLine::Do_Help(void)
 	Raw() << "Saturn Hypervisor console, please use the following commands:" << fmt::endl;
 	Raw() << "  help        - display usage information" << fmt::endl;
 	Raw() << "  quit        - stop console application" << fmt::endl;
+#ifdef ENABLE_TESTING
 	Raw() << "  test        - test adapter to run smoke tests" << fmt::endl;
+#endif // ENABLE_TESTING
 	Raw() << "  vm          - virtual machine management" << fmt::endl;
 	Raw() << fmt::endl;
 }
@@ -177,6 +181,7 @@ void CommandLine::Do_Bad_Command(void)
 	Raw() << fmt::endl;
 }
 
+#ifdef ENABLE_TESTING
 void CommandLine::Do_Test_Adapter(const char* args)
 {
 	if (Str_Cmp(args, "run"))
@@ -190,6 +195,7 @@ void CommandLine::Do_Test_Adapter(const char* args)
 
 	Raw() << fmt::endl;
 }
+#endif // ENABLE_TESTING
 
 void CommandLine::Do_Vm(const char* args)
 {
