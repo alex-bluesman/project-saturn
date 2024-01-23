@@ -47,8 +47,7 @@ enum MMapStage
 class MemoryManagementUnit : public IMemoryManagementUnit {
 public:
 	MemoryManagementUnit(tt_desc_t (&Level1)[],
-			     tt_desc_t (&Level2)[][_l2_size],
-			     tt_desc_t (&Level3)[][_l3_size],
+			     tt_desc_t (&Level2)[][_ptable_size],
 			     MMapStage Stage = MMapStage::Stage1
 			    );
 
@@ -59,7 +58,8 @@ public:
 	void MemoryUnmap(uint64_t base_addr, size_t size);
 
 private:
-	uint16_t FindFreeL3(void);
+	inline void* Get_Table(void);
+	inline void Free_Table(void* ptable);
 
 private:
 	lpae_table_t* Map_L1_PTable(uint64_t virt_addr);
@@ -73,8 +73,7 @@ private:
 	MMapStage TStage;
 
 	tt_desc_t (&PTable1)[];
-	tt_desc_t (&PTable2)[][_l2_size];
-	tt_desc_t (&PTable3)[][_l3_size];
+	tt_desc_t (&PTable2)[][_ptable_size];
 
 	uint8_t FreeMaskL3[(_l3_tables + 7) / 8];
 };

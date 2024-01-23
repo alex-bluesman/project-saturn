@@ -21,47 +21,30 @@ namespace saturn {
 namespace core {
 
 MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level1)[],
-					   tt_desc_t (&Level2)[][_l2_size],
-					   tt_desc_t (&Level3)[][_l3_size],
+					   tt_desc_t (&Level2)[][_ptable_size],
 					   MMapStage Stage)
 	: PTable1(Level1)
 	, PTable2(Level2)
-	, PTable3(Level3)
 	, TStage(Stage)
-{
-	size_t maskSize = sizeof(FreeMaskL3) / sizeof(FreeMaskL3[0]);
+{}
 
-	for (size_t i = 0; i < maskSize; i++)
+void* MemoryManagementUnit::Get_Table(void)
+{
+	void* ptable = new tt_desc_t[_ptable_size];
+
+	if (ptable)
 	{
-		FreeMaskL3[i] = 0;
+		MSet<uint64_t>(ptable, _ptable_size, 0);
 	}
+
+	return ptable;
 }
 
-uint16_t MemoryManagementUnit::FindFreeL3(void)
+void MemoryManagementUnit::Free_Table(void* ptable)
 {
-	size_t i;
-
-	for (i = 0; i < _l3_tables; i++)
-	{
-		size_t a, b;
-
-		// The target bit would be _FreeMaskL3[a] position 'b'
-		a = i / sizeof(FreeMaskL3[0]);
-		b = i % sizeof(FreeMaskL3[0]);
-
-		if (((FreeMaskL3[a] >> b) & 1) == 0)
-		{
-			FreeMaskL3[a] |= 1U << b;
-			break;
-		}
-	}
-
-	if (i == _l3_tables)
-	{
-		Fault("mmu: no free L3 tables left");
-	}
-
-	return i;
+	// NOTE: we assume that table does not contain any valid entry, this should be guaranteed by caller
+	MSet<uint64_t>(ptable, _ptable_size, 0);
+	delete [] static_cast<tt_desc_t*>(ptable);
 }
 
 lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, uint64_t phys_addr,  MMapType type)
@@ -288,14 +271,20 @@ lpae_table_t* MemoryManagementUnit::Map_L2_PTable(uint64_t virt_addr)
 
 	if (entry->valid == 0)
 	{
-		size_t index = FindFreeL3();
+		void* ptable = Get_Table();
 
-		entry->valid = 1;
-		entry->type = LPAE_Type::Table;
-		entry->addr = ((uint64_t)&PTable3[index]) >> 12;
+		if (ptable)
+		{
+			entry->valid = 1;
+			entry->type = LPAE_Type::Table;
+			entry->addr = ((uint64_t)ptable) >> 12;
 
-		Log() << "mm:   PTable2[" << l1 << "][" << l2 << "] -> PTable3[" << index << "] for address 0x"
-		      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+			extern const void* const _heap_start;
+			size_t index = ((uint64_t)ptable - (uint64_t)_heap_start) / _page_size;
+			Log() << "mm:   PTable2[" << l1 << "][" << l2 << "] -> "
+			      << "Heap[" << index << "] for address 0x"
+			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+		}
 	}
 	else
 	{
