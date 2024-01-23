@@ -13,7 +13,7 @@
 #pragma once
 
 #include <core/iheap>
-#include <list>
+#include <lib/list>
 
 namespace saturn {
 namespace core {
@@ -22,11 +22,39 @@ namespace core {
 template <size_t _block_size>
 struct Data_Block
 {
-	int Id;
-	char Data[_block_size];
-	list_head_t List;
+	char raw[_block_size];
 };
 
+// Data block list token
+template <size_t _block_size>
+struct Data_Block_List
+{
+	Data_Block<_block_size> data;
+	lib::List<void*>::Element element;
+};
+
+// Data pool which manages the blocks
+class Data_Pool
+{
+public:
+	Data_Pool(size_t s);
+
+public:
+	inline size_t Block_Size(void);
+	inline bool Has_Free_Block(void);
+	void* Get_Block(void);
+	bool Free_Block(void* base);
+// Debugging interface
+public:
+	void State(void);
+
+public:
+	lib::List<void*> available;
+	lib::List<void*> allocated;
+	size_t block_size;
+};
+
+// Heap orchestrator
 class Heap : public IHeap
 {
 public:
@@ -41,22 +69,14 @@ public:
 	void	State(void);
 
 private:
-	Data_Block<16> (&Data16)[];
-	list_head_t	List16_Available;
-	list_head_t	List16_Allocated;
+	void	Data_Pools_Init();
 
-	Data_Block<32> (&Data32)[];
-	list_head_t	List32_Available;
-	list_head_t	List32_Allocated;
-
-	Data_Block<48> (&Data48)[];
-	list_head_t	List48_Available;
-	list_head_t	List48_Allocated;
-
-	Data_Block<64> (&Data64)[];
-	list_head_t	List64_Available;
-	list_head_t	List64_Allocated;
-
+private:
+	Data_Pool pool16;
+	Data_Pool pool32;
+	Data_Pool pool48;
+	Data_Pool pool64;
+	Data_Pool pool4k;
 };
 
 }; // namespace core

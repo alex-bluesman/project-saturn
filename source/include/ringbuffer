@@ -36,12 +36,12 @@ public:
 		if (nullptr == buf)
 		{
 			Buffer = new T[S];
-			Extern = true;
+			Extern = false;
 		}
 		else
 		{
 			Buffer = buf;
-			Extern = false;
+			Extern = true;
 		}
 	}
 

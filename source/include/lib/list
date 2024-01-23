@@ -1,0 +1,401 @@
+// Copyright (C) 2023 Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
+//
+// Licensed under the MIT License (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+// http://opensource.org/licenses/MIT
+//
+// Unless required by applicable law or agreed to in writing, software distributed 
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+// specific language governing permissions and limitations under the License.
+
+#pragma once
+
+#include <basetypes>
+
+namespace saturn {
+namespace lib {
+
+enum class Allocator_Type
+{
+	none,
+	heap
+};
+
+// List class declaration
+
+template <typename T>
+class List
+{
+public:
+	class Element {
+	public:
+		Element();
+		Element(Element* _prev, T _data);
+
+	public:
+		Element*	next;
+		Element*	prev;
+		T		data;
+	};
+
+public:
+	class Iterator
+	{
+	public:
+		Iterator(Element* _e);
+
+	public:
+		Iterator	operator=(const Iterator& it);
+		void		operator++(void);
+		T&		operator*(void);
+		bool		operator!=(const Iterator& it);
+		bool		operator==(const Iterator& it);
+
+	public:
+		Element* raw(void);
+
+	private:
+		Element* e;
+	};
+
+public:
+	List(Allocator_Type alloc = Allocator_Type::heap);
+	~List();
+
+public:
+	void assign(Iterator _first, Iterator _last);
+	size_t size(void);
+
+public:
+	void push_back(T data);
+	void push_back(Element* e);
+	void pop_back(void);
+
+public:
+	void push_front(T data);
+	void push_front(Element* e);
+	void pop_front(void);
+
+public:
+	Iterator begin(void);
+	Iterator end(void);
+
+public:
+	Iterator find(T value);
+	Iterator erase(Iterator pos);
+	void remove(T value);
+
+private:
+	Element* first;
+	Element* last;
+
+private:
+	Allocator_Type allocator_type;
+	size_t sz;
+};
+
+// List::Element class definition
+
+template <typename T>
+List<T>::Element::Element(Element* _prev, T _data)
+	: next(nullptr)
+	, prev(_prev)
+	, data(_data)
+{};
+
+template <typename T>
+List<T>::Element::Element()
+	: next(nullptr)
+	, prev(nullptr)
+{};
+
+// List::Iterator class definition
+
+template <typename T>
+List<T>::Iterator::Iterator(Element* _e)
+	: e(_e)
+{}
+
+template <typename T>
+typename List<T>::Iterator List<T>::Iterator::operator=(const Iterator& it)
+{
+	e = it.e;
+	return Iterator(e);
+}
+
+template <typename T>
+void List<T>::Iterator::operator++()
+{
+	e = e->next;
+}
+
+template <typename T>
+T& List<T>::Iterator::operator*()
+{
+	return e->data;
+}
+
+template <typename T>
+bool List<T>::Iterator::operator!=(const Iterator& it)
+{
+	return e != it.e;
+}
+
+template <typename T>
+bool List<T>::Iterator::operator==(const Iterator& it)
+{
+	return e == it.e;
+}
+
+template <typename T>
+typename List<T>::Element* List<T>::Iterator::raw()
+{
+	return e;
+}
+
+// List class definition
+
+template <typename T>
+List<T>::List(Allocator_Type alloc)
+	: first(nullptr)
+	, last(nullptr)
+	, allocator_type(alloc)
+	, sz(0)
+{}
+
+template <typename T>
+List<T>::~List()
+{
+	while (nullptr != last)
+	{
+		pop_back();
+	}
+}
+
+template <typename T>
+void List<T>::assign(Iterator _first, Iterator _last)
+{
+	first = _first.raw();
+	first->prev = nullptr;
+
+	last = _last.raw();
+	last->next = nullptr;
+
+	for (Element* e = first; e != nullptr; e = e->next)
+	{
+		sz++;
+	}
+}
+
+template <typename T>
+size_t List<T>::size()
+{
+	return sz;
+}
+
+template <typename T>
+void List<T>::push_back(T data)
+{
+	if (Allocator_Type::heap == allocator_type)
+	{
+		Element* e = new Element(last, data);
+		push_back(e);
+	}
+};
+
+template <typename T>
+void List<T>::push_back(Element* e)
+{
+	if (nullptr == first)
+	{
+		first = e;
+		e->prev = nullptr;
+	}
+
+	if (last)
+	{
+		last->next = e;
+		e->prev = last;
+	}
+
+	e->next = nullptr;
+	last = e;
+	sz++;
+}
+
+template <typename T>
+void List<T>::pop_back(void)
+{
+	if (last)
+	{
+		Element* prev = last->prev;
+
+		if (prev)
+		{
+			prev->next = last->next;
+		}
+		else
+		{
+			first = nullptr;
+		}
+
+		if (Allocator_Type::heap == allocator_type)
+		{
+			delete last;
+		}
+		else
+		{
+			last->next = nullptr;
+			last->prev = nullptr;
+		}
+
+		last = prev;
+		sz--;
+	}
+}
+
+template <typename T>
+void List<T>::push_front(T data)
+{
+	if (Allocator_Type::heap == allocator_type)
+	{
+		Element* e = new Element(nullptr, data);
+		push_front(e);
+	}
+};
+
+template <typename T>
+void List<T>::push_front(Element* e)
+{
+	if (nullptr == last)
+	{
+		last = e;
+	}
+
+	if (first)
+	{
+		first->prev = e;
+	}
+
+	e->next = first;
+	first = e;
+	sz++;
+}
+
+template <typename T>
+void List<T>::pop_front(void)
+{
+	if (first)
+	{
+		Element* next = first->next;
+
+		if (next)
+		{
+			next->prev = first->prev;
+		}
+		else
+		{
+			last = nullptr;
+		}
+
+		if (Allocator_Type::heap == allocator_type)
+		{
+			delete first;
+		}
+		else
+		{
+			first->next = nullptr;
+			first->prev = nullptr;
+		}
+
+		first = next;
+		sz--;
+	}
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::begin(void)
+{
+	return Iterator(first);
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::end(void)
+{
+	return Iterator(nullptr);
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::find(T val)
+{
+	Element* e;
+
+	for (e = first; e != nullptr; e = e->next)
+	{
+		if (e->data == val)
+		{
+			break;
+		}
+	}
+
+	return e;
+}
+
+template <typename T>
+typename List<T>::Iterator List<T>::erase(Iterator pos)
+{
+	Element* e = pos.raw();
+
+	if (e)
+	{
+		Element* prev = e->prev;
+		Element* next = e->next;
+
+		if (Allocator_Type::heap == allocator_type)
+		{
+			delete e;
+		}
+		else
+		{
+			e->next = nullptr;
+			e->prev = nullptr;
+		}
+
+		if (nullptr == prev)
+		{
+			// Remove first element
+			first = next;
+		}
+		else
+		{
+			prev->next = next;
+		}
+
+		if (nullptr == next)
+		{
+			// Remove last element
+			last = prev;
+		}
+		else
+		{
+			next->prev = prev;
+		}
+
+		e = next;
+		sz--;
+	}
+
+	return Iterator(e);
+}
+
+template <typename T>
+void List<T>::remove(T val)
+{
+	Iterator it = find(val);
+	erase(it);
+}
+
+}; // namespace lib
+}; // namespace saturn

@@ -10,6 +10,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "mm/config.hpp"
 #include "heap.hpp"
 
 #include <core/iconsole>
@@ -18,112 +19,190 @@
 namespace saturn {
 namespace core {
 
-// Saturn heap definition
-static Data_Block<16> _data16[_heap_size] __section(".heap");
-static Data_Block<32> _data32[_heap_size] __section(".heap");
-static Data_Block<48> _data48[_heap_size] __section(".heap");
-static Data_Block<64> _data64[_heap_size] __section(".heap");
+// (!) Heap part for MMU.
+// Note: we can't use Data_Block_List here because MMU requires pages to be aligned, what is not
+// possible within the structure mentioned above, because one element size is (_page_size + 16).
+// So let's manually create this special list for MMU.
+static Data_Block<_page_size>    _mmu_pages[_l3_tables] __section(".heap") __align(_page_size);
+static lib::List<void*>::Element _mmu_pool[_l3_tables]  __section(".heap");
 
-// Template to initialize list of data blocks
-template<typename T, size_t _heap_size>
-static void Heap_List_Init(list_head_t *avail, list_head_t *alloc, T *data)
+// (!) Heap pre-allocated data pools, must be used as carefully
+static Data_Block_List<16> _pool16[_heap_size] __section(".heap");
+static Data_Block_List<32> _pool32[_heap_size] __section(".heap");
+static Data_Block_List<48> _pool48[_heap_size] __section(".heap");
+static Data_Block_List<64> _pool64[_heap_size] __section(".heap");
+
+// Let's have heap start pointer for some debugging stuff in MMU module
+const void* _heap_start = &_mmu_pages[0];
+
+Data_Pool::Data_Pool(size_t s)
+	: available(lib::Allocator_Type::none)
+	, allocated(lib::Allocator_Type::none)
+	, block_size(s)
+{}
+
+size_t Data_Pool::Block_Size(void)
 {
-	List_Init(avail);
-	List_Init(alloc);
-
-	for (int i = 0; i < _heap_size; ++i)
-	{
-		data[i].Id = 1;
-		List_Add(&data[i].List, avail);
-	}
+	return block_size;
 }
 
-// Template to allocate memory block from the heap
-template<typename T>
-static void* Heap_Get_Block(list_head_t* avail, list_head_t* alloc)
+bool Data_Pool::Has_Free_Block(void)
+{
+	return (available.size() > 0);
+};
+
+void* Data_Pool::Get_Block(void)
 {
 	void* block = nullptr;
 
-	if (List_Size(avail) > 0)
+	if (available.size() > 0)
 	{
-		list_head_t *entry = avail->next;
-		List_Del(entry);
-		List_Add(entry, alloc);
-
-		block = List_Entry(entry, T, List)->Data;
+		auto it = available.begin();
+		available.pop_front();
+		allocated.push_back(it.raw());
+		block = *it;
 	}
 
 	return block;
+};
+
+bool Data_Pool::Free_Block(void* base)
+{
+	bool ret = false;
+	auto it = allocated.find(base);
+
+	if (it != allocated.end())
+	{
+		allocated.erase(it);
+		available.push_back(it.raw());
+		ret = true;
+	}
+
+	return ret;
+};
+
+void Data_Pool::State(void)
+{
+	Log() << "  data pool " << block_size << " bytes:" << fmt::endl;
+
+	Log() << "    available = " << available.size() << fmt::endl;
+	for (auto it = available.begin(); it != available.end(); ++it)
+	{
+		Log() << "      0x" << fmt::hex << fmt::fill << (uint64_t)*it << fmt::endl;
+	}
+
+	Log() << "    allocated = " << allocated.size() << fmt::endl;
+	for (auto it = allocated.begin(); it != allocated.end(); ++it)
+	{
+		Log() << "      0x" << fmt::hex << fmt::fill << (uint64_t)*it << fmt::endl;
+	}
 }
 
-template<typename T>
-static bool Heap_Free_Block(list_head_t* avail, list_head_t* alloc, void* block)
+template<typename T, size_t S = _heap_size>
+static void Pool_Init(T (&pool)[])
 {
-	list_head_t *entry = alloc->next;
-	bool found = false;
-
-	while (entry != alloc)
+	for (int i = 0; i < S; ++i)
 	{
-		if (block == (void*)List_Entry(entry, T, List)->Data)
+		auto& e = pool[i].element;
+
+		if (i > 0)
 		{
-			List_Del(entry);
-			List_Add(entry, avail);
-			found = true;
-			break;
+			e.prev = &pool[i - 1].element;
 		}
-		entry = entry->next;
-	}
 
-	return found;
+		if (i < (S - 1))
+		{
+			e.next = &pool[i + 1].element;
+		}
+
+		e.data = &pool[i].data;
+	}
 }
 
-// Template to dump blocks in the heap list
-template<typename T>
-static void Dump_Block_List(list_head_t* head)
+template<typename T, size_t S = _heap_size>
+static void Pool_Init(lib::List<void*>::Element (&elements)[], T (&blocks)[])
 {
-	size_t i = 0;
-	list_head_t *entry = head->next;
-	while (entry != head)
+	for (int i = 0; i < S; ++i)
 	{
-		Log() << "      Data[" << i++ << "] = 0x" << fmt::hex << fmt::fill
-			<< (unsigned long)List_Entry(entry, T, List)->Data << fmt::endl;
-		entry = entry->next;
+		auto& e = elements[i];
+		auto& data = blocks[i];
+
+		if (i > 0)
+		{
+			e.prev = &elements[i - 1];
+		}
+
+		if (i < (S - 1))
+		{
+			e.next = &elements[i + 1];
+		}
+
+		e.data = &data;
 	}
 }
 
+
+void Heap::Data_Pools_Init(void)
+{
+	using dbl16 = Data_Block_List<16>;
+	Pool_Init<dbl16>(_pool16);
+	pool16.available.assign(&_pool16[0].element, &_pool16[_heap_size - 1].element);
+
+	using dbl32 = Data_Block_List<32>;
+	Pool_Init<dbl32>(_pool32);
+	pool32.available.assign(&_pool32[0].element, &_pool32[_heap_size - 1].element);
+
+	using dbl48 = Data_Block_List<48>;
+	Pool_Init<dbl48>(_pool48);
+	pool48.available.assign(&_pool48[0].element, &_pool48[_heap_size - 1].element);
+
+	using dbl64 = Data_Block_List<64>;
+	Pool_Init<dbl64>(_pool64);
+	pool64.available.assign(&_pool64[0].element, &_pool64[_heap_size - 1].element);
+
+	using dbl4k = Data_Block<_page_size>;
+	Pool_Init<dbl4k, _l3_tables>(_mmu_pool, _mmu_pages);
+	pool4k.available.assign(&_mmu_pool[0], &_mmu_pool[_heap_size - 1]);
+}
 
 // Heap class implementation
 Heap::Heap(void)
-	: Data16(_data16)
-	, Data32(_data32)
-	, Data48(_data48)
-	, Data64(_data64)
+	: pool16(16)
+	, pool32(32)
+	, pool48(48)
+	, pool64(64)
+	, pool4k(_page_size)
 {
-	Heap_List_Init<Data_Block<16>, _heap_size>(&List16_Available, &List16_Allocated, Data16);
-	Heap_List_Init<Data_Block<32>, _heap_size>(&List32_Available, &List32_Allocated, Data32);
-	Heap_List_Init<Data_Block<48>, _heap_size>(&List48_Available, &List48_Allocated, Data48);
-	Heap_List_Init<Data_Block<64>, _heap_size>(&List64_Available, &List64_Allocated, Data64);
+	Data_Pools_Init();
 }
 
 void* Heap::Alloc(size_t size)
 {
 	void* block = nullptr;
 
-	if (size <= 16)
+	if (size <= pool16.Block_Size() && pool16.Has_Free_Block())
 	{
-		block = Heap_Get_Block<Data_Block<16>>(&List16_Available, &List16_Allocated);
+		block = pool16.Get_Block();
 	}
-	else if (size <= 32)
+	else
+	if (size <= pool32.Block_Size() && pool32.Has_Free_Block())
 	{
-		block = Heap_Get_Block<Data_Block<32>>(&List32_Available, &List32_Allocated);
+		block = pool32.Get_Block();
 	}
-	else if (size <= 48)
+	else
+	if (size <= pool48.Block_Size() && pool48.Has_Free_Block())
 	{
-		block = Heap_Get_Block<Data_Block<48>>(&List48_Available, &List48_Allocated);
+		block = pool48.Get_Block();
 	}
-	else if (size <= 64)
+	else
+	if (size <= pool64.Block_Size() && pool64.Has_Free_Block())
 	{
-		block = Heap_Get_Block<Data_Block<64>>(&List64_Available, &List64_Allocated);
+		block = pool64.Get_Block();
+	}
+	else
+	if (size <= pool4k.Block_Size() && pool4k.Has_Free_Block())
+	{
+		block = pool4k.Get_Block();
 	}
 
 	return block;
@@ -131,54 +210,23 @@ void* Heap::Alloc(size_t size)
 
 void Heap::Free(void *base)
 {
-	if (base <= &Data16[_heap_size])
-	{
-		Heap_Free_Block<Data_Block<16>>(&List16_Available, &List16_Allocated, base);
-	}
-	else
-	if (base <= &Data32[_heap_size])
-	{
-		Heap_Free_Block<Data_Block<32>>(&List32_Available, &List32_Allocated, base);
-	}
-	else
-	if (base <= &Data48[_heap_size])
-	{
-		Heap_Free_Block<Data_Block<48>>(&List48_Available, &List48_Allocated, base);
-	}
-	else
-	if (base <= &Data64[_heap_size])
-	{
-		Heap_Free_Block<Data_Block<64>>(&List64_Available, &List64_Allocated, base);
-	}
+	if (pool16.Free_Block(base) ||
+	    pool32.Free_Block(base) ||
+	    pool48.Free_Block(base) ||
+	    pool64.Free_Block(base) ||
+	    pool4k.Free_Block(base))
+	{}
 }
 
 void Heap::State(void)
 {
 	Log() << "Saturn heap state:" << fmt::endl;
 
-	Log() << "  Data block 16 bytes:" << fmt::endl;
-	Log() << "    Available = " << List_Size(&List16_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<16>>(&List16_Available);
-	Log() << "    Allocated = " << List_Size(&List16_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<16>>(&List16_Allocated);
-
-	Log() << "  Data block 32 bytes:" << fmt::endl;
-	Log() << "    Available = " << List_Size(&List32_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<32>>(&List32_Available);
-	Log() << "    Allocated = " << List_Size(&List32_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<32>>(&List32_Allocated);
-
-	Log() << "  Data block 48 bytes:" << fmt::endl;
-	Log() << "    Available = " << List_Size(&List48_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<48>>(&List48_Available);
-	Log() << "    Allocated = " << List_Size(&List48_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<48>>(&List48_Allocated);
-
-	Log() << "  Data block 64 bytes:" << fmt::endl;
-	Log() << "    Available = " << List_Size(&List64_Available) << fmt::endl;
-	Dump_Block_List<Data_Block<64>>(&List64_Available);
-	Log() << "    Allocated = " << List_Size(&List64_Allocated) << fmt::endl;
-	Dump_Block_List<Data_Block<64>>(&List64_Allocated);
+	pool16.State();
+	pool32.State();
+	pool48.State();
+	pool64.State();
+	pool4k.State();
 }
 
 } // namespace core
