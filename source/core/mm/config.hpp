@@ -24,12 +24,12 @@ namespace core {
 // on hardware configuration. Each table size is 4KB, so we could save
 // quite a lot RAM with fine-tunned configuration.
 
+static const size_t _ptable_size = 512;		// 512 etries per-table
+
 // TBD: should be reworked to avoid compile time hardcoding
 // Page tables parameters:
 static const size_t _l0_size = 1;		// Single entry
 static const size_t _l1_size = 4;		// 4GB of mapped address space
-static const size_t _l2_size = 512;		// 1GB of memory per-table
-static const size_t _l3_size = 512;		// 2MB of memory per-table
 
 // Number of tables for hypervisor level-3 page mapping. Hypervisor uses them
 // to map I/O peripheral regions. And due to only certain devices are used

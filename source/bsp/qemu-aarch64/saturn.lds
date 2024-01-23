@@ -7,7 +7,6 @@ PHDRS
 SECTIONS
 {
 	. = 0x7fc00000;
-
 	_start = .;
 
 	.text :
@@ -15,10 +14,7 @@ SECTIONS
 		*(.text)
 	} : text = 0x3030
 
-	/* TBD: map data segment
-	 * . = 0x7fe00000;
-	 */
-
+	. = ALIGN(1 << 12);
 	.data :
 	{
 		*(.data)
@@ -44,5 +40,6 @@ SECTIONS
 	. = ALIGN(1 << 3);
 	_bss_end = .;
 
+	. = ALIGN(1 << 12);
 	_end = . ;
 }
