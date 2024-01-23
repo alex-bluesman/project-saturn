@@ -10,6 +10,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
 
+#include "mm/config.hpp"
 #include "heap.hpp"
 
 #include <core/iconsole>
@@ -22,8 +23,8 @@ namespace core {
 // Note: we can't use Data_Block_List here because MMU requires pages to be aligned, what is not
 // possible within the structure mentioned above, because one element size is (_page_size + 16).
 // So let's manually create this special list for MMU.
-static Data_Block<_page_size>    _mmu_pages[_heap_size] __section(".heap") __align(_page_size);
-static lib::List<void*>::Element _mmu_pool[_heap_size]  __section(".heap");
+static Data_Block<_page_size>    _mmu_pages[_l3_tables] __section(".heap") __align(_page_size);
+static lib::List<void*>::Element _mmu_pool[_l3_tables]  __section(".heap");
 
 // (!) Heap pre-allocated data pools, must be used as carefully
 static Data_Block_List<16> _pool16[_heap_size] __section(".heap");
@@ -160,7 +161,7 @@ void Heap::Data_Pools_Init(void)
 	pool64.available.assign(&_pool64[0].element, &_pool64[_heap_size - 1].element);
 
 	using dbl4k = Data_Block<_page_size>;
-	Pool_Init<dbl4k>(_mmu_pool, _mmu_pages);
+	Pool_Init<dbl4k, _l3_tables>(_mmu_pool, _mmu_pages);
 	pool4k.available.assign(&_mmu_pool[0], &_mmu_pool[_heap_size - 1]);
 }
 
