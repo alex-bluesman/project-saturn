@@ -18,11 +18,21 @@
 namespace saturn {
 namespace core {
 
+// (!) Heap part for MMU.
+// Note: we can't use Data_Block_List here because MMU requires pages to be aligned, what is not
+// possible within the structure mentioned above, because one element size is (_page_size + 16).
+// So let's manually create this special list for MMU.
+static Data_Block<_page_size>    _mmu_pages[_heap_size] __section(".heap") __align(_page_size);
+static lib::List<void*>::Element _mmu_pool[_heap_size]  __section(".heap");
+
 // (!) Heap pre-allocated data pools, must be used as carefully
-static Data_Block<16> _pool16[_heap_size] __section(".heap");
-static Data_Block<32> _pool32[_heap_size] __section(".heap");
-static Data_Block<48> _pool48[_heap_size] __section(".heap");
-static Data_Block<64> _pool64[_heap_size] __section(".heap");
+static Data_Block_List<16> _pool16[_heap_size] __section(".heap");
+static Data_Block_List<32> _pool32[_heap_size] __section(".heap");
+static Data_Block_List<48> _pool48[_heap_size] __section(".heap");
+static Data_Block_List<64> _pool64[_heap_size] __section(".heap");
+
+// Let's have heap start pointer for some debugging stuff in MMU module
+const void* _heap_start = &_mmu_pages[0];
 
 Data_Pool::Data_Pool(size_t s)
 	: available(lib::Allocator_Type::none)
@@ -104,27 +114,54 @@ static void Pool_Init(T (&pool)[])
 			e.next = &pool[i + 1].element;
 		}
 
-		e.data = pool[i].data;
+		e.data = &pool[i].data;
 	}
 }
 
+template<typename T, size_t S = _heap_size>
+static void Pool_Init(lib::List<void*>::Element (&elements)[], T (&blocks)[])
+{
+	for (int i = 0; i < S; ++i)
+	{
+		auto& e = elements[i];
+		auto& data = blocks[i];
+
+		if (i > 0)
+		{
+			e.prev = &elements[i - 1];
+		}
+
+		if (i < (S - 1))
+		{
+			e.next = &elements[i + 1];
+		}
+
+		e.data = &data;
+	}
+}
+
+
 void Heap::Data_Pools_Init(void)
 {
-	using db16 = Data_Block<16>;
-	Pool_Init<db16>(_pool16);
+	using dbl16 = Data_Block_List<16>;
+	Pool_Init<dbl16>(_pool16);
 	pool16.available.assign(&_pool16[0].element, &_pool16[_heap_size - 1].element);
 
-	using db32 = Data_Block<32>;
-	Pool_Init<db32>(_pool32);
+	using dbl32 = Data_Block_List<32>;
+	Pool_Init<dbl32>(_pool32);
 	pool32.available.assign(&_pool32[0].element, &_pool32[_heap_size - 1].element);
 
-	using db48 = Data_Block<48>;
-	Pool_Init<db48>(_pool48);
+	using dbl48 = Data_Block_List<48>;
+	Pool_Init<dbl48>(_pool48);
 	pool48.available.assign(&_pool48[0].element, &_pool48[_heap_size - 1].element);
 
-	using db64 = Data_Block<64>;
-	Pool_Init<db64>(_pool64);
+	using dbl64 = Data_Block_List<64>;
+	Pool_Init<dbl64>(_pool64);
 	pool64.available.assign(&_pool64[0].element, &_pool64[_heap_size - 1].element);
+
+	using dbl4k = Data_Block<_page_size>;
+	Pool_Init<dbl4k>(_mmu_pool, _mmu_pages);
+	pool4k.available.assign(&_mmu_pool[0], &_mmu_pool[_heap_size - 1]);
 }
 
 // Heap class implementation
@@ -133,6 +170,7 @@ Heap::Heap(void)
 	, pool32(32)
 	, pool48(48)
 	, pool64(64)
+	, pool4k(_page_size)
 {
 	Data_Pools_Init();
 }
@@ -160,6 +198,11 @@ void* Heap::Alloc(size_t size)
 	{
 		block = pool64.Get_Block();
 	}
+	else
+	if (size <= pool4k.Block_Size() && pool4k.Has_Free_Block())
+	{
+		block = pool4k.Get_Block();
+	}
 
 	return block;
 }
@@ -169,7 +212,8 @@ void Heap::Free(void *base)
 	if (pool16.Free_Block(base) ||
 	    pool32.Free_Block(base) ||
 	    pool48.Free_Block(base) ||
-	    pool64.Free_Block(base))
+	    pool64.Free_Block(base) ||
+	    pool4k.Free_Block(base))
 	{}
 }
 
@@ -181,6 +225,7 @@ void Heap::State(void)
 	pool32.State();
 	pool48.State();
 	pool64.State();
+	pool4k.State();
 }
 
 } // namespace core

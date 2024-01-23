@@ -22,7 +22,14 @@ namespace core {
 template <size_t _block_size>
 struct Data_Block
 {
-	char data[_block_size];
+	char raw[_block_size];
+};
+
+// Data block list token
+template <size_t _block_size>
+struct Data_Block_List
+{
+	Data_Block<_block_size> data;
 	lib::List<void*>::Element element;
 };
 
@@ -69,6 +76,7 @@ private:
 	Data_Pool pool32;
 	Data_Pool pool48;
 	Data_Pool pool64;
+	Data_Pool pool4k;
 };
 
 }; // namespace core
