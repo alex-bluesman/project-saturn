@@ -14,6 +14,7 @@
 
 #include <core/iconsole>
 #include <ringbuffer>
+#include <system>
 
 namespace saturn {
 namespace core {
@@ -21,7 +22,7 @@ namespace core {
 using namespace device;
 
 static const size_t _rx_size = 16;
-static const size_t _tx_size = 1024;
+static const size_t _tx_size = 8 * _page_size; // Reserve 32K buffer to cache log messages on boot
 
 enum systemKeys
 {
