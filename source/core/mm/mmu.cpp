@@ -20,11 +20,8 @@
 namespace saturn {
 namespace core {
 
-MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level1)[],
-					   tt_desc_t (&Level2)[][_ptable_size],
-					   MMapStage Stage)
+MemoryManagementUnit::MemoryManagementUnit(tt_desc_t (&Level1)[], MMapStage Stage)
 	: PTable1(Level1)
-	, PTable2(Level2)
 	, TStage(Stage)
 {}
 
@@ -42,18 +39,40 @@ void* MemoryManagementUnit::Get_Table(void)
 
 void MemoryManagementUnit::Free_Table(void* ptable)
 {
-	// NOTE: we assume that table does not contain any valid entry, this should be guaranteed by caller
-	MSet<uint64_t>(ptable, _ptable_size, 0);
-	delete [] static_cast<tt_desc_t*>(ptable);
+	if (ptable)
+	{
+		// NOTE: we assume that table does not contain any valid entry, this should be guaranteed by caller
+		MSet<uint64_t>(ptable, _ptable_size, 0);
+		delete [] static_cast<tt_desc_t*>(ptable);
+	}
+}
+
+void MemoryManagementUnit::Fill_Mem_Attrs(lpae_block_t* entry, MMapType type)
+{
+	entry->ns = 1;
+	entry->ap = 1 | TStage; // R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
+	entry->af = 1;
+	entry->ng = 1;
+
+	switch (type)
+	{
+	case MMapType::Device:
+		entry->attr = 1;
+		entry->sh = 2;
+		break;
+	case MMapType::Normal:
+		entry->attr = 7;
+		entry->sh = 2;
+		break;
+	default:
+		break;
+	}
 }
 
 lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, uint64_t phys_addr,  MMapType type)
 {
-	size_t index;
-	lpae_table_t* pt;
 	lpae_block_t* entry = nullptr;
-
-	index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
+	size_t index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
 
 	if (index < _l1_size)
 	{
@@ -65,26 +84,10 @@ lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, uint64_t ph
 			entry->valid = 1;
 			entry->type = LPAE_Type::Block;
 			entry->addr = phys_addr >> 30;
-			entry->ns = 1;
-			entry->ap = 1 | TStage; // R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
-			entry->af = 1;
-			entry->ng = 1;
 
-			switch (type)
-			{
-			case MMapType::Device:
-				entry->attr = 4;
-				entry->sh = 2;
-				break;
-			case MMapType::Normal:
-				entry->attr = 7;
-				entry->sh = 3;
-				break;
-			default:
-				break;
-			}
+			Fill_Mem_Attrs(entry, type);
 
-			Log() << "mm: PTable1[" << index << "] -> 1GB block for address 0x"
+			Log() << "mm: PTable1[] -> 1GB block for address 0x"
 			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 		}
 		else
@@ -102,11 +105,9 @@ lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, uint64_t ph
 
 lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, uint64_t phys_addr, MMapType type)
 {
-	size_t index;
-	lpae_table_t* pt;
 	lpae_block_t* entry = nullptr;
 
-	pt = Map_L1_PTable(virt_addr);
+	lpae_table_t* pt = Map_L1_PTable(virt_addr);
 	if (nullptr != pt)
 	{
 		// L2 page table
@@ -114,9 +115,8 @@ lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, uint64_t ph
 		pt = reinterpret_cast<lpae_table_t *>(pt_addr);
 
 		// L2 table entry
-		index = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
-		entry = (lpae_block_t *)&pt[index];
-
+		size_t index = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
+		entry = reinterpret_cast<lpae_block_t*>(&pt[index]);
 
 		// Check if the entry is not already mapped
 		if (entry->valid == 0)
@@ -124,26 +124,10 @@ lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, uint64_t ph
 			entry->valid = 1;
 			entry->type = LPAE_Type::Block;
 			entry->addr = phys_addr >> 21;
-			entry->ns = 1;
-			entry->ap = 1 | TStage; // R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
-			entry->af = 1;
-			entry->ng = 1;
 
-			switch (type)
-			{
-			case MMapType::Device:
-				entry->attr = 1;
-				entry->sh = 2;
-				break;
-			case MMapType::Normal:
-				entry->attr = 7;
-				entry->sh = 2;
-				break;
-			default:
-				break;
-			}
+			Fill_Mem_Attrs(entry, type);
 
-			Log() << "mm:   PTable2[][" << index << "] -> 2MB block for address 0x"
+			Log() << "mm:   PTable2[] -> 2MB block for address 0x"
 			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 		}
 		else
@@ -161,23 +145,21 @@ lpae_block_t* MemoryManagementUnit::Map_L2_Block(uint64_t virt_addr, uint64_t ph
 
 lpae_page_t* MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, uint64_t phys_addr, MMapType type)
 {
-	size_t index;
-	lpae_table_t *pt, *entry;
 	lpae_page_t *page = nullptr;
 
-	entry = Map_L1_PTable(virt_addr);
-	if (nullptr != entry)
+	lpae_table_t* pt = Map_L1_PTable(virt_addr);
+	if (nullptr != pt)
 	{
-		entry = Map_L2_PTable(virt_addr);
-		if (nullptr != entry)
+		pt = Map_L2_PTable(virt_addr);
+		if (nullptr != pt)
 		{
 			// L3 page table
-			uint64_t pt_addr = static_cast<uint64_t>(entry->addr << 12U);
+			uint64_t pt_addr = static_cast<uint64_t>(pt->addr << 12U);
 			pt = reinterpret_cast<lpae_table_t *>(pt_addr);
 
 			// L3 table entry
-			index = (virt_addr >> _l3_addr_shift) & _ptable_size_mask;
-			page = (lpae_page_t *)&pt[index];
+			size_t index = (virt_addr >> _l3_addr_shift) & _ptable_size_mask;
+			page = reinterpret_cast<lpae_page_t*>(&pt[index]);
 
 			// Page -> Address
 			if (page->valid == 0)
@@ -185,37 +167,13 @@ lpae_page_t* MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, uint64_t phys
 				page->valid = 1;
 				page->type = LPAE_Type::Page;
 				page->addr = phys_addr >> 12;
-				page->ns = 1;
-				page->ap = 1 | TStage;	// R/W: EL2 AP[2:1] = b01, EL1 S2AP[1:0] = b11
-				page->af = 1;
-				page->ng = 1;
 
-				switch (type)
-				{
-				case MMapType::Device:
-					page->attr = 1;
-					page->sh = 2;
-					break;
-				case MMapType::Normal:
-					page->attr = 7;
-					page->sh = 2;
-					break;
-				default:
-					break;
-				}
+				Fill_Mem_Attrs(reinterpret_cast<lpae_block_t*>(page), type);
+
+				Log() << "mm:     PTable3[] -> 4KB page for address 0x"
+				      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 			}
-
-			Log() << "mm:     PTable3[][" << index << "] -> 4KB page for address 0x"
-			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
 		}
-		else
-		{
-			Error() << "level-2 mapping failed for address: 0x" << fmt::fill << fmt::hex << virt_addr << fmt::endl;
-		}
-	}
-	else
-	{
-		Error() << "level-1 mapping failed for address: 0x" << fmt::fill << fmt::hex << virt_addr << fmt::endl;
 	}
 
 	return page;
@@ -223,12 +181,9 @@ lpae_page_t* MemoryManagementUnit::Map_L3_Page(uint64_t virt_addr, uint64_t phys
 
 lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
 {
-	size_t index;
-	lpae_table_t* pt;
 	lpae_table_t* entry = nullptr;
 
-	index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
-
+	size_t index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
 	if (index < _l1_size)
 	{
 		entry = reinterpret_cast<lpae_table_t *>(&PTable1[index]);
@@ -236,12 +191,20 @@ lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
 		// Check if the entry is not already mapped
 		if (entry->valid == 0)
 		{
-			entry->valid = 1;
-			entry->type = LPAE_Type::Table;
-			entry->addr = reinterpret_cast<uint64_t>(PTable2[index])>> 12;
+			void* ptable = Get_Table();
+			if (ptable)
+			{
+				entry->valid = 1;
+				entry->type = LPAE_Type::Table;
+				entry->addr = ((uint64_t)ptable) >> 12;
 
-			Log() << "mm: PTable1[" << index << "] -> PTable2[" << index << "][] for address 0x"
-			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+				Log() << "mm: PTable1[] -> PTable2[] for address 0x"
+				      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+			}
+			else
+			{
+				entry = nullptr;
+			}
 		}
 		else
 		{
@@ -258,43 +221,57 @@ lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
 
 lpae_table_t* MemoryManagementUnit::Map_L2_PTable(uint64_t virt_addr)
 {
-	lpae_table_t *pt, *entry;
+	lpae_table_t *entry = nullptr;
 
-	// L2 page table
-	// NOTE: no need to check index because it's already checked by L1 mapping
-	size_t l1  = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
-	pt = reinterpret_cast<lpae_table_t *>(&PTable2[l1]);
-
-	// L2 table entry
-	size_t l2 = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
-	entry = reinterpret_cast<lpae_table_t *>(&pt[l2]);
-
-	if (entry->valid == 0)
+	lpae_table_t* pt = Map_L1_PTable(virt_addr);
+	if (nullptr != pt)
 	{
-		void* ptable = Get_Table();
+		// L2 page table
+		uint64_t pt_addr = static_cast<uint64_t>(pt->addr << 12U);
+		pt = reinterpret_cast<lpae_table_t *>(pt_addr);
 
-		if (ptable)
+		// L2 table entry
+		size_t index = (virt_addr >> _l2_addr_shift) & _ptable_size_mask;
+		entry = reinterpret_cast<lpae_table_t *>(&pt[index]);
+
+		if (entry->valid == 0)
 		{
-			entry->valid = 1;
-			entry->type = LPAE_Type::Table;
-			entry->addr = ((uint64_t)ptable) >> 12;
+			void* ptable = Get_Table();
+			if (ptable)
+			{
+				entry->valid = 1;
+				entry->type = LPAE_Type::Table;
+				entry->addr = ((uint64_t)ptable) >> 12;
 
-			extern const void* const _heap_start;
-			size_t index = ((uint64_t)ptable - (uint64_t)_heap_start) / _page_size;
-			Log() << "mm:   PTable2[" << l1 << "][" << l2 << "] -> "
-			      << "Heap[" << index << "] for address 0x"
-			      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+				Log() << "mm:   PTable2[] -> PTable3[] for address 0x"
+				      << fmt::hex << fmt::fill << virt_addr << fmt::endl;
+			}
+			else
+			{
+				entry = nullptr;
+			}
 		}
-	}
-	else
-	{
-		if (entry->type == LPAE_Type::Block)
+		else
 		{
-			entry = nullptr;
+			// Entry is already mapped as page table
+			if (entry->type == LPAE_Type::Block)
+			{
+				entry = nullptr;
+			}
 		}
 	}
 
 	return entry;
+}
+
+void MemoryManagementUnit::TLB_Flush_All(void)
+{
+	asm volatile("\
+			dsb	nshst;		\
+			tlbi	vmalle1;	\
+			dsb	nsh;		\
+			isb;			\
+		     " : : : "memory");
 }
 
 void* MemoryManagementUnit::MemoryMap(Memory_Region& region)
@@ -353,13 +330,7 @@ void* MemoryManagementUnit::MemoryMap(uint64_t virt_addr, uint64_t phys_addr, si
 	}
 	while (start < end);
 
-	// TBD: flush whole TLB
-	asm volatile("\
-			dsb	ishst;		\
-			tlbi	vmalle1;	\
-			dsb	ish;		\
-			isb;			\
-	             " : : : "memory");
+	TLB_Flush_All();
 
 	if (nullptr == ret)
 	{
@@ -379,12 +350,11 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 {
 	uint64_t start = virt_addr & _page_base;
 	uint64_t end = (virt_addr + size) & _page_base;
-	lpae_table_t* entry = nullptr;
 
 	do
 	{
-		size_t l1 = (start >> _l1_addr_shift) & _ptable_size_mask;
-		entry = reinterpret_cast<lpae_table_t *>(&PTable1[l1]);
+		size_t index = (start >> _l1_addr_shift) & _ptable_size_mask;
+		lpae_table_t* entry = reinterpret_cast<lpae_table_t *>(&PTable1[index]);
 
 		// L1 block
 		if ((entry->valid == 1) && (entry->type == LPAE_Type::Block))
@@ -392,7 +362,7 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 			void* ptr = reinterpret_cast<void*>(entry);
 			MSet<uint64_t>(ptr, 1, 0);
 
-			Log() << "mm: PTable1[" << l1 << "] -> free 1GB block for address 0x"
+			Log() << "mm: PTable1[] -> free 1GB block for address 0x"
 			      << fmt::hex << fmt::fill << start << fmt::endl;
 
 			start += BlockSize::L1_Block;
@@ -401,8 +371,11 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 		// L1 page table
 		if ((entry->valid == 1) && (entry->type == LPAE_Type::Table))
 		{
-			size_t l2 = (start >> _l2_addr_shift) & _ptable_size_mask;
-			entry = reinterpret_cast<lpae_table_t *>(&PTable2[l1][l2]);
+			uint64_t pt_addr = static_cast<uint64_t>(entry->addr << 12U);
+			lpae_table_t* pt = reinterpret_cast<lpae_table_t *>(pt_addr);
+
+			index = (start >> _l2_addr_shift) & _ptable_size_mask;
+			entry = reinterpret_cast<lpae_table_t *>(&pt[index]);
 
 			// L2 block
 			if ((entry->valid == 1) && (entry->type == LPAE_Type::Block))
@@ -410,7 +383,7 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 				void* ptr = reinterpret_cast<void*>(entry);
 				MSet<uint64_t>(ptr, 1, 0);
 
-				Log() << "mm:   PTable2[][" << l2 << "] -> free 2MB block for address 0x"
+				Log() << "mm:   PTable2[] -> free 2MB block for address 0x"
 				      << fmt::hex << fmt::fill << start << fmt::endl;
 
 				start += BlockSize::L2_Block;
@@ -420,11 +393,11 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 			if ((entry->valid == 1) && (entry->type == LPAE_Type::Table))
 			{
 				// L3 page table
-				uint64_t pt_addr = static_cast<uint64_t>(entry->addr << 12U);
-				lpae_table_t* pt = reinterpret_cast<lpae_table_t *>(pt_addr);
+				pt_addr = static_cast<uint64_t>(entry->addr << 12U);
+				pt = reinterpret_cast<lpae_table_t *>(pt_addr);
 
-				size_t l3 = (start >> _l3_addr_shift) & _ptable_size_mask;
-				lpae_page_t* page = (lpae_page_t *)&pt[l3];
+				index = (start >> _l3_addr_shift) & _ptable_size_mask;
+				lpae_page_t* page = reinterpret_cast<lpae_page_t*>(&pt[index]);
 
 				// L3 page
 				if (page->valid == 1)
@@ -432,7 +405,7 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 					void* ptr = reinterpret_cast<void*>(page);
 					MSet<uint64_t>(ptr, 1, 0);
 
-					Log() << "mm:     PTable3[][" << l3 << "] -> free 4KB page for address 0x"
+					Log() << "mm:     PTable3[] -> free 4KB page for address 0x"
 					      << fmt::hex << fmt::fill << start << fmt::endl;
 
 					start += BlockSize::L3_Page;
@@ -454,13 +427,73 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 	}
 	while (start < end);
 
-	// TBD: flush whole TLB
-	asm volatile("\
-			dsb	nshst;		\
-			tlbi	vmalle1;	\
-			dsb	nsh;		\
-			isb;			\
-	             " : : : "memory");
+	Free_Empty_Tables();
+
+	TLB_Flush_All();
+}
+
+void MemoryManagementUnit::Free_Empty_Tables(void)
+{
+	for (size_t l1 = 0; l1 < _l1_size; ++l1)
+	{
+		lpae_table_t* entry_l1 = reinterpret_cast<lpae_table_t *>(&PTable1[l1]);
+
+		if ((entry_l1->valid == 1) && (entry_l1->type == LPAE_Type::Table))
+		{
+			uint64_t pt_addr = static_cast<uint64_t>(entry_l1->addr << 12U);
+			lpae_table_t* pt2 = reinterpret_cast<lpae_table_t *>(pt_addr);
+			bool empty_l2 = true;
+
+			for (size_t l2 = 0; l2 < _ptable_size; ++l2)
+			{
+				lpae_table_t* entry_l2 = reinterpret_cast<lpae_table_t *>(&pt2[l2]);
+
+				if ((entry_l2->valid == 1) && (entry_l2->type == LPAE_Type::Block))
+				{
+					empty_l2 = false;
+					break;
+				}
+				else
+				if ((entry_l2->valid == 1) && (entry_l2->type == LPAE_Type::Table))
+				{
+					pt_addr = static_cast<uint64_t>(entry_l2->addr << 12U);
+					lpae_table_t* pt3 = reinterpret_cast<lpae_table_t *>(pt_addr);
+					bool empty_l3 = true;
+
+					for (size_t l3 = 0; l3 < _ptable_size; ++l3)
+					{
+						lpae_page_t* entry_l3 = reinterpret_cast<lpae_page_t *>(&pt3[l3]);
+
+						if (entry_l3->valid == 1)
+						{
+							empty_l3 = false;
+							break;
+						}
+					}
+
+					if (empty_l3)
+					{
+						Log() << "mm:   PTable2[] -> free PTable3[]" << fmt::endl;
+						void* ptr = reinterpret_cast<void*>(entry_l2);
+						MSet<uint64_t>(ptr, 1, 0);
+						Free_Table(pt3);
+					}
+					else
+					{
+						empty_l2 = false;
+					}
+				}
+			}
+
+			if (empty_l2)
+			{
+				Log() << "mm: PTable1[] -> free PTable2[]" << fmt::endl;
+				void* ptr = reinterpret_cast<void*>(entry_l1);
+				MSet<uint64_t>(ptr, 1, 0);
+				Free_Table(pt2);
+			}
+		}
+	}
 }
 
 }; // namespace core
