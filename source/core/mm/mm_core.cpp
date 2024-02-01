@@ -18,16 +18,16 @@
 using namespace saturn::core;
 
 // Should be global without namespace to be visible in assembly boot code
-tt_desc_t ptable_l0[_l0_size]				__align(_page_size);
-tt_desc_t ptable_l1[_l1_size]				__align(_page_size);
-tt_desc_t ptable_l2[_l1_size][_ptable_size]			__align(_page_size);
+tt_desc_t core_ptable_l0[_l0_size]	__align(_page_size);
+tt_desc_t core_ptable_l1[_ptable_size]	__align(_page_size);
+tt_desc_t core_ptable_l2[_ptable_size]	__align(_page_size);
+tt_desc_t core_ptable_l3[_ptable_size]	__align(_page_size);
 
 namespace saturn {
 namespace core {
 
 // Guest PA-IPA data
-static tt_desc_t ipa_ptable_l1[_l1_size]		__align(_page_size);
-static tt_desc_t ipa_ptable_l2[_l1_size][_ptable_size]	__align(_page_size);
+static tt_desc_t ipa_ptable_l1[_ptable_size]	__align(_page_size);
 
 static MemoryManagementUnit* 	Saturn_MMU = nullptr;		// MMU object pointer for hypervisor mapping
 static MemoryManagementUnit* 	Guest_MMU = nullptr;		// MMU object pointer for guest mapping
@@ -38,7 +38,7 @@ void Memory_Trap_Init(void);
 void MMU_Init(void)
 {
 	// Create Saturn MMU
-	Saturn_MMU = new MemoryManagementUnit(ptable_l1, ptable_l2, MMapStage::Stage1);
+	Saturn_MMU = new MemoryManagementUnit(core_ptable_l1, MMapStage::Stage1);
 
 	// Initial value for VTCR_EL2:
 	//		  SH0_IS   | ORGN0_WBWA | IRGN0_WBWA |  SL0_L1   | T0SZ = 32 bits
@@ -46,14 +46,9 @@ void MMU_Init(void)
 	WriteArm64Reg(VTCR_EL2, vtcr);
 	
 	// Set IPA page tables to 0 value
-	for (size_t i = 0; i < _l1_size; i++)
+	for (size_t i = 0; i < _ptable_size; i++)
 	{
 		ipa_ptable_l1[i] = 0;
-
-		for (size_t j = 0; j < _ptable_size; j++)
-		{
-			ipa_ptable_l2[i][j] = 0;
-		}
 	}
 
 	// Initial value for VTTBR_EL2
@@ -62,7 +57,7 @@ void MMU_Init(void)
 	WriteArm64Reg(VTTBR_EL2, vttbr);
 
 	// Create guest IPA MMU
-	Guest_MMU = new MemoryManagementUnit(ipa_ptable_l1, ipa_ptable_l2, MMapStage::Stage2);
+	Guest_MMU = new MemoryManagementUnit(ipa_ptable_l1, MMapStage::Stage2);
 
 	// Initialize guest memory traps
 	Memory_Trap_Init();

@@ -15,6 +15,8 @@ SECTIONS
 	} : text = 0x3030
 
 	. = ALIGN(1 << 12);
+	_data = .;
+
 	.data :
 	{
 		*(.data)
