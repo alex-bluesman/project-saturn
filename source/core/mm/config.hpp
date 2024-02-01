@@ -17,23 +17,15 @@
 namespace saturn {
 namespace core {
 
+static const size_t _ptable_size = 512;		// 512 etries per-table
+static const size_t _l0_size = 1;		// Single entry which covers 512GB, should be enough...
+
 // Saturn follows the approach of static resources split and allocation,
 // so this means that we create the configuration once during boot and
 // do not perform any dynamic allocations during runtime. This gives us
-// possibility to statically define the sizes of translation tables based
+// possibility to statically define number of translation tables based
 // on hardware configuration. Each table size is 4KB, so we could save
 // quite a lot RAM with fine-tunned configuration.
-
-static const size_t _ptable_size = 512;		// 512 etries per-table
-
-// TBD: should be reworked to avoid compile time hardcoding
-// Page tables parameters:
-static const size_t _l0_size = 1;		// Single entry
-static const size_t _l1_size = 4;		// 4GB of mapped address space
-
-// Number of tables for hypervisor level-3 page mapping. Hypervisor uses them
-// to map I/O peripheral regions. And due to only certain devices are used
-// (like UART and GIC), no need to create many tables
 static const size_t _l3_tables = 16;
 
 }; // namespace core
