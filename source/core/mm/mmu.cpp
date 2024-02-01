@@ -74,7 +74,7 @@ lpae_block_t* MemoryManagementUnit::Map_L1_Block(uint64_t virt_addr, uint64_t ph
 	lpae_block_t* entry = nullptr;
 	size_t index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
 
-	if (index < _l1_size)
+	if (index < _ptable_size)
 	{
 		entry = reinterpret_cast<lpae_block_t *>(&PTable1[index]);
 
@@ -184,7 +184,7 @@ lpae_table_t* MemoryManagementUnit::Map_L1_PTable(uint64_t virt_addr)
 	lpae_table_t* entry = nullptr;
 
 	size_t index = (virt_addr >> _l1_addr_shift) & _ptable_size_mask;
-	if (index < _l1_size)
+	if (index < _ptable_size)
 	{
 		entry = reinterpret_cast<lpae_table_t *>(&PTable1[index]);
 
@@ -434,7 +434,7 @@ void MemoryManagementUnit::MemoryUnmap(uint64_t virt_addr, size_t size)
 
 void MemoryManagementUnit::Free_Empty_Tables(void)
 {
-	for (size_t l1 = 0; l1 < _l1_size; ++l1)
+	for (size_t l1 = 0; l1 < _ptable_size; ++l1)
 	{
 		lpae_table_t* entry_l1 = reinterpret_cast<lpae_table_t *>(&PTable1[l1]);
 
